@@ -15,7 +15,6 @@ const defaultSettings: AppSettings = {
   preferredOpenAiModel: "gpt-4.1-mini",
   preferredAnthropicModel: "claude-sonnet-4-20250514",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
-  developerDebugMode: false,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -60,10 +59,6 @@ function sanitizeSettings(settings: unknown): AppSettings {
       typeof candidate.extractionPrompt === "string" && candidate.extractionPrompt.trim().length > 0
         ? candidate.extractionPrompt
         : defaultSettings.extractionPrompt,
-    developerDebugMode:
-      typeof candidate.developerDebugMode === "boolean"
-        ? candidate.developerDebugMode
-        : defaultSettings.developerDebugMode,
     onboardingCompletedAt:
       typeof candidate.onboardingCompletedAt === "string" ? candidate.onboardingCompletedAt : undefined,
   };

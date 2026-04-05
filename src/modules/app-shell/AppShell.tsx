@@ -68,12 +68,12 @@ export function AppShell() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {canInstall ? (
-                  <Button variant="secondary" onClick={() => void promptInstall()}>
+                  <Button type="button" variant="secondary" onClick={() => void promptInstall()}>
                     Install app
                   </Button>
                 ) : null}
                 {needRefresh ? (
-                  <Button variant="secondary" onClick={() => void applyUpdate()}>
+                  <Button type="button" variant="secondary" onClick={() => void applyUpdate()}>
                     Update app
                   </Button>
                 ) : null}
@@ -161,7 +161,7 @@ export function AppShell() {
                     Meishi can reopen its shell and saved local data offline, but extraction and Google sync still require a network connection.
                   </p>
                 </div>
-                <Button variant="outline" onClick={dismissOfflineReady}>
+                <Button type="button" variant="outline" onClick={dismissOfflineReady}>
                   Dismiss
                 </Button>
               </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Camera, ImagePlus, Sparkles, Trash2 } from "lucide-react";
+import { appEnv } from "../../app/env";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { Button } from "../../shared/ui/button";
 import {
@@ -12,10 +13,17 @@ import {
 } from "../../shared/ui/card";
 import { Alert } from "../../shared/ui/alert";
 import { createCapturedCardImages } from "./imageProcessing";
-import {
-  openPreferredCameraStream,
-} from "./cameraFacingMode";
+import { openPreferredCameraStream } from "./cameraFacingMode";
 import { detectPreferredCaptureExperience } from "./captureExperience";
+import {
+  appendCaptureDebugEvent,
+  clearCaptureDebugLog,
+  getCaptureDebugPanelQueryKey,
+  getCaptureDebugMaxEdgeStorageKey,
+  isCaptureDebugPanelEnabled,
+  readCaptureDebugLog,
+  readCaptureDebugMaxEdge,
+} from "./captureDebug";
 import {
   loadCapturedImages,
   saveCapturedImages,
@@ -23,8 +31,8 @@ import {
 } from "../local-data";
 import {
   createContactDraft,
-  selectCapturedImages,
   populateDraftFromExtraction,
+  selectCapturedImages,
   setCapturedImages,
 } from "../contact-review/reviewDraftSlice";
 import { useExtractBusinessCardMutation } from "../card-extraction/extractionApi";
@@ -54,27 +62,126 @@ export function CaptureWorkspace() {
   const images = useAppSelector(selectCapturedImages);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const initialImageCountRef = useRef(images.length);
+  const hydratedCaptureSessionRef = useRef(false);
+  const latestImagesRef = useRef(images);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [captureExperience] = useState(() =>
-    detectPreferredCaptureExperience(),
-  );
+  const [captureExperience] = useState(() => detectPreferredCaptureExperience());
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [isCapturingPhoto, setIsCapturingPhoto] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
+  const [debugEntries, setDebugEntries] = useState(() => readCaptureDebugLog());
   const [extractBusinessCard, extraction] = useExtractBusinessCardMutation();
+  const captureDebugMaxEdge = readCaptureDebugMaxEdge();
+  const isDebugPanelEnabled = isCaptureDebugPanelEnabled();
+  const pageSessionId =
+    typeof window === "undefined" ? "server" : window.__meishiPageSessionId ?? "unset";
+
+  function refreshDebugEntries() {
+    if (!appEnv.isDevelopment) {
+      return;
+    }
+
+    setDebugEntries(readCaptureDebugLog());
+  }
+
+  function logDebugEvent(event: string, details?: unknown) {
+    if (!appEnv.isDevelopment) {
+      return;
+    }
+
+    setDebugEntries(appendCaptureDebugEvent(event, details));
+  }
 
   useEffect(() => {
+    latestImagesRef.current = images;
+  }, [images]);
+
+  useEffect(() => {
+    if (hydratedCaptureSessionRef.current) {
+      return;
+    }
+
+    hydratedCaptureSessionRef.current = true;
     if (images.length) {
       return;
     }
 
+    let cancelled = false;
+
     void loadCapturedImages().then((storedImages) => {
+      if (cancelled || latestImagesRef.current.length || !storedImages.length) {
+        return;
+      }
+
       if (storedImages.length) {
         dispatch(setCapturedImages(storedImages));
       }
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [dispatch, images.length]);
+
+  useEffect(() => {
+    if (!appEnv.isDevelopment || typeof window === "undefined") {
+      return;
+    }
+
+    setDebugEntries(
+      appendCaptureDebugEvent("component:mounted", {
+        imageCount: initialImageCountRef.current,
+        pageSessionId: window.__meishiPageSessionId ?? "unset",
+      }),
+    );
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      setDebugEntries(
+        appendCaptureDebugEvent("window:pageshow", {
+          persisted: event.persisted,
+          pageSessionId: window.__meishiPageSessionId ?? "unset",
+        }),
+      );
+    };
+    const handlePageHide = (event: PageTransitionEvent) => {
+      setDebugEntries(
+        appendCaptureDebugEvent("window:pagehide", {
+          persisted: event.persisted,
+          pageSessionId: window.__meishiPageSessionId ?? "unset",
+        }),
+      );
+    };
+    const handleBeforeUnload = () => {
+      appendCaptureDebugEvent("window:beforeunload", {
+        pageSessionId: window.__meishiPageSessionId ?? "unset",
+      });
+    };
+    const handleVisibilityChange = () => {
+      setDebugEntries(
+        appendCaptureDebugEvent("document:visibilitychange", {
+          pageSessionId: window.__meishiPageSessionId ?? "unset",
+          visibilityState: document.visibilityState,
+        }),
+      );
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      appendCaptureDebugEvent("component:unmounted", {
+        pageSessionId: window.__meishiPageSessionId ?? "unset",
+      });
+      window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -98,21 +205,29 @@ export function CaptureWorkspace() {
 
   async function handleFiles(files: FileList | File[] | null) {
     if (!files?.length) {
+      logDebugEvent("handleFiles:skipped-empty");
       return;
     }
 
     try {
-      const nextImages = [
-        ...images,
-        ...(await createCapturedCardImages(files)),
-      ];
+      logDebugEvent("handleFiles:start", { fileCount: files.length });
+      logDebugEvent("createCapturedCardImages:start", { fileCount: files.length });
+      const nextImages = [...images, ...(await createCapturedCardImages(files))];
+      refreshDebugEntries();
+      logDebugEvent("createCapturedCardImages:end", { nextImageCount: nextImages.length });
       dispatch(setCapturedImages(nextImages));
+      logDebugEvent("saveCapturedImages:start", { nextImageCount: nextImages.length });
       await saveCapturedImages(nextImages);
+      logDebugEvent("saveCapturedImages:end", { nextImageCount: nextImages.length });
       pushToast(
         `${files.length} image${files.length === 1 ? "" : "s"} added to the active capture session.`,
       );
+      logDebugEvent("toast:pushed", { fileCount: files.length });
       setCameraError(null);
     } catch (error) {
+      logDebugEvent("handleFiles:error", {
+        message: error instanceof Error ? error.message : "Unable to process images.",
+      });
       setCameraError(
         error instanceof Error ? error.message : "Unable to process images.",
       );
@@ -122,7 +237,9 @@ export function CaptureWorkspace() {
   async function handleRemoveImage(imageId: string) {
     const nextImages = images.filter((image) => image.id !== imageId);
     dispatch(setCapturedImages(nextImages));
+    logDebugEvent("handleRemoveImage:start", { imageId, nextImageCount: nextImages.length });
     await saveCapturedImages(nextImages);
+    logDebugEvent("handleRemoveImage:end", { imageId, nextImageCount: nextImages.length });
     pushToast("Image removed from the active capture session.");
   }
 
@@ -136,6 +253,10 @@ export function CaptureWorkspace() {
 
   async function handleFileInputChange(event: ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
+    logDebugEvent("handleFileInputChange", {
+      fileCount: input.files?.length ?? 0,
+      inputCapture: input.getAttribute("capture") ?? "none",
+    });
 
     try {
       await handleFiles(input.files);
@@ -145,6 +266,10 @@ export function CaptureWorkspace() {
   }
 
   async function handleOpenCamera() {
+    logDebugEvent("handleOpenCamera", {
+      captureExperience,
+      hasGetUserMedia: Boolean(navigator.mediaDevices?.getUserMedia),
+    });
     stopCamera();
 
     if (
@@ -160,7 +285,11 @@ export function CaptureWorkspace() {
       setIsStartingCamera(true);
       const nextStream = await openPreferredCameraStream();
       setCameraStream(nextStream);
+      logDebugEvent("handleOpenCamera:live-preview-opened");
     } catch (error) {
+      logDebugEvent("handleOpenCamera:error", {
+        message: error instanceof Error ? error.message : "Unable to open the camera.",
+      });
       setCameraError(
         error instanceof Error ? error.message : "Unable to open the camera.",
       );
@@ -184,6 +313,10 @@ export function CaptureWorkspace() {
     try {
       setCameraError(null);
       setIsCapturingPhoto(true);
+      logDebugEvent("handleCapturePhoto:start", {
+        height: videoElement.videoHeight,
+        width: videoElement.videoWidth,
+      });
 
       const canvas = document.createElement("canvas");
       canvas.width = videoElement.videoWidth;
@@ -218,7 +351,11 @@ export function CaptureWorkspace() {
       });
 
       await handleFiles([file]);
+      logDebugEvent("handleCapturePhoto:end", { fileName });
     } catch (error) {
+      logDebugEvent("handleCapturePhoto:error", {
+        message: error instanceof Error ? error.message : "Unable to capture a photo.",
+      });
       setCameraError(
         error instanceof Error ? error.message : "Unable to capture a photo.",
       );
@@ -315,6 +452,7 @@ export function CaptureWorkspace() {
             </label>
 
             <Button
+              type="button"
               className="w-full"
               size="lg"
               onClick={handleExtract}
@@ -388,6 +526,64 @@ export function CaptureWorkspace() {
         </Card>
       </div>
 
+      {isDebugPanelEnabled ? (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Capture debug</CardTitle>
+            <CardDescription>
+              Tracks page lifetime and capture events across reloads. Use
+              `?{getCaptureDebugPanelQueryKey()}=1` to show this panel, and
+              use
+              `?{getCaptureDebugMaxEdgeStorageKey()}=1600` or localStorage to
+              enable temporary downscaling.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <span className="rounded-full border border-border px-3 py-1">
+                Page session: <span className="font-mono text-foreground">{pageSessionId}</span>
+              </span>
+              <span className="rounded-full border border-border px-3 py-1">
+                Downscale max edge:{" "}
+                <span className="font-mono text-foreground">
+                  {captureDebugMaxEdge ?? "disabled"}
+                </span>
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                clearCaptureDebugLog();
+                refreshDebugEntries();
+              }}
+            >
+              Clear debug log
+            </Button>
+            <div className="rounded-[24px] border border-border/70 bg-background/70 p-4">
+              {debugEntries.length ? (
+                <ol className="space-y-2 font-mono text-xs text-muted-foreground">
+                  {debugEntries.slice(-15).map((entry, index) => (
+                    <li
+                      key={`${entry.timestamp}-${entry.event}-${index}`}
+                      className="space-y-1 break-all border-b border-border/50 pb-2 last:border-b-0 last:pb-0"
+                    >
+                      <p className="text-foreground">
+                        {entry.timestamp} {entry.event}
+                      </p>
+                      {entry.details ? <p>{entry.details}</p> : null}
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <Alert>No capture debug events recorded yet.</Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {cameraStream ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
@@ -409,11 +605,7 @@ export function CaptureWorkspace() {
                   capturing.
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={stopCamera}
-              >
+              <Button type="button" variant="outline" onClick={stopCamera}>
                 Close camera
               </Button>
             </div>

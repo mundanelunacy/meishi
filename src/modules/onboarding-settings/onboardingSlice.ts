@@ -72,10 +72,6 @@ const onboardingSlice = createSlice({
       state.settings.extractionPrompt = action.payload;
       persistState(state);
     },
-    setDeveloperDebugMode(state, action: PayloadAction<boolean>) {
-      state.settings.developerDebugMode = action.payload;
-      persistState(state);
-    },
     setGoogleAuthState(state, action: PayloadAction<GoogleAuthState>) {
       state.googleAuth = action.payload;
       persistState(state);
@@ -103,7 +99,6 @@ export const {
   setPreferredOpenAiModel,
   setPreferredAnthropicModel,
   setExtractionPrompt,
-  setDeveloperDebugMode,
   setGoogleAuthState,
   completeOnboarding,
   signOutGoogle,
@@ -114,8 +109,6 @@ export const onboardingReducer = onboardingSlice.reducer;
 
 export const selectSettings = (state: RootState) => state.onboarding.settings;
 export const selectGoogleAuth = (state: RootState) => state.onboarding.googleAuth;
-export const selectDeveloperDebugMode = (state: RootState) =>
-  state.onboarding.settings.developerDebugMode;
 export const selectHasCompletedOnboarding = (state: RootState) =>
   Boolean(state.onboarding.settings.onboardingCompletedAt);
 export const selectHasLlmConfiguration = (state: RootState) =>

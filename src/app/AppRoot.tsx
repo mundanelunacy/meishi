@@ -4,6 +4,16 @@ import { store } from "./store";
 import { routeTree } from "../routeTree.gen";
 import { Toaster } from "../shared/ui/toaster";
 
+declare global {
+  interface Window {
+    __meishiPageSessionId?: string;
+  }
+}
+
+if (typeof window !== "undefined" && !window.__meishiPageSessionId) {
+  window.__meishiPageSessionId = crypto.randomUUID();
+}
+
 const router = createRouter({
   routeTree,
   context: {

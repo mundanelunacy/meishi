@@ -2,6 +2,31 @@
 
 ## 2026-04-05
 
+### Capture session deletion race fix
+
+- Fixed the `/capture` active-session image list so deleting the final remaining image no longer requires a second click.
+- Changed `src/modules/card-capture/CaptureWorkspace.tsx` to hydrate persisted capture-session images only once per mount, preventing stale IndexedDB session data from being reloaded after an in-memory delete clears the list.
+- Added a regression test in `src/modules/card-capture/CaptureWorkspace.test.tsx` that simulates a delayed final delete write plus a stale `loadCapturedImages()` result, and verifies the last image stays removed.
+
+### Capture and review debug gating
+
+- Added a shared URL-based debug flag in `src/app/debug.ts` so debug-only UI can be enabled with `?debug=1` instead of a persisted settings toggle.
+- Moved the review route’s raw extraction, derived vCard, and derived Google payload sections behind `/review?debug=1`.
+- Removed the persisted developer debug toggle from onboarding/settings state, storage sanitization, and the `/settings` screen.
+
+### Android capture investigation tooling
+
+- Added a development-only page-session marker in `src/app/AppRoot.tsx` so true reloads can be distinguished from in-app remounts during capture debugging.
+- Added reload-persistent capture diagnostics in `src/modules/card-capture/CaptureWorkspace.tsx`, including lifecycle events, capture pipeline events, and a debug panel shown only with `/capture?debug=1`.
+- Added temporary image downscaling support for capture debugging via `captureDebugMaxEdge`, plus file-size and dimension logging in `src/modules/card-capture/imageProcessing.ts`.
+- Hardened non-submit shell and capture buttons with explicit `type="button"` attributes.
+
+### Documentation and tests
+
+- Updated the root README and module READMEs to document URL-based debug access, temporary capture diagnostics, and the removal of the settings-based debug toggle.
+- Documented that mobile native-camera capture can still refresh the page when using the Vite dev server via `npm run dev`, and noted that as an open issue for future work.
+- Added and updated tests covering debug-query behavior, removed settings-toggle expectations, and the trimmed persisted settings shape.
+
 ### App shell, onboarding, and Google auth foundation
 
 - Reworked the app shell to act as the top-level composition layer for the PWA.

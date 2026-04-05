@@ -3,7 +3,7 @@
 ## Responsibilities
 
 - Own first-run setup and settings management.
-- Persist the chosen LLM provider, provider-specific API keys, provider models, one shared extraction prompt, and the developer debug toggle.
+- Persist the chosen LLM provider, provider-specific API keys, provider models, and one shared extraction prompt.
 - Track onboarding completion.
 - Manage Google auth state handoff from the GIS module.
 - Act as the app readiness authority for future route and module gating.
@@ -14,7 +14,6 @@
 - Provider picker with OpenAI and Anthropic support
 - Provider-specific BYOK API key entry
 - Shared advanced extraction guidance setting appended to fixed structured-output and fidelity rules
-- Developer debug mode toggle
 - Settings screen for later edits and local reset
 - Route readiness selectors
 - Explicit development messaging when mock Google auth is active
@@ -25,7 +24,7 @@
   - `AppSettings`
   - `GoogleAuthState`
   - onboarding selectors including `selectHasLlmConfiguration`, `selectHasGoogleAuthorization`, and `selectAppReadiness`
-  - onboarding actions such as `setOpenAiApiKey`, `setAnthropicApiKey`, `setExtractionPrompt`, `setDeveloperDebugMode`, `setGoogleAuthState`, and `completeOnboarding`
+  - onboarding actions such as `setOpenAiApiKey`, `setAnthropicApiKey`, `setExtractionPrompt`, `setGoogleAuthState`, and `completeOnboarding`
 - Depends on:
   - `src/modules/google-auth`
   - `src/modules/local-data`

@@ -46,7 +46,6 @@ const preloadedState = {
       preferredOpenAiModel: "gpt-4.1-mini",
       preferredAnthropicModel: "claude-sonnet-4-20250514",
       extractionPrompt: "Use the printed title verbatim.",
-      developerDebugMode: true,
       onboardingCompletedAt: "2026-04-05T00:00:00.000Z",
     },
     googleAuth: {
@@ -170,9 +169,18 @@ function renderWorkspace(overrideState?: Partial<typeof preloadedState>) {
 describe("ReviewWorkspace", () => {
   afterEach(() => {
     cleanup();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: new URL("https://example.test/review"),
+    });
   });
 
-  it("shows the developer debug panel when debug mode is enabled", () => {
+  it("shows the developer debug panel when the debug URL flag is enabled", () => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: new URL("https://example.test/review?debug=1"),
+    });
+
     renderWorkspace();
 
     expect(screen.getByText(/developer debug preview/i)).toBeInTheDocument();
@@ -183,21 +191,18 @@ describe("ReviewWorkspace", () => {
     expect(screen.getAllByDisplayValue("Jane Doe").length).toBeGreaterThan(0);
   });
 
-  it("hides the developer debug panel when debug mode is disabled", () => {
-    renderWorkspace({
-      onboarding: {
-        ...preloadedState.onboarding,
-        settings: {
-          ...preloadedState.onboarding.settings,
-          developerDebugMode: false,
-        },
-      },
-    });
+  it("hides the developer debug panel when the debug URL flag is absent", () => {
+    renderWorkspace();
 
     expect(screen.queryByText(/developer debug preview/i)).not.toBeInTheDocument();
   });
 
   it("updates preview output from current form edits", async () => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: new URL("https://example.test/review?debug=1"),
+    });
+
     renderWorkspace();
     const user = userEvent.setup();
     const phoneSection = screen
@@ -226,6 +231,11 @@ describe("ReviewWorkspace", () => {
   });
 
   it("allows adding extra repeatable and custom fields", async () => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: new URL("https://example.test/review?debug=1"),
+    });
+
     renderWorkspace();
     const user = userEvent.setup();
     const emailSection = screen

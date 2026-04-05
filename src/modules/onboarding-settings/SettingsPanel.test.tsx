@@ -122,11 +122,10 @@ describe("SettingsPanel", () => {
 
     await user.clear(screen.getByLabelText(/advanced extraction prompt/i));
     await user.type(screen.getByLabelText(/advanced extraction prompt/i), "Use company name exactly as printed.");
-    await user.click(screen.getByLabelText(/developer debug mode/i));
 
     expect(store.getState().onboarding.settings.extractionPrompt).toBe(
       "Use company name exactly as printed."
     );
-    expect(store.getState().onboarding.settings.developerDebugMode).toBe(true);
+    expect(screen.queryByLabelText(/developer debug mode/i)).not.toBeInTheDocument();
   });
 });

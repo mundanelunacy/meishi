@@ -17,6 +17,7 @@ import { reviewDraftReducer } from "../contact-review/reviewDraftSlice";
 import { CaptureWorkspace } from "./CaptureWorkspace";
 
 const navigateMock = vi.fn();
+const loadCapturedImagesMock = vi.fn(async () => [] as CapturedCardImage[]);
 const saveCapturedImagesMock = vi.fn(async (images: CapturedCardImage[]) => {
   void images;
 });
@@ -38,7 +39,7 @@ vi.mock("../local-data", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../local-data")>();
   return {
     ...actual,
-    loadCapturedImages: vi.fn(() => Promise.resolve([])),
+    loadCapturedImages: () => loadCapturedImagesMock(),
     saveCapturedImages: (
       images: Parameters<typeof actual.saveCapturedImages>[0],
     ) => saveCapturedImagesMock(images),
@@ -70,7 +71,6 @@ function createStore(images: CapturedCardImage[] = []) {
           preferredOpenAiModel: "gpt-4.1-mini",
           preferredAnthropicModel: "claude-sonnet-4-20250514",
           extractionPrompt: "Use the printed title verbatim.",
-          developerDebugMode: false,
           onboardingCompletedAt: "2026-04-05T00:00:00.000Z",
         },
         googleAuth: {
@@ -101,7 +101,12 @@ describe("CaptureWorkspace", () => {
 
   beforeEach(() => {
     navigateMock.mockReset();
+    loadCapturedImagesMock.mockReset();
+    loadCapturedImagesMock.mockImplementation(async () => []);
     saveCapturedImagesMock.mockClear();
+    saveCapturedImagesMock.mockImplementation(async (images: CapturedCardImage[]) => {
+      void images;
+    });
     saveDraftMock.mockClear();
     extractBusinessCardMock.mockReset();
 
@@ -248,6 +253,76 @@ describe("CaptureWorkspace", () => {
 
     expect(screen.queryByText("front.png")).not.toBeInTheDocument();
     expect(screen.getByText("back.png")).toBeInTheDocument();
+  });
+
+  it("does not rehydrate a stale last image while the final delete is persisting", async () => {
+    const frontImage: CapturedCardImage = {
+      id: "img-1",
+      dataUrl: "data:image/png;base64,ZmFrZQ==",
+      fileName: "front.png",
+      mimeType: "image/png",
+      capturedAt: "2026-04-05T00:00:00.000Z",
+      width: 1200,
+      height: 800,
+    };
+    const backImage: CapturedCardImage = {
+      id: "img-2",
+      dataUrl: "data:image/png;base64,ZmFrZTI=",
+      fileName: "back.png",
+      mimeType: "image/png",
+      capturedAt: "2026-04-05T00:01:00.000Z",
+      width: 1200,
+      height: 800,
+    };
+    const store = createStore([frontImage, backImage]);
+
+    render(
+      <Provider store={store}>
+        <CaptureWorkspace />
+      </Provider>,
+    );
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /delete front\.png/i }));
+
+    await waitFor(() => {
+      expect(saveCapturedImagesMock).toHaveBeenCalledWith([backImage]);
+    });
+
+    let resolveEmptySave = () => {};
+    const emptySavePromise = new Promise<void>((resolve) => {
+      resolveEmptySave = resolve;
+    });
+    let resolveStaleLoad: (value: CapturedCardImage[]) => void = () => {};
+    const staleLoadPromise = new Promise<CapturedCardImage[]>((resolve) => {
+      resolveStaleLoad = resolve;
+    });
+
+    saveCapturedImagesMock.mockImplementation(async (images: CapturedCardImage[]) => {
+      if (!images.length) {
+        await emptySavePromise;
+      }
+    });
+    loadCapturedImagesMock.mockImplementation(async () => staleLoadPromise);
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /delete back\.png/i }));
+
+    expect(
+      await screen.findByText(/no images captured yet\. start with the camera or photo library above\./i),
+    ).toBeInTheDocument();
+
+    resolveStaleLoad([backImage]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(screen.queryByText("back.png")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/no images captured yet\. start with the camera or photo library above\./i),
+    ).toBeInTheDocument();
+
+    resolveEmptySave();
   });
 
   it("opens the native camera input on touch devices even when getUserMedia is available", async () => {

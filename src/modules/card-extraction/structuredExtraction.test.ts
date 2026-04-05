@@ -20,7 +20,6 @@ const baseSettings: AppSettings = {
   preferredOpenAiModel: "gpt-4.1-mini",
   preferredAnthropicModel: "claude-sonnet-4-20250514",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
-  developerDebugMode: false,
 };
 
 describe("structuredExtraction", () => {

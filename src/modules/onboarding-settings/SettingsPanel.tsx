@@ -7,12 +7,10 @@ import { Label } from "../../shared/ui/label";
 import { Alert } from "../../shared/ui/alert";
 import {
   clearAllSettings,
-  selectDeveloperDebugMode,
   selectAppReadiness,
   selectGoogleAuth,
   selectSettings,
   setAnthropicApiKey,
-  setDeveloperDebugMode,
   setExtractionPrompt,
   setGoogleAuthState,
   setOpenAiApiKey,
@@ -33,7 +31,6 @@ export function SettingsPanel() {
   const settings = useAppSelector(selectSettings);
   const googleAuth = useAppSelector(selectGoogleAuth);
   const readiness = useAppSelector(selectAppReadiness);
-  const developerDebugMode = useAppSelector(selectDeveloperDebugMode);
 
   async function handleReconnectGoogle() {
     try {
@@ -123,22 +120,6 @@ export function SettingsPanel() {
               This guidance is shared by OpenAI and Anthropic and is appended to the fixed structured-output and fidelity rules. Prompt edits cannot disable schema enforcement.
             </p>
           </div>
-
-          <label className="flex items-start justify-between gap-4 rounded-[24px] border border-border/70 bg-muted/40 px-4 py-3">
-            <div>
-              <p className="font-medium text-foreground">Developer debug mode</p>
-              <p className="text-sm text-muted-foreground">
-                Show raw extraction, vCard preview, and Google payload preview on the review screen.
-              </p>
-            </div>
-            <input
-              aria-label="Developer debug mode"
-              type="checkbox"
-              className="mt-1 h-4 w-4"
-              checked={developerDebugMode}
-              onChange={(event) => dispatch(setDeveloperDebugMode(event.target.checked))}
-            />
-          </label>
         </CardContent>
       </Card>
 

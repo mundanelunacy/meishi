@@ -10,6 +10,7 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { isDebugQueryEnabled } from "../../app/debug";
 import type {
   CapturedCardImage,
   ContactDraft,
@@ -54,7 +55,6 @@ import {
   syncFailed,
   syncSucceeded,
 } from "../google-contacts/syncSessionSlice";
-import { selectDeveloperDebugMode } from "../onboarding-settings/onboardingSlice";
 import {
   buildContactPayload,
   buildContactVCard,
@@ -321,7 +321,7 @@ export function ReviewWorkspace() {
   const navigate = useNavigate();
   const draft = useAppSelector(selectDraft);
   const images = useAppSelector(selectCapturedImages);
-  const developerDebugMode = useAppSelector(selectDeveloperDebugMode);
+  const debugQueryEnabled = isDebugQueryEnabled();
   const [createContact, createContactState] = useCreateContactMutation();
   const [updateContactPhoto] = useUpdateContactPhotoMutation();
   const autosaveTimeoutRef = useRef<number | null>(null);
@@ -727,7 +727,7 @@ export function ReviewWorkspace() {
             </Alert>
           ) : null}
 
-          {developerDebugMode ? (
+          {debugQueryEnabled ? (
             <DebugPanel
               draft={draft}
               images={images}

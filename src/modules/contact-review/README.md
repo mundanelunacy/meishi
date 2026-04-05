@@ -15,7 +15,7 @@
 - Draft persistence and restore support
 - Persisted raw extraction snapshot for traceability
 - Review draft notes preserve extracted `X-` fields and ambiguous text so fidelity is not lost when non-standard or ambiguous card data appears
-- Inline developer debug preview for raw extraction, vCard, and Google payload inspection
+- Inline `?debug=1` preview for raw extraction, vCard, and Google payload inspection
 - Sync trigger after verification
 
 ## Interfaces

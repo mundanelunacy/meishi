@@ -10,7 +10,7 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 3. The user captures one or more business-card images from a mobile camera or image library.
 4. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
 5. The review screen shows source images in the top section and an editable contact form in the lower section. The form covers Google-Contacts-style name/company fields such as prefix, phonetic name parts, nickname, file-as, and department, and expands to repeatable collections such as multiple emails, phone numbers, addresses, websites, related people, significant dates, and custom fields. Draft edits autosave locally for recovery after refresh.
-6. An optional developer debug mode shows the raw extraction snapshot, a derived vCard preview, and the Google People API payload derived from the current reviewed form values.
+6. An optional `?debug=1` review mode shows the raw extraction snapshot, a derived vCard preview, and the Google People API payload derived from the current reviewed form values.
 7. Saving creates a Google contact and uploads one selected image as the Google contact photo.
 8. Additional captured images remain local in IndexedDB because Google Contacts does not support arbitrary multi-image business-card attachments.
 
@@ -61,7 +61,6 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
   - provider-specific API keys
   - preferred OpenAI and Anthropic models
   - shared advanced extraction prompt
-  - developer debug mode toggle
   - limited Google auth metadata such as scope and account hint, but not durable access tokens
 - IndexedDB
   - captured images
@@ -123,8 +122,14 @@ Vite loads env files from the repo root automatically. Meishi now assumes this l
 - `VITE_*` variables are compile-time inputs to the browser build. If `VITE_GOOGLE_CLIENT_ID` exists only in `.env.production`, the production build will see it, but `npm run dev` will not.
 - After changing `.env.production`, rebuild before re-testing: `npm run build && npm run preview`.
 - `npm run dev` is not the authoritative way to test PWA behavior in this repo because `vite-plugin-pwa` development service worker support is not enabled in [vite.config.ts](/Users/mundanelunacy/Projects/meishi/vite.config.ts).
+- When testing through the Vite dev server with `npm run dev`, mobile native-camera capture on `/capture` can still trigger page refreshes after returning from the camera flow. Treat that as an open issue to address in future capture/runtime work, and prefer `npm run build && npm run preview` when validating mobile capture behavior.
 - Use `npm run build && npm run preview` when testing service worker registration, install prompts, offline shell behavior, or update prompts.
 - If temporary dev-server PWA testing is needed, enable `devOptions: { enabled: true }` in the `VitePWA(...)` config, but treat previewing the production build as the final verification path.
 - If an older PWA build is still showing stale behavior, clear site data or unregister the service worker before re-testing.
+- For Android capture refresh debugging, `/capture?debug=1`
+  shows the capture debug panel, and `/capture?debug=1&captureDebugMaxEdge=1600`
+  additionally enables temporary image downscaling in development.
+- For review diagnostics, `/review?debug=1` shows the raw extraction snapshot,
+  derived vCard, and derived Google payload sections.
 
 See [AGENTS.md](/Users/mundanelunacy/Projects/meishi/AGENTS.md) for the project-specific development loop future agents should follow.

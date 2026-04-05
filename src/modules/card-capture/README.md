@@ -20,6 +20,9 @@
 - Active-session persistence to IndexedDB
 - Per-image removal from the active capture session
 - Extraction handoff into a persisted review draft
+- Development-only capture diagnostics that survive reloads, including page
+  session markers, lifecycle logging, and optional image downscaling via
+  `captureDebugMaxEdge`
 
 ## Interfaces
 
@@ -39,3 +42,5 @@
 - Extraction must always run against the current persisted active session images.
 - Some mobile browsers may still show a camera-or-library chooser because
   `capture` remains a browser hint rather than a guaranteed native-camera mode.
+- Development-only downscaling is for investigation only and should not be
+  treated as the production capture path.

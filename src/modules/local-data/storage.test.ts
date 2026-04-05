@@ -29,7 +29,6 @@ describe("local-data/storage", () => {
           llmApiKey: "sk-test",
           preferredOpenAiModel: "gpt-4.1",
           extractionPrompt: "custom prompt",
-          developerDebugMode: true,
         },
         googleAuth: {
           scope: "contacts",
@@ -46,7 +45,6 @@ describe("local-data/storage", () => {
         openAiApiKey: "sk-test",
         preferredOpenAiModel: "gpt-4.1",
         extractionPrompt: "custom prompt",
-        developerDebugMode: true,
       },
       googleAuth: {
         scope: "contacts",

@@ -22,7 +22,6 @@ export interface AppSettings {
   preferredOpenAiModel: string;
   preferredAnthropicModel: string;
   extractionPrompt: string;
-  developerDebugMode: boolean;
   onboardingCompletedAt?: string;
 }
 
