@@ -6,12 +6,13 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 
 1. On first load, the user authorizes Google Contacts access with Google Identity Services.
    - In local development, the app can fall back to an explicit mock Google auth mode when a Google client ID is not configured.
-2. The user selects an LLM provider and stores a BYOK API key locally in the browser.
+2. The user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, and can tune one shared advanced extraction prompt.
 3. The user captures one or more business-card images from a mobile camera or image library.
-4. The app sends those images to the configured LLM, validates the structured response, and builds a local contact draft.
-5. The review screen shows source images in the top section and an editable contact form in the lower section. Draft edits autosave locally for recovery after refresh.
-6. Saving creates a Google contact and uploads one selected image as the Google contact photo.
-7. Additional captured images remain local in IndexedDB because Google Contacts does not support arbitrary multi-image business-card attachments.
+4. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
+5. The review screen shows source images in the top section and an editable contact form in the lower section. The form expands to cover extracted repeatable collections such as multiple emails, phone numbers, addresses, websites, related people, significant dates, and custom fields. Draft edits autosave locally for recovery after refresh.
+6. An optional developer debug mode shows the raw extraction snapshot, a derived vCard preview, and the Google People API payload derived from the current reviewed form values.
+7. Saving creates a Google contact and uploads one selected image as the Google contact photo.
+8. Additional captured images remain local in IndexedDB because Google Contacts does not support arbitrary multi-image business-card attachments.
 
 ## Stack
 
@@ -39,10 +40,10 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 - Camera and file-library capture flows plus image normalization hooks.
 
 ### `src/modules/card-extraction`
-- LLM provider abstraction, OpenAI extraction request building, response parsing, and schema validation.
+- LLM provider abstraction, OpenAI and Anthropic structured-output extraction, response parsing, and schema validation.
 
 ### `src/modules/contact-review`
-- Editable review form, source-image pairing, and verified-contact finalization.
+- Editable review form, source-image pairing, dynamic repeatable field editing, developer debug preview, and verified-contact finalization.
 
 ### `src/modules/google-contacts`
 - Google People API contact creation, contact photo upload, and sync result tracking.
@@ -57,13 +58,15 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 
 - `localStorage`
   - LLM provider choice
-  - LLM API key
-  - preferred OpenAI model
+  - provider-specific API keys
+  - preferred OpenAI and Anthropic models
+  - shared advanced extraction prompt
+  - developer debug mode toggle
   - limited Google auth metadata such as scope and account hint, but not durable access tokens
 - IndexedDB
   - captured images
   - active capture session
-  - latest draft with autosaved review edits
+  - latest draft with autosaved review edits and persisted extraction snapshot
   - append-only sync history
 - In-memory Redux state
   - current Google access token

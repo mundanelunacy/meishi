@@ -1,4 +1,5 @@
 import type { AppSettings, GoogleAuthState } from "../../shared/types/models";
+import { DEFAULT_EXTRACTION_PROMPT } from "../../shared/lib/extractionPrompt";
 
 const SETTINGS_KEY = "meishi.settings";
 
@@ -9,8 +10,12 @@ export interface PersistedOnboardingState {
 
 const defaultSettings: AppSettings = {
   llmProvider: "openai",
-  llmApiKey: "",
+  openAiApiKey: "",
+  anthropicApiKey: "",
   preferredOpenAiModel: "gpt-4.1-mini",
+  preferredAnthropicModel: "claude-sonnet-4-20250514",
+  extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
+  developerDebugMode: false,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -28,17 +33,37 @@ function readLocalStorage() {
 function sanitizeSettings(settings: unknown): AppSettings {
   const candidate = isRecord(settings) ? settings : {};
   const llmProvider = candidate.llmProvider;
+  const legacyApiKey = typeof candidate.llmApiKey === "string" ? candidate.llmApiKey : "";
 
   return {
     llmProvider:
       llmProvider === "openai" || llmProvider === "anthropic" || llmProvider === "gemini"
         ? llmProvider
         : defaultSettings.llmProvider,
-    llmApiKey: typeof candidate.llmApiKey === "string" ? candidate.llmApiKey : defaultSettings.llmApiKey,
+    openAiApiKey:
+      typeof candidate.openAiApiKey === "string"
+        ? candidate.openAiApiKey
+        : legacyApiKey || defaultSettings.openAiApiKey,
+    anthropicApiKey:
+      typeof candidate.anthropicApiKey === "string"
+        ? candidate.anthropicApiKey
+        : defaultSettings.anthropicApiKey,
     preferredOpenAiModel:
       typeof candidate.preferredOpenAiModel === "string"
         ? candidate.preferredOpenAiModel
         : defaultSettings.preferredOpenAiModel,
+    preferredAnthropicModel:
+      typeof candidate.preferredAnthropicModel === "string"
+        ? candidate.preferredAnthropicModel
+        : defaultSettings.preferredAnthropicModel,
+    extractionPrompt:
+      typeof candidate.extractionPrompt === "string" && candidate.extractionPrompt.trim().length > 0
+        ? candidate.extractionPrompt
+        : defaultSettings.extractionPrompt,
+    developerDebugMode:
+      typeof candidate.developerDebugMode === "boolean"
+        ? candidate.developerDebugMode
+        : defaultSettings.developerDebugMode,
     onboardingCompletedAt:
       typeof candidate.onboardingCompletedAt === "string" ? candidate.onboardingCompletedAt : undefined,
   };

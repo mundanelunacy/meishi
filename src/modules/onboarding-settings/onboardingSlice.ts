@@ -33,6 +33,17 @@ function persistState(state: OnboardingState) {
   });
 }
 
+function hasProviderConfiguration(settings: AppSettings) {
+  switch (settings.llmProvider) {
+    case "openai":
+      return settings.openAiApiKey.trim().length > 0;
+    case "anthropic":
+      return settings.anthropicApiKey.trim().length > 0;
+    default:
+      return false;
+  }
+}
+
 const onboardingSlice = createSlice({
   name: "onboarding",
   initialState,
@@ -41,12 +52,28 @@ const onboardingSlice = createSlice({
       state.settings.llmProvider = action.payload;
       persistState(state);
     },
-    setLlmApiKey(state, action: PayloadAction<string>) {
-      state.settings.llmApiKey = action.payload;
+    setOpenAiApiKey(state, action: PayloadAction<string>) {
+      state.settings.openAiApiKey = action.payload;
+      persistState(state);
+    },
+    setAnthropicApiKey(state, action: PayloadAction<string>) {
+      state.settings.anthropicApiKey = action.payload;
       persistState(state);
     },
     setPreferredOpenAiModel(state, action: PayloadAction<string>) {
       state.settings.preferredOpenAiModel = action.payload;
+      persistState(state);
+    },
+    setPreferredAnthropicModel(state, action: PayloadAction<string>) {
+      state.settings.preferredAnthropicModel = action.payload;
+      persistState(state);
+    },
+    setExtractionPrompt(state, action: PayloadAction<string>) {
+      state.settings.extractionPrompt = action.payload;
+      persistState(state);
+    },
+    setDeveloperDebugMode(state, action: PayloadAction<boolean>) {
+      state.settings.developerDebugMode = action.payload;
       persistState(state);
     },
     setGoogleAuthState(state, action: PayloadAction<GoogleAuthState>) {
@@ -71,8 +98,12 @@ const onboardingSlice = createSlice({
 
 export const {
   setLlmProvider,
-  setLlmApiKey,
+  setOpenAiApiKey,
+  setAnthropicApiKey,
   setPreferredOpenAiModel,
+  setPreferredAnthropicModel,
+  setExtractionPrompt,
+  setDeveloperDebugMode,
   setGoogleAuthState,
   completeOnboarding,
   signOutGoogle,
@@ -83,10 +114,12 @@ export const onboardingReducer = onboardingSlice.reducer;
 
 export const selectSettings = (state: RootState) => state.onboarding.settings;
 export const selectGoogleAuth = (state: RootState) => state.onboarding.googleAuth;
+export const selectDeveloperDebugMode = (state: RootState) =>
+  state.onboarding.settings.developerDebugMode;
 export const selectHasCompletedOnboarding = (state: RootState) =>
   Boolean(state.onboarding.settings.onboardingCompletedAt);
 export const selectHasLlmConfiguration = (state: RootState) =>
-  state.onboarding.settings.llmApiKey.trim().length > 0;
+  hasProviderConfiguration(state.onboarding.settings);
 export const selectHasGoogleAuthorization = (state: RootState) =>
   Boolean(state.onboarding.googleAuth.accessToken);
 export const selectHasGoogleToken = selectHasGoogleAuthorization;
@@ -102,8 +135,7 @@ export const selectAppReadiness = createSelector(
     hasLlmConfiguration,
     hasGoogleAuthorization,
     hasCompletedOnboarding,
-    isCaptureReady:
-      hasLlmConfiguration && hasGoogleAuthorization && hasCompletedOnboarding,
+    isCaptureReady: hasLlmConfiguration && hasGoogleAuthorization && hasCompletedOnboarding,
     requiresGoogleClientId: requiresRealGoogleClientId(),
     googleAuthMode: googleAuth.mode,
   })

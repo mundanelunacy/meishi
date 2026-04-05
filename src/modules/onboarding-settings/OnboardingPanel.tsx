@@ -21,9 +21,11 @@ import {
   selectAppReadiness,
   selectGoogleAuth,
   selectSettings,
+  setAnthropicApiKey,
   setGoogleAuthState,
-  setLlmApiKey,
   setLlmProvider,
+  setOpenAiApiKey,
+  setPreferredAnthropicModel,
   setPreferredOpenAiModel,
 } from "./onboardingSlice";
 import {
@@ -40,6 +42,13 @@ export function OnboardingPanel() {
   const readiness = useAppSelector(selectAppReadiness);
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const selectedProvider = settings.llmProvider;
+  const providerApiKey =
+    selectedProvider === "anthropic" ? settings.anthropicApiKey : settings.openAiApiKey;
+  const providerModel =
+    selectedProvider === "anthropic"
+      ? settings.preferredAnthropicModel
+      : settings.preferredOpenAiModel;
 
   const canContinue = readiness.hasLlmConfiguration && readiness.hasGoogleAuthorization;
 
@@ -115,9 +124,7 @@ export function OnboardingPanel() {
               }
             >
               <option value="openai">OpenAI</option>
-              <option value="anthropic" disabled>
-                Anthropic (planned)
-              </option>
+              <option value="anthropic">Anthropic</option>
               <option value="gemini" disabled>
                 Gemini (planned)
               </option>
@@ -126,25 +133,56 @@ export function OnboardingPanel() {
 
           <section className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-3 sm:col-span-2">
-              <Label htmlFor="api-key">API key</Label>
+              <Label htmlFor="api-key">
+                {selectedProvider === "anthropic" ? "Anthropic API key" : "OpenAI API key"}
+              </Label>
               <Input
                 id="api-key"
                 type="password"
                 autoComplete="off"
-                placeholder="sk-..."
-                value={settings.llmApiKey}
-                onChange={(event) => dispatch(setLlmApiKey(event.target.value))}
+                placeholder={selectedProvider === "anthropic" ? "sk-ant-..." : "sk-..."}
+                value={providerApiKey}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  if (selectedProvider === "anthropic") {
+                    dispatch(setAnthropicApiKey(nextValue));
+                    return;
+                  }
+
+                  dispatch(setOpenAiApiKey(nextValue));
+                }}
               />
             </div>
             <div className="space-y-3 sm:col-span-2">
-              <Label htmlFor="model">OpenAI model</Label>
+              <Label htmlFor="model">
+                {selectedProvider === "anthropic" ? "Anthropic model" : "OpenAI model"}
+              </Label>
               <Input
                 id="model"
-                placeholder="gpt-4.1-mini"
-                value={settings.preferredOpenAiModel}
-                onChange={(event) => dispatch(setPreferredOpenAiModel(event.target.value))}
+                placeholder={
+                  selectedProvider === "anthropic"
+                    ? "claude-sonnet-4-20250514"
+                    : "gpt-4.1-mini"
+                }
+                value={providerModel}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  if (selectedProvider === "anthropic") {
+                    dispatch(setPreferredAnthropicModel(nextValue));
+                    return;
+                  }
+
+                  dispatch(setPreferredOpenAiModel(nextValue));
+                }}
               />
             </div>
+          </section>
+
+          <section className="rounded-[28px] border border-border/70 bg-muted/40 p-4 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Structured extraction</p>
+            <p className="mt-1">
+              Meishi enforces structured output for extraction. The shared prompt is adjustable later in Settings, but the schema contract stays fixed.
+            </p>
           </section>
 
           <section className="rounded-[28px] bg-muted/60 p-4">
@@ -178,7 +216,7 @@ export function OnboardingPanel() {
               Continue to capture
             </Button>
             <span className="text-sm text-muted-foreground">
-              Ready when Google access and an API key are both present.
+              Ready when Google access and the selected provider configuration are both present.
             </span>
           </div>
         </CardContent>
@@ -198,7 +236,9 @@ export function OnboardingPanel() {
           </div>
           <div>
             <p className="font-medium text-foreground">2. Extract</p>
-            <p>Meishi sends those images to the selected LLM provider and validates the returned schema locally.</p>
+            <p>
+              Meishi sends those images to the selected provider and validates the returned structured schema locally before the draft reaches review.
+            </p>
           </div>
           <div>
             <p className="font-medium text-foreground">3. Review and sync</p>

@@ -91,4 +91,14 @@ describe("OnboardingPanel", () => {
 
     expect(navigateMock).toHaveBeenCalledWith({ to: "/capture" });
   });
+
+  it("switches provider-specific fields when Anthropic is selected", async () => {
+    renderPanel();
+
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByLabelText(/llm provider/i), "anthropic");
+
+    expect(screen.getByLabelText(/anthropic api key/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/anthropic model/i)).toBeInTheDocument();
+  });
 });

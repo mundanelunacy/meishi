@@ -64,6 +64,19 @@
 - IndexedDB sync history is append-only. The public `SyncOutcome` interface stays stable while local storage adds its own generated record key internally.
 - PWA offline messaging must stay explicit: the app shell and local data can recover offline, but extraction and Google sync still require network access.
 
+## Future agent notes
+
+- Treat `src/modules/local-data` as the persistence boundary. Avoid reaching across modules for draft, image, or settings storage details.
+- Keep extraction richer than the first review UI. Preserve `extractionSnapshot` and derive editable fields from it instead of collapsing data early.
+- Model contact data as repeatable collections first. Google-Contacts-style arrays are the stable base; single-value fields are only summaries.
+- Preserve non-standard or ambiguous card text in both custom/X-field form and notes so fidelity survives review and sync.
+- Normalize `react-hook-form` `watch()` output before passing it into typed helpers; watched values are often partial.
+- Re-export shared contact field types from `src/shared/types/models.ts`, since that is the module boundary most features import.
+- Prefer RTK Query `unwrap()` for mutation handling; it keeps control flow and types simpler than branching on union-shaped results.
+- In review layouts, remember `min-w-0` on grid/flex children when media should shrink to the viewport.
+- Keep the user-editable extraction prompt additive. Structured-output and fidelity rules should stay fixed in code.
+- Google People API maps significant dates cleanly, but other “significant data” should remain preserved through custom fields and notes unless a standard field clearly fits.
+
 ## Tool selection quick guide
 
 - Use Vitest when you need fast, repeatable, Jest-style feedback on pure logic or small React slices.

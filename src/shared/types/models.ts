@@ -1,10 +1,28 @@
+import type { BusinessCardExtraction } from "../../modules/card-extraction/extractionSchema";
+import type {
+  CustomContactField,
+  MultiValueContactField,
+  RelatedPersonField,
+  SignificantDateField,
+} from "./contact";
+export type {
+  CustomContactField,
+  MultiValueContactField,
+  RelatedPersonField,
+  SignificantDateField,
+} from "./contact";
+
 export type SupportedLlmProvider = "openai" | "anthropic" | "gemini";
 export type GoogleAuthMode = "real" | "mock";
 
 export interface AppSettings {
   llmProvider: SupportedLlmProvider;
-  llmApiKey: string;
+  openAiApiKey: string;
+  anthropicApiKey: string;
   preferredOpenAiModel: string;
+  preferredAnthropicModel: string;
+  extractionPrompt: string;
+  developerDebugMode: boolean;
   onboardingCompletedAt?: string;
 }
 
@@ -43,7 +61,15 @@ export interface ContactDraft {
   website: string;
   notes: string;
   address: string;
+  emails: MultiValueContactField[];
+  phones: MultiValueContactField[];
+  websites: MultiValueContactField[];
+  addresses: MultiValueContactField[];
+  relatedPeople: RelatedPersonField[];
+  significantDates: SignificantDateField[];
+  customFields: CustomContactField[];
   confidenceNotes: string[];
+  extractionSnapshot: BusinessCardExtraction | null;
   createdAt: string;
   updatedAt: string;
 }

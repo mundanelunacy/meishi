@@ -106,3 +106,55 @@
 - `npm run typecheck`
 - `npm run test -- src/modules/local-data/storage.test.ts src/modules/local-data/database.test.ts src/modules/pwa-runtime/usePwaLifecycle.test.tsx src/modules/app-shell/AppShell.test.tsx`
 - `npm run lint`
+
+### Structured extraction and provider settings
+
+- Added real OpenAI and Anthropic extraction support behind one shared extraction boundary.
+- Switched extraction to provider-enforced structured-output mode with schema validation for both providers.
+- Replaced the old single generic LLM key shape with provider-specific settings, model preferences, a shared advanced extraction prompt, and a persisted developer debug toggle.
+- Kept the user-editable extraction prompt additive so fixed structured-output and fidelity rules remain enforced in code.
+
+### Capture, draft persistence, and review flow
+
+- Completed the capture-to-review handoff so extraction results are saved into a persisted draft before navigating to review.
+- Added persisted `extractionSnapshot` storage on `ContactDraft` for traceability and debug inspection.
+- Preserved capture-session recovery and review autosave while expanding the review draft shape.
+
+### Review form and contact fidelity
+
+- Reworked the review screen into a Google-Contacts-style dynamic form with editable repeatable sections for emails, phone numbers, addresses, websites, related people, significant dates, and custom fields.
+- Preserved non-standard and ambiguous card text through custom/X-fields and notes so repeated or unclear values are not lost.
+- Added inline developer debug preview for raw extraction JSON, derived vCard output, and derived Google People API payloads based on the current edited form state.
+- Updated the source-image panel so captured images render inside a viewport-bounded container with contained sizing instead of overflowing at intrinsic image width.
+
+### Google Contacts mapping
+
+- Added pure mapping helpers for reviewed contacts to both Google People create-contact payloads and developer-facing vCard previews.
+- Expanded sync mapping to cover repeatable emails, phones, URLs, addresses, relations, significant dates, and user-defined custom fields.
+- Kept non-date significant data preserved locally through notes and custom fields when it cannot map cleanly to Google People `events`.
+
+### Type and validation fixes
+
+- Re-exported shared repeatable contact field types from `src/shared/types/models.ts` to match the project’s import boundary.
+- Normalized `react-hook-form` watched values before passing them into typed draft builders to avoid partial-value drift.
+- Simplified review sync typing by switching mutation handling to RTK Query `unwrap()`.
+
+### Documentation
+
+- Updated the root README plus module READMEs for onboarding/settings, card extraction, contact review, and Google contacts to reflect structured-output extraction, advanced prompt settings, dynamic review fields, fidelity preservation, and debug previews.
+- Added concise future-agent notes to `AGENTS.md` covering persistence boundaries, repeatable contact modeling, fidelity rules, `watch()` normalization, `unwrap()`, and layout sizing pitfalls.
+
+### Tests added and updated
+
+- Added extraction adapter coverage for structured-output success and validation behavior.
+- Added mapping tests for Google payload and vCard generation across repeatable fields and custom/X-field preservation.
+- Added review workspace tests for debug-mode rendering, preview updates from edited form state, and repeatable field additions.
+- Added capture flow coverage for persisted draft creation after extraction.
+- Expanded storage, onboarding, and schema tests for the new settings and extraction shapes.
+
+### Verification run
+
+- `npm run typecheck`
+- `npm run test`
+- `npm run lint`
+- `npm run test -- src/modules/contact-review/ReviewWorkspace.test.tsx`

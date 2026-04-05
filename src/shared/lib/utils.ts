@@ -19,6 +19,6 @@ export function base64FromDataUrl(dataUrl: string) {
   return base64 ?? "";
 }
 
-export function assertNever(value: never) {
+export function assertNever(value: never): never {
   throw new Error(`Unexpected value: ${String(value)}`);
 }

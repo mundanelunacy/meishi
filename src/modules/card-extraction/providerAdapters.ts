@@ -1,24 +1,20 @@
 import type { AppSettings, LLMProviderAdapter } from "../../shared/types/models";
 
-function keyConfigured(settings: AppSettings) {
-  return settings.llmApiKey.trim().length > 0;
-}
-
 export const llmProviders: LLMProviderAdapter[] = [
   {
     provider: "openai",
     displayName: "OpenAI",
-    isConfigured: keyConfigured,
+    isConfigured: (settings) => settings.openAiApiKey.trim().length > 0,
   },
   {
     provider: "anthropic",
     displayName: "Anthropic",
-    isConfigured: keyConfigured,
+    isConfigured: (settings) => settings.anthropicApiKey.trim().length > 0,
   },
   {
     provider: "gemini",
     displayName: "Google Gemini",
-    isConfigured: keyConfigured,
+    isConfigured: () => false,
   },
 ];
 

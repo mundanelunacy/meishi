@@ -9,8 +9,12 @@
 ## Features
 
 - Provider registry via `LLMProviderAdapter`
-- OpenAI Responses API integration
+- OpenAI Responses API integration with strict JSON schema output
+- Anthropic Messages API integration with forced tool-based structured output
 - Structured output schema validation with Zod
+- Repeatable vCard-style extraction for emails, phones, URLs, addresses, related people, and significant dates
+- Preservation buckets for non-standard fields (`X-` fields) and ambiguous text
+- Shared advanced extraction prompt used by both providers as additive guidance
 - Error handling for missing keys, unsupported providers, and invalid model output
 
 ## Interfaces
@@ -18,7 +22,8 @@
 - Exposes:
   - `llmProviders`
   - `businessCardExtractionSchema`
-  - `openAiApi`
+  - `businessCardExtractionJsonSchema`
+  - `extractionApi`
   - `useExtractBusinessCardMutation`
 - Consumes:
   - `ExtractionRequest`
@@ -32,5 +37,8 @@
 
 ## Constraints
 
-- OpenAI is the only implemented provider in this scaffold.
-- Anthropic and Gemini should be added as parallel adapters, not by branching UI logic.
+- OpenAI and Anthropic must stay behind the same extraction mutation boundary.
+- Prompt customization must not weaken provider-enforced structured output mode.
+- Extraction should preserve fidelity rather than collapse repeated or ambiguous card text into a single scalar field.
+- If recognizable card text cannot be confidently mapped to a standard field, extraction should preserve it in both ambiguous text output and custom `X-` field material for review.
+- Gemini remains out of scope and should not be added by branching UI logic.

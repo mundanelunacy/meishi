@@ -1,12 +1,31 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import {
+  useFieldArray,
+  useForm,
+  type DeepPartial,
+  type FieldArrayWithId,
+  type UseFormRegister,
+} from "react-hook-form";
 import { z } from "zod";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import type { ContactDraft } from "../../shared/types/models";
+import type {
+  CapturedCardImage,
+  ContactDraft,
+  CustomContactField,
+  MultiValueContactField,
+  RelatedPersonField,
+  SignificantDateField,
+} from "../../shared/types/models";
 import { Button } from "../../shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../shared/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../shared/ui/card";
 import { Input } from "../../shared/ui/input";
 import { Label } from "../../shared/ui/label";
 import { Textarea } from "../../shared/ui/textarea";
@@ -19,13 +38,39 @@ import {
   restoreDraft,
   updateDraft,
 } from "./reviewDraftSlice";
-import { loadCapturedImages, loadLatestDraft, saveDraft, saveSyncOutcome } from "../local-data";
+import {
+  loadCapturedImages,
+  loadLatestDraft,
+  saveDraft,
+  saveSyncOutcome,
+} from "../local-data";
 import {
   useCreateContactMutation,
   useUpdateContactPhotoMutation,
 } from "../google-contacts/googlePeopleApi";
 import { pushToast } from "../../shared/ui/toastBus";
-import { startSync, syncFailed, syncSucceeded } from "../google-contacts/syncSessionSlice";
+import {
+  startSync,
+  syncFailed,
+  syncSucceeded,
+} from "../google-contacts/syncSessionSlice";
+import { selectDeveloperDebugMode } from "../onboarding-settings/onboardingSlice";
+import {
+  buildContactPayload,
+  buildContactVCard,
+} from "../google-contacts/contactMapping";
+import { buildPreservedNotes } from "../../shared/lib/contactFidelity";
+
+const multiValueFieldSchema = z.object({
+  value: z.string(),
+  type: z.string(),
+  label: z.string(),
+});
+
+const customFieldSchema = z.object({
+  key: z.string(),
+  value: z.string(),
+});
 
 const reviewSchema = z.object({
   fullName: z.string(),
@@ -33,30 +78,187 @@ const reviewSchema = z.object({
   lastName: z.string(),
   organization: z.string(),
   title: z.string(),
-  email: z.string(),
-  phone: z.string(),
-  website: z.string(),
   notes: z.string(),
-  address: z.string(),
+  emails: z.array(multiValueFieldSchema),
+  phones: z.array(multiValueFieldSchema),
+  websites: z.array(multiValueFieldSchema),
+  addresses: z.array(multiValueFieldSchema),
+  relatedPeople: z.array(multiValueFieldSchema),
+  significantDates: z.array(multiValueFieldSchema),
+  customFields: z.array(customFieldSchema),
   selectedPhotoImageId: z.string().optional(),
 });
 
 type ReviewFormValues = z.infer<typeof reviewSchema>;
+type RepeatableFieldName =
+  | "emails"
+  | "phones"
+  | "websites"
+  | "addresses"
+  | "relatedPeople"
+  | "significantDates";
 
 const AUTOSAVE_DELAY_MS = 400;
 
+function emptyMultiValueField(): MultiValueContactField {
+  return { value: "", type: "", label: "" };
+}
+
+function emptyRelatedPerson(): RelatedPersonField {
+  return { value: "", type: "", label: "" };
+}
+
+function emptySignificantDate(): SignificantDateField {
+  return { value: "", type: "", label: "" };
+}
+
+function emptyCustomField(): CustomContactField {
+  return { key: "", value: "" };
+}
+
+function normalizeMultiValueFields(
+  fields: MultiValueContactField[] | undefined,
+  fallbackValue = "",
+): MultiValueContactField[] {
+  const sanitized = (fields ?? []).filter(
+    (field) =>
+      field.value.trim().length > 0 ||
+      field.type.trim().length > 0 ||
+      field.label.trim().length > 0,
+  );
+
+  if (sanitized.length > 0) {
+    return sanitized;
+  }
+
+  return fallbackValue ? [{ value: fallbackValue, type: "", label: "" }] : [];
+}
+
+function normalizeCustomFields(fields: CustomContactField[] | undefined) {
+  return (fields ?? []).filter(
+    (field) => field.key.trim().length > 0 || field.value.trim().length > 0,
+  );
+}
+
+function buildFormValues(
+  draft: ContactDraft | null,
+  images: CapturedCardImage[],
+): ReviewFormValues {
+  return {
+    fullName: draft?.fullName ?? "",
+    firstName: draft?.firstName ?? "",
+    lastName: draft?.lastName ?? "",
+    organization: draft?.organization ?? "",
+    title: draft?.title ?? "",
+    notes: draft?.notes ?? "",
+    emails: normalizeMultiValueFields(draft?.emails, draft?.email ?? ""),
+    phones: normalizeMultiValueFields(draft?.phones, draft?.phone ?? ""),
+    websites: normalizeMultiValueFields(draft?.websites, draft?.website ?? ""),
+    addresses: normalizeMultiValueFields(
+      draft?.addresses,
+      draft?.address ?? "",
+    ),
+    relatedPeople: draft?.relatedPeople ?? [],
+    significantDates: draft?.significantDates ?? [],
+    customFields: normalizeCustomFields(draft?.customFields),
+    selectedPhotoImageId: images[0]?.id,
+  };
+}
+
+function normalizeWatchedMultiValueFields(
+  fields: Array<Partial<MultiValueContactField> | undefined> | undefined,
+): MultiValueContactField[] {
+  return (fields ?? []).map((field) => ({
+    value: field?.value ?? "",
+    type: field?.type ?? "",
+    label: field?.label ?? "",
+  }));
+}
+
+function normalizeWatchedCustomFields(
+  fields: Array<Partial<CustomContactField> | undefined> | undefined,
+): CustomContactField[] {
+  return (fields ?? []).map((field) => ({
+    key: field?.key ?? "",
+    value: field?.value ?? "",
+  }));
+}
+
+function normalizeWatchedValues(
+  values: DeepPartial<ReviewFormValues>,
+): ReviewFormValues {
+  return {
+    fullName: values.fullName ?? "",
+    firstName: values.firstName ?? "",
+    lastName: values.lastName ?? "",
+    organization: values.organization ?? "",
+    title: values.title ?? "",
+    notes: values.notes ?? "",
+    emails: normalizeWatchedMultiValueFields(values.emails),
+    phones: normalizeWatchedMultiValueFields(values.phones),
+    websites: normalizeWatchedMultiValueFields(values.websites),
+    addresses: normalizeWatchedMultiValueFields(values.addresses),
+    relatedPeople: normalizeWatchedMultiValueFields(
+      values.relatedPeople,
+    ) as RelatedPersonField[],
+    significantDates: normalizeWatchedMultiValueFields(
+      values.significantDates,
+    ) as SignificantDateField[],
+    customFields: normalizeWatchedCustomFields(values.customFields),
+    selectedPhotoImageId: values.selectedPhotoImageId,
+  };
+}
+
+function sanitizeMultiValueFields(fields: MultiValueContactField[]) {
+  return fields
+    .map((field) => ({
+      value: field.value.trim(),
+      type: field.type.trim(),
+      label: field.label.trim(),
+    }))
+    .filter((field) => field.value.length > 0);
+}
+
+function sanitizeCustomFields(fields: CustomContactField[]) {
+  return fields
+    .map((field) => ({
+      key: field.key.trim(),
+      value: field.value.trim(),
+    }))
+    .filter((field) => field.key.length > 0 && field.value.length > 0);
+}
+
 function getDraftFields(values: ReviewFormValues) {
+  const emails = sanitizeMultiValueFields(values.emails);
+  const phones = sanitizeMultiValueFields(values.phones);
+  const websites = sanitizeMultiValueFields(values.websites);
+  const addresses = sanitizeMultiValueFields(values.addresses);
+  const relatedPeople = sanitizeMultiValueFields(
+    values.relatedPeople,
+  ) as RelatedPersonField[];
+  const significantDates = sanitizeMultiValueFields(
+    values.significantDates,
+  ) as SignificantDateField[];
+  const customFields = sanitizeCustomFields(values.customFields);
+
   return {
     fullName: values.fullName,
     firstName: values.firstName,
     lastName: values.lastName,
     organization: values.organization,
     title: values.title,
-    email: values.email,
-    phone: values.phone,
-    website: values.website,
-    notes: values.notes,
-    address: values.address,
+    email: emails[0]?.value ?? "",
+    phone: phones[0]?.value ?? "",
+    website: websites[0]?.value ?? "",
+    address: addresses[0]?.value ?? "",
+    notes: buildPreservedNotes(values.notes, customFields),
+    emails,
+    phones,
+    websites,
+    addresses,
+    relatedPeople,
+    significantDates,
+    customFields,
   } satisfies Pick<
     ContactDraft,
     | "fullName"
@@ -67,8 +269,15 @@ function getDraftFields(values: ReviewFormValues) {
     | "email"
     | "phone"
     | "website"
-    | "notes"
     | "address"
+    | "notes"
+    | "emails"
+    | "phones"
+    | "websites"
+    | "addresses"
+    | "relatedPeople"
+    | "significantDates"
+    | "customFields"
   >;
 }
 
@@ -77,6 +286,7 @@ export function ReviewWorkspace() {
   const navigate = useNavigate();
   const draft = useAppSelector(selectDraft);
   const images = useAppSelector(selectCapturedImages);
+  const developerDebugMode = useAppSelector(selectDeveloperDebugMode);
   const [createContact, createContactState] = useCreateContactMutation();
   const [updateContactPhoto] = useUpdateContactPhotoMutation();
   const autosaveTimeoutRef = useRef<number | null>(null);
@@ -87,28 +297,49 @@ export function ReviewWorkspace() {
       return;
     }
 
-    void Promise.all([loadCapturedImages(), loadLatestDraft()]).then(([storedImages, storedDraft]) => {
-      if (storedImages.length || storedDraft) {
-        dispatch(restoreDraft({ images: storedImages, draft: storedDraft ?? null }));
-      }
-    });
+    void Promise.all([loadCapturedImages(), loadLatestDraft()]).then(
+      ([storedImages, storedDraft]) => {
+        if (storedImages.length || storedDraft) {
+          dispatch(
+            restoreDraft({ images: storedImages, draft: storedDraft ?? null }),
+          );
+        }
+      },
+    );
   }, [dispatch, draft, images.length]);
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewSchema),
-    values: {
-      fullName: draft?.fullName ?? "",
-      firstName: draft?.firstName ?? "",
-      lastName: draft?.lastName ?? "",
-      organization: draft?.organization ?? "",
-      title: draft?.title ?? "",
-      email: draft?.email ?? "",
-      phone: draft?.phone ?? "",
-      website: draft?.website ?? "",
-      notes: draft?.notes ?? "",
-      address: draft?.address ?? "",
-      selectedPhotoImageId: images[0]?.id,
-    },
+    values: buildFormValues(draft, images),
+  });
+
+  const emailsFieldArray = useFieldArray({
+    control: form.control,
+    name: "emails",
+  });
+  const phonesFieldArray = useFieldArray({
+    control: form.control,
+    name: "phones",
+  });
+  const websitesFieldArray = useFieldArray({
+    control: form.control,
+    name: "websites",
+  });
+  const addressesFieldArray = useFieldArray({
+    control: form.control,
+    name: "addresses",
+  });
+  const relatedPeopleFieldArray = useFieldArray({
+    control: form.control,
+    name: "relatedPeople",
+  });
+  const significantDatesFieldArray = useFieldArray({
+    control: form.control,
+    name: "significantDates",
+  });
+  const customFieldsFieldArray = useFieldArray({
+    control: form.control,
+    name: "customFields",
   });
 
   useEffect(() => {
@@ -122,19 +353,7 @@ export function ReviewWorkspace() {
     }
 
     hydratedDraftSignatureRef.current = nextSignature;
-    form.reset({
-      fullName: draft.fullName,
-      firstName: draft.firstName,
-      lastName: draft.lastName,
-      organization: draft.organization,
-      title: draft.title,
-      email: draft.email,
-      phone: draft.phone,
-      website: draft.website,
-      notes: draft.notes,
-      address: draft.address,
-      selectedPhotoImageId: images[0]?.id,
-    });
+    form.reset(buildFormValues(draft, images));
   }, [draft, form, images]);
 
   useEffect(() => {
@@ -142,32 +361,24 @@ export function ReviewWorkspace() {
       return;
     }
 
+    const activeDraft = draft;
+
     const subscription = form.watch((values) => {
       if (autosaveTimeoutRef.current) {
         window.clearTimeout(autosaveTimeoutRef.current);
       }
 
       autosaveTimeoutRef.current = window.setTimeout(() => {
-        const draftFields = getDraftFields({
-          fullName: values.fullName ?? "",
-          firstName: values.firstName ?? "",
-          lastName: values.lastName ?? "",
-          organization: values.organization ?? "",
-          title: values.title ?? "",
-          email: values.email ?? "",
-          phone: values.phone ?? "",
-          website: values.website ?? "",
-          notes: values.notes ?? "",
-          address: values.address ?? "",
-          selectedPhotoImageId: values.selectedPhotoImageId,
-        });
+        const normalizedValues = normalizeWatchedValues(values);
+        const draftFields = getDraftFields(normalizedValues);
 
         dispatch(updateDraft(draftFields));
         void saveDraft({
-          ...draft,
+          ...activeDraft,
           ...draftFields,
-          sourceImageIds: draft.sourceImageIds,
-          confidenceNotes: draft.confidenceNotes,
+          sourceImageIds: activeDraft.sourceImageIds,
+          confidenceNotes: activeDraft.confidenceNotes,
+          extractionSnapshot: activeDraft.extractionSnapshot,
           updatedAt: new Date().toISOString(),
         });
       }, AUTOSAVE_DELAY_MS);
@@ -181,69 +392,90 @@ export function ReviewWorkspace() {
     };
   }, [dispatch, draft, form]);
 
+  const currentValues = normalizeWatchedValues(form.watch());
+
   if (!draft) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>No draft available</CardTitle>
           <CardDescription>
-            Capture at least one business-card image and run extraction before opening the review screen.
+            Capture at least one business-card image and run extraction before
+            opening the review screen.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => navigate({ to: "/capture" })}>Go to capture</Button>
+          <Button onClick={() => navigate({ to: "/capture" })}>
+            Go to capture
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
+  const activeDraft = draft;
+
   async function onSubmit(values: ReviewFormValues) {
-    const selectedPhoto = images.find((image) => image.id === values.selectedPhotoImageId);
+    const selectedPhoto = images.find(
+      (image) => image.id === values.selectedPhotoImageId,
+    );
     const draftFields = getDraftFields(values);
     dispatch(updateDraft(draftFields));
     await saveDraft({
-      ...draft,
+      ...activeDraft,
       ...draftFields,
-      sourceImageIds: draft.sourceImageIds,
-      confidenceNotes: draft.confidenceNotes,
+      sourceImageIds: activeDraft.sourceImageIds,
+      confidenceNotes: activeDraft.confidenceNotes,
+      extractionSnapshot: activeDraft.extractionSnapshot,
       updatedAt: new Date().toISOString(),
     });
-    dispatch(finalizeDraft({ selectedPhotoImageId: values.selectedPhotoImageId }));
+    dispatch(
+      finalizeDraft({ selectedPhotoImageId: values.selectedPhotoImageId }),
+    );
     dispatch(startSync());
 
     const verifiedContact = {
-      ...draft,
-      ...values,
+      ...activeDraft,
+      ...draftFields,
       selectedPhotoImageId: values.selectedPhotoImageId,
       verifiedAt: new Date().toISOString(),
+    } satisfies ContactDraft & {
+      selectedPhotoImageId?: string;
+      verifiedAt: string;
     };
 
-    const created = await createContact(verifiedContact);
-    if (!("data" in created)) {
-      dispatch(syncFailed(String(created.error.data ?? "Unable to create Google contact.")));
-      return;
-    }
+    try {
+      const created = await createContact(verifiedContact).unwrap();
 
-    let photoUploaded = false;
-    if (selectedPhoto) {
-      const photoResult = await updateContactPhoto({
-        resourceName: created.data.resourceName,
-        dataUrl: selectedPhoto.dataUrl,
-      });
-      photoUploaded = "data" in photoResult;
-    }
+      let photoUploaded = false;
+      if (selectedPhoto) {
+        await updateContactPhoto({
+          resourceName: created.resourceName,
+          dataUrl: selectedPhoto.dataUrl,
+        }).unwrap();
+        photoUploaded = true;
+      }
 
-    const outcome = {
-      contactResourceName: created.data.resourceName,
-      photoUploaded,
-      localOnlyImageIds: images
-        .filter((image) => image.id !== values.selectedPhotoImageId)
-        .map((image) => image.id),
-      syncedAt: new Date().toISOString(),
-    };
-    await saveSyncOutcome(outcome);
-    dispatch(syncSucceeded(outcome));
-    pushToast("Verified contact synced to Google Contacts.");
+      const outcome = {
+        contactResourceName: created.resourceName,
+        photoUploaded,
+        localOnlyImageIds: images
+          .filter((image) => image.id !== values.selectedPhotoImageId)
+          .map((image) => image.id),
+        syncedAt: new Date().toISOString(),
+      };
+      await saveSyncOutcome(outcome);
+      dispatch(syncSucceeded(outcome));
+      pushToast("Verified contact synced to Google Contacts.");
+    } catch (error) {
+      dispatch(
+        syncFailed(
+          error instanceof Error
+            ? error.message
+            : "Unable to create Google contact.",
+        ),
+      );
+    }
   }
 
   return (
@@ -251,32 +483,45 @@ export function ReviewWorkspace() {
       className="grid min-h-[70vh] gap-6 xl:grid-cols-[1.05fr_0.95fr]"
       onSubmit={form.handleSubmit(onSubmit)}
     >
-      <Card className="overflow-hidden">
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <CardTitle>Source images</CardTitle>
           <CardDescription>
-            Keep the visual reference visible while you edit the extracted fields. One image can be chosen as the Google contact photo.
+            Keep the visual reference visible while you edit the extracted
+            fields. One image can be chosen as the Google contact photo.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
+        <CardContent className="grid min-w-0 gap-4">
           {images.map((image) => (
             <label
               key={image.id}
-              className={`overflow-hidden rounded-[28px] border ${
-                form.watch("selectedPhotoImageId") === image.id ? "border-primary" : "border-border/70"
+              className={`block min-w-0 max-w-full overflow-hidden rounded-[28px] border ${
+                form.watch("selectedPhotoImageId") === image.id
+                  ? "border-primary"
+                  : "border-border/70"
               }`}
             >
-              <img src={image.dataUrl} alt={image.fileName} className="aspect-[4/3] w-full object-cover" />
+              <div className="flex h-[min(70vh,100vw)] min-w-0 max-w-full items-center justify-center overflow-hidden bg-muted/20">
+                <img
+                  src={image.dataUrl}
+                  alt={image.fileName}
+                  className="block max-h-full max-w-full object-contain"
+                />
+              </div>
               <div className="flex items-center justify-between gap-3 p-4 text-sm">
                 <div>
                   <p className="font-medium">{image.fileName}</p>
-                  <p className="text-xs text-muted-foreground">Local capture only unless selected as contact photo.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Local capture only unless selected as contact photo.
+                  </p>
                 </div>
                 <input
                   type="radio"
                   value={image.id}
                   checked={form.watch("selectedPhotoImageId") === image.id}
-                  onChange={() => form.setValue("selectedPhotoImageId", image.id)}
+                  onChange={() =>
+                    form.setValue("selectedPhotoImageId", image.id)
+                  }
                 />
               </div>
             </label>
@@ -288,10 +533,12 @@ export function ReviewWorkspace() {
         <CardHeader>
           <CardTitle>Verify extracted contact</CardTitle>
           <CardDescription>
-            Edit anything the model got wrong before syncing. Confidence notes are preserved with the local draft for traceability.
+            Edit anything the model got wrong before syncing. The review form
+            expands to show extracted contact collections and lets you add more
+            values like Google Contacts does.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {draft.confidenceNotes.length ? (
             <div className="flex flex-wrap gap-2">
               {draft.confidenceNotes.map((note) => (
@@ -301,37 +548,122 @@ export function ReviewWorkspace() {
           ) : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Full name">
-              <Input {...form.register("fullName")} />
+            <Field label="Full name" htmlFor="review-full-name">
+              <Input id="review-full-name" {...form.register("fullName")} />
             </Field>
-            <Field label="Title">
-              <Input {...form.register("title")} />
+            <Field label="Title" htmlFor="review-title">
+              <Input id="review-title" {...form.register("title")} />
             </Field>
-            <Field label="First name">
-              <Input {...form.register("firstName")} />
+            <Field label="First name" htmlFor="review-first-name">
+              <Input id="review-first-name" {...form.register("firstName")} />
             </Field>
-            <Field label="Last name">
-              <Input {...form.register("lastName")} />
+            <Field label="Last name" htmlFor="review-last-name">
+              <Input id="review-last-name" {...form.register("lastName")} />
             </Field>
-            <Field label="Organization">
-              <Input {...form.register("organization")} />
-            </Field>
-            <Field label="Email">
-              <Input {...form.register("email")} />
-            </Field>
-            <Field label="Phone">
-              <Input {...form.register("phone")} />
-            </Field>
-            <Field label="Website">
-              <Input {...form.register("website")} />
-            </Field>
-            <Field className="sm:col-span-2" label="Address">
-              <Textarea {...form.register("address")} className="min-h-[96px]" />
-            </Field>
-            <Field className="sm:col-span-2" label="Notes">
-              <Textarea {...form.register("notes")} />
+            <Field
+              label="Organization"
+              htmlFor="review-organization"
+              className="sm:col-span-2"
+            >
+              <Input
+                id="review-organization"
+                {...form.register("organization")}
+              />
             </Field>
           </div>
+
+          <RepeatableFieldSection
+            title="Email addresses"
+            description="All extracted and manually added email addresses are editable here."
+            addLabel="Add email"
+            fieldArray={emailsFieldArray}
+            register={form.register}
+            name="emails"
+            valuePlaceholder="name@example.com"
+            typePlaceholder="work"
+            labelPlaceholder="Press"
+            legend="Email"
+          />
+
+          <RepeatableFieldSection
+            title="Phone numbers"
+            description="Store multiple direct, mobile, or office numbers."
+            addLabel="Add phone number"
+            fieldArray={phonesFieldArray}
+            register={form.register}
+            name="phones"
+            valuePlaceholder="+82 10-1234-5678"
+            typePlaceholder="mobile"
+            labelPlaceholder="Desk"
+            legend="Phone"
+          />
+
+          <RepeatableFieldSection
+            title="Addresses"
+            description="Use one card line per address, with optional type and label."
+            addLabel="Add address"
+            fieldArray={addressesFieldArray}
+            register={form.register}
+            name="addresses"
+            valuePlaceholder="123 Main St, Seoul"
+            typePlaceholder="work"
+            labelPlaceholder="HQ"
+            legend="Address"
+            multiline
+          />
+
+          <RepeatableFieldSection
+            title="Websites"
+            description="Support multiple URLs such as company site, profile, or booking link."
+            addLabel="Add website"
+            fieldArray={websitesFieldArray}
+            register={form.register}
+            name="websites"
+            valuePlaceholder="https://example.com"
+            typePlaceholder="work"
+            labelPlaceholder="Portfolio"
+            legend="Website"
+          />
+
+          <RepeatableFieldSection
+            title="Related people"
+            description="Model assistant, manager, spouse, or other related contacts."
+            addLabel="Add related person"
+            fieldArray={relatedPeopleFieldArray}
+            register={form.register}
+            name="relatedPeople"
+            valuePlaceholder="Jane Doe"
+            typePlaceholder="assistant"
+            labelPlaceholder="EA"
+            legend="Related person"
+          />
+
+          <RepeatableFieldSection
+            title="Significant dates"
+            description="Modeled after the Google Contacts edit view. Enter ISO dates for sync to Google; other text still remains in local notes/custom fields."
+            addLabel="Add significant date"
+            fieldArray={significantDatesFieldArray}
+            register={form.register}
+            name="significantDates"
+            valuePlaceholder="2026-04-05"
+            typePlaceholder="anniversary"
+            labelPlaceholder="Joined company"
+            legend="Significant date"
+            valueInputType="date"
+          />
+
+          <CustomFieldSection
+            fieldArray={customFieldsFieldArray}
+            register={form.register}
+          />
+
+          <Field className="sm:col-span-2" label="Notes" htmlFor="review-notes">
+            <Textarea
+              id="review-notes"
+              {...form.register("notes")}
+              className="min-h-[120px]"
+            />
+          </Field>
 
           {createContactState.isError ? (
             <Alert className="border-destructive/30 text-destructive">
@@ -339,11 +671,44 @@ export function ReviewWorkspace() {
             </Alert>
           ) : null}
 
+          {developerDebugMode ? (
+            <DebugPanel
+              draft={draft}
+              images={images}
+              values={{
+                fullName: currentValues.fullName ?? "",
+                firstName: currentValues.firstName ?? "",
+                lastName: currentValues.lastName ?? "",
+                organization: currentValues.organization ?? "",
+                title: currentValues.title ?? "",
+                notes: currentValues.notes ?? "",
+                emails: currentValues.emails ?? [],
+                phones: currentValues.phones ?? [],
+                websites: currentValues.websites ?? [],
+                addresses: currentValues.addresses ?? [],
+                relatedPeople: currentValues.relatedPeople ?? [],
+                significantDates: currentValues.significantDates ?? [],
+                customFields: currentValues.customFields ?? [],
+                selectedPhotoImageId: currentValues.selectedPhotoImageId,
+              }}
+            />
+          ) : null}
+
           <div className="flex flex-wrap gap-3">
-            <Button size="lg" type="submit" disabled={createContactState.isLoading}>
-              {createContactState.isLoading ? "Syncing..." : "Save to Google Contacts"}
+            <Button
+              size="lg"
+              type="submit"
+              disabled={createContactState.isLoading}
+            >
+              {createContactState.isLoading
+                ? "Syncing..."
+                : "Save to Google Contacts"}
             </Button>
-            <Button type="button" variant="outline" onClick={() => navigate({ to: "/capture" })}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate({ to: "/capture" })}
+            >
               Back to capture
             </Button>
           </div>
@@ -355,17 +720,298 @@ export function ReviewWorkspace() {
 
 function Field({
   label,
+  htmlFor,
   className,
   children,
 }: {
   label: string;
+  htmlFor?: string;
   className?: string;
   children: ReactNode;
 }) {
   return (
     <div className={className}>
-      <Label className="mb-2 block">{label}</Label>
+      <Label htmlFor={htmlFor} className="mb-2 block">
+        {label}
+      </Label>
       {children}
+    </div>
+  );
+}
+
+function RepeatableFieldSection({
+  title,
+  description,
+  addLabel,
+  fieldArray,
+  register,
+  name,
+  valuePlaceholder,
+  typePlaceholder,
+  labelPlaceholder,
+  legend,
+  multiline = false,
+  valueInputType = "text",
+}: {
+  title: string;
+  description: string;
+  addLabel: string;
+  fieldArray: {
+    fields: FieldArrayWithId<ReviewFormValues, RepeatableFieldName, "id">[];
+    append(
+      value: MultiValueContactField | RelatedPersonField | SignificantDateField,
+    ): void;
+    remove(index: number): void;
+  };
+  register: UseFormRegister<ReviewFormValues>;
+  name: RepeatableFieldName;
+  valuePlaceholder: string;
+  typePlaceholder: string;
+  labelPlaceholder: string;
+  legend: string;
+  multiline?: boolean;
+  valueInputType?: "text" | "date";
+}) {
+  return (
+    <section className="space-y-3 rounded-[24px] border border-border/70 bg-muted/25 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="font-medium text-foreground">{title}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            fieldArray.append(
+              name === "relatedPeople"
+                ? emptyRelatedPerson()
+                : name === "significantDates"
+                  ? emptySignificantDate()
+                  : emptyMultiValueField(),
+            )
+          }
+        >
+          {addLabel}
+        </Button>
+      </div>
+
+      {fieldArray.fields.length ? (
+        <div className="space-y-3">
+          {fieldArray.fields.map((field, index) => (
+            <div
+              key={field.id}
+              className="rounded-[20px] border border-border/70 bg-background/80 p-4"
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-foreground">
+                  {legend} {index + 1}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fieldArray.remove(index)}
+                >
+                  Remove
+                </Button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[1.4fr_0.8fr_0.8fr]">
+                <Field label="Value" htmlFor={`${name}-${index}-value`}>
+                  {multiline ? (
+                    <Textarea
+                      id={`${name}-${index}-value`}
+                      className="min-h-[96px]"
+                      {...register(`${name}.${index}.value` as const)}
+                      placeholder={valuePlaceholder}
+                    />
+                  ) : (
+                    <Input
+                      id={`${name}-${index}-value`}
+                      type={valueInputType}
+                      {...register(`${name}.${index}.value` as const)}
+                      placeholder={valuePlaceholder}
+                    />
+                  )}
+                </Field>
+                <Field label="Type" htmlFor={`${name}-${index}-type`}>
+                  <Input
+                    id={`${name}-${index}-type`}
+                    {...register(`${name}.${index}.type` as const)}
+                    placeholder={typePlaceholder}
+                  />
+                </Field>
+                <Field label="Label" htmlFor={`${name}-${index}-label`}>
+                  <Input
+                    id={`${name}-${index}-label`}
+                    {...register(`${name}.${index}.label` as const)}
+                    placeholder={labelPlaceholder}
+                  />
+                </Field>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <Alert>No {title.toLowerCase()} yet.</Alert>
+      )}
+    </section>
+  );
+}
+
+function CustomFieldSection({
+  fieldArray,
+  register,
+}: {
+  fieldArray: {
+    fields: FieldArrayWithId<ReviewFormValues, "customFields", "id">[];
+    append(value: CustomContactField): void;
+    remove(index: number): void;
+  };
+  register: UseFormRegister<ReviewFormValues>;
+}) {
+  return (
+    <section className="space-y-3 rounded-[24px] border border-border/70 bg-muted/25 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="font-medium text-foreground">Custom fields</p>
+          <p className="text-sm text-muted-foreground">
+            Use this for non-standard card data or anything you want preserved
+            as a custom/X- field.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => fieldArray.append(emptyCustomField())}
+        >
+          Add custom field
+        </Button>
+      </div>
+
+      {fieldArray.fields.length ? (
+        <div className="space-y-3">
+          {fieldArray.fields.map((field, index) => (
+            <div
+              key={field.id}
+              className="rounded-[20px] border border-border/70 bg-background/80 p-4"
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-foreground">
+                  Custom field {index + 1}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fieldArray.remove(index)}
+                >
+                  Remove
+                </Button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[0.9fr_1.1fr]">
+                <Field label="Key" htmlFor={`custom-fields-${index}-key`}>
+                  <Input
+                    id={`custom-fields-${index}-key`}
+                    {...register(`customFields.${index}.key` as const)}
+                    placeholder="X-ASSISTANT"
+                  />
+                </Field>
+                <Field label="Value" htmlFor={`custom-fields-${index}-value`}>
+                  <Input
+                    id={`custom-fields-${index}-value`}
+                    {...register(`customFields.${index}.value` as const)}
+                    placeholder="Jane Doe"
+                  />
+                </Field>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <Alert>No custom fields yet.</Alert>
+      )}
+    </section>
+  );
+}
+
+function DebugPanel({
+  draft,
+  images,
+  values,
+}: {
+  draft: ContactDraft;
+  images: CapturedCardImage[];
+  values: ReviewFormValues;
+}) {
+  const previewContact = {
+    ...draft,
+    ...getDraftFields(values),
+    selectedPhotoImageId: values.selectedPhotoImageId,
+    verifiedAt: draft.updatedAt,
+  };
+  const selectedPhoto = images.find(
+    (image) => image.id === values.selectedPhotoImageId,
+  );
+
+  return (
+    <details
+      className="rounded-[24px] border border-border/70 bg-muted/35 p-4"
+      open
+    >
+      <summary className="cursor-pointer text-sm font-medium text-foreground">
+        Developer debug preview
+      </summary>
+      <div className="mt-4 space-y-4">
+        <DebugBlock
+          title="Raw extraction snapshot"
+          body={
+            draft.extractionSnapshot
+              ? JSON.stringify(draft.extractionSnapshot, null, 2)
+              : "No extraction snapshot is available for this draft."
+          }
+        />
+        <DebugBlock
+          title="Derived vCard"
+          body={buildContactVCard(previewContact)}
+        />
+        <DebugBlock
+          title="Derived Google createContact payload"
+          body={JSON.stringify(buildContactPayload(previewContact), null, 2)}
+        />
+        <DebugBlock
+          title="Selected photo metadata"
+          body={JSON.stringify(
+            selectedPhoto
+              ? {
+                  id: selectedPhoto.id,
+                  fileName: selectedPhoto.fileName,
+                  mimeType: selectedPhoto.mimeType,
+                  width: selectedPhoto.width,
+                  height: selectedPhoto.height,
+                }
+              : {
+                  selectedPhotoImageId: values.selectedPhotoImageId ?? null,
+                  note: "No image is currently selected.",
+                },
+            null,
+            2,
+          )}
+        />
+      </div>
+    </details>
+  );
+}
+
+function DebugBlock({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <pre className="overflow-x-auto rounded-2xl bg-background/90 p-4 text-xs leading-6 text-foreground">
+        <code>{body}</code>
+      </pre>
     </div>
   );
 }

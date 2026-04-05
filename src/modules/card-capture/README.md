@@ -12,6 +12,7 @@
 - Multi-image upload
 - Image metadata extraction
 - Active-session persistence to IndexedDB
+- Extraction handoff into a persisted review draft
 
 ## Interfaces
 
@@ -28,3 +29,4 @@
 
 - Compression can be added later, but only if it preserves LLM extraction quality.
 - Keep the capture module independent from provider-specific extraction logic.
+- Extraction must always run against the current persisted active session images.

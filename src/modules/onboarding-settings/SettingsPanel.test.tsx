@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   onboardingReducer,
   setGoogleAuthState,
-  setLlmApiKey,
+  setOpenAiApiKey,
 } from "./onboardingSlice";
 import { SettingsPanel } from "./SettingsPanel";
 
@@ -45,7 +45,7 @@ function renderPanel() {
       onboarding: onboardingReducer(
         onboardingReducer(
           undefined,
-          setLlmApiKey("sk-test")
+          setOpenAiApiKey("sk-test")
         ),
         setGoogleAuthState({
           mode: "mock",
@@ -114,5 +114,19 @@ describe("SettingsPanel", () => {
 
     expect(store.getState().onboarding.googleAuth.accessToken).toBeNull();
     expect(screen.getByText(/developer mock auth is active/i)).toBeInTheDocument();
+  });
+
+  it("persists advanced extraction settings in onboarding state", async () => {
+    const { store } = renderPanel();
+    const user = userEvent.setup();
+
+    await user.clear(screen.getByLabelText(/advanced extraction prompt/i));
+    await user.type(screen.getByLabelText(/advanced extraction prompt/i), "Use company name exactly as printed.");
+    await user.click(screen.getByLabelText(/developer debug mode/i));
+
+    expect(store.getState().onboarding.settings.extractionPrompt).toBe(
+      "Use company name exactly as printed."
+    );
+    expect(store.getState().onboarding.settings.developerDebugMode).toBe(true);
   });
 });

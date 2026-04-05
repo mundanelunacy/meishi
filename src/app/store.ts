@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { openAiApi } from "../modules/card-extraction/openAiApi";
+import { extractionApi } from "../modules/card-extraction/extractionApi";
 import { googlePeopleApi } from "../modules/google-contacts/googlePeopleApi";
 import { onboardingReducer } from "../modules/onboarding-settings/onboardingSlice";
 import { reviewDraftReducer } from "../modules/contact-review/reviewDraftSlice";
@@ -10,13 +10,13 @@ export const store = configureStore({
     onboarding: onboardingReducer,
     reviewDraft: reviewDraftReducer,
     syncSession: syncSessionReducer,
-    [openAiApi.reducerPath]: openAiApi.reducer,
+    [extractionApi.reducerPath]: extractionApi.reducer,
     [googlePeopleApi.reducerPath]: googlePeopleApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(openAiApi.middleware, googlePeopleApi.middleware),
+    }).concat(extractionApi.middleware, googlePeopleApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

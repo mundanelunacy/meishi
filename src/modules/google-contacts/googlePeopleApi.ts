@@ -2,40 +2,14 @@ import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import type {
   GoogleCreateContactResponse,
   GoogleUpdatePhotoResponse,
-  CreateContactPayload,
 } from "../../shared/types/google";
 import type { GoogleAuthState, VerifiedContact } from "../../shared/types/models";
 import { base64FromDataUrl } from "../../shared/lib/utils";
+import { buildContactPayload } from "./contactMapping";
 
 interface GooglePeopleApiState {
   onboarding: {
     googleAuth: Pick<GoogleAuthState, "accessToken" | "mode">;
-  };
-}
-
-function buildContactPayload(contact: VerifiedContact): CreateContactPayload {
-  return {
-    names: [
-      {
-        displayName: contact.fullName,
-        givenName: contact.firstName,
-        familyName: contact.lastName,
-      },
-    ],
-    emailAddresses: contact.email ? [{ value: contact.email }] : undefined,
-    phoneNumbers: contact.phone ? [{ value: contact.phone }] : undefined,
-    organizations:
-      contact.organization || contact.title
-        ? [
-            {
-              name: contact.organization,
-              title: contact.title,
-            },
-          ]
-        : undefined,
-    biographies: contact.notes ? [{ value: contact.notes }] : undefined,
-    urls: contact.website ? [{ value: contact.website, type: "work" }] : undefined,
-    addresses: contact.address ? [{ formattedValue: contact.address }] : undefined,
   };
 }
 
@@ -68,7 +42,7 @@ export const googlePeopleApi = createApi({
 
         try {
           const response = await fetch(
-            "https://people.googleapis.com/v1/people:createContact?personFields=names,emailAddresses,phoneNumbers,organizations,biographies,urls,addresses",
+            "https://people.googleapis.com/v1/people:createContact?personFields=names,emailAddresses,phoneNumbers,organizations,biographies,urls,addresses,relations,events,userDefined",
             {
               method: "POST",
               headers: {

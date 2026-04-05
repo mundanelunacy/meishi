@@ -3,7 +3,7 @@
 ## Responsibilities
 
 - Own first-run setup and settings management.
-- Persist the chosen LLM provider, provider key, and preferred OpenAI model.
+- Persist the chosen LLM provider, provider-specific API keys, provider models, one shared extraction prompt, and the developer debug toggle.
 - Track onboarding completion.
 - Manage Google auth state handoff from the GIS module.
 - Act as the app readiness authority for future route and module gating.
@@ -11,8 +11,10 @@
 ## Features
 
 - First-run onboarding panel
-- Provider picker with OpenAI-first support
-- BYOK API key entry
+- Provider picker with OpenAI and Anthropic support
+- Provider-specific BYOK API key entry
+- Shared advanced extraction guidance setting appended to fixed structured-output and fidelity rules
+- Developer debug mode toggle
 - Settings screen for later edits and local reset
 - Route readiness selectors
 - Explicit development messaging when mock Google auth is active
@@ -23,7 +25,7 @@
   - `AppSettings`
   - `GoogleAuthState`
   - onboarding selectors including `selectHasLlmConfiguration`, `selectHasGoogleAuthorization`, and `selectAppReadiness`
-  - onboarding actions such as `setLlmApiKey`, `setGoogleAuthState`, and `completeOnboarding`
+  - onboarding actions such as `setOpenAiApiKey`, `setAnthropicApiKey`, `setExtractionPrompt`, `setDeveloperDebugMode`, `setGoogleAuthState`, and `completeOnboarding`
 - Depends on:
   - `src/modules/google-auth`
   - `src/modules/local-data`
@@ -37,3 +39,4 @@
 
 - This module must continue to warn that client-side API key storage is prototype-only.
 - Mock Google auth is acceptable only for local development and must stay explicitly labeled in the UI.
+- Route readiness must be based on the currently selected provider’s configuration, not a generic API key flag.
