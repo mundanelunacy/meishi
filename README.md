@@ -5,10 +5,11 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 ## Product flow
 
 1. On first load, the user authorizes Google Contacts access with Google Identity Services.
+   - In local development, the app can fall back to an explicit mock Google auth mode when a Google client ID is not configured.
 2. The user selects an LLM provider and stores a BYOK API key locally in the browser.
 3. The user captures one or more business-card images from a mobile camera or image library.
 4. The app sends those images to the configured LLM, validates the structured response, and builds a local contact draft.
-5. The review screen shows source images in the top section and an editable contact form in the lower section.
+5. The review screen shows source images in the top section and an editable contact form in the lower section. Draft edits autosave locally for recovery after refresh.
 6. Saving creates a Google contact and uploads one selected image as the Google contact photo.
 7. Additional captured images remain local in IndexedDB because Google Contacts does not support arbitrary multi-image business-card attachments.
 
@@ -26,13 +27,13 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 ## Architecture
 
 ### `src/modules/app-shell`
-- Top-level frame, navigation, route shell, and PWA update affordances.
+- Top-level frame, navigation, route shell, app readiness display, and PWA update affordances.
 
 ### `src/modules/onboarding-settings`
-- First-run flow, provider selection, API key entry, session-ready checks, and settings management.
+- First-run flow, provider selection, API key entry, readiness selectors, and settings management.
 
 ### `src/modules/google-auth`
-- Google Identity Services script loading and token acquisition for browser-only Google Contacts access.
+- Google auth client boundary for real GIS token acquisition and development-safe mock auth.
 
 ### `src/modules/card-capture`
 - Camera and file-library capture flows plus image normalization hooks.
@@ -47,10 +48,10 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 - Google People API contact creation, contact photo upload, and sync result tracking.
 
 ### `src/modules/local-data`
-- Browser persistence boundaries for `localStorage` and IndexedDB.
+- Browser persistence boundaries for `localStorage` and IndexedDB, including draft recovery and append-only sync history.
 
 ### `src/modules/pwa-runtime`
-- PWA lifecycle hooks, update prompts, and install/update wiring.
+- PWA lifecycle hooks, install prompting, prompt-based updates, and explicit offline-runtime messaging.
 
 ## Data boundaries
 
@@ -58,12 +59,12 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
   - LLM provider choice
   - LLM API key
   - preferred OpenAI model
-  - limited Google auth metadata, but not durable access tokens
+  - limited Google auth metadata such as scope and account hint, but not durable access tokens
 - IndexedDB
   - captured images
   - active capture session
-  - latest draft
-  - sync history
+  - latest draft with autosaved review edits
+  - append-only sync history
 - In-memory Redux state
   - current Google access token
   - active draft edit state
@@ -94,5 +95,33 @@ The app does not include a backend token broker, encrypted key vault, or server-
 npm install
 npm run dev
 ```
+
+## Environment files
+
+Vite loads env files from the repo root automatically. Meishi now assumes this layout:
+
+```bash
+.env
+.env.development
+.env.production
+```
+
+- `.env`: shared defaults used in every mode
+- `.env.development`: local development overrides for `npm run dev`
+- `.env.production`: production build values for `npm run build`
+- Only variables prefixed with `VITE_` are exposed to browser code
+- Start from [.env.example](/Users/mundanelunacy/Projects/meishi/.env.example)
+
+## Local testing notes
+
+- `VITE_GOOGLE_CLIENT_ID` is required for real Google OAuth.
+- `VITE_GOOGLE_AUTH_MODE=real|mock` can force the auth mode.
+- In development, if `VITE_GOOGLE_CLIENT_ID` is missing and no explicit auth mode is set, Meishi defaults to mock Google auth so the onboarding, shell, capture, review, and demo sync flow remain testable.
+- `VITE_*` variables are compile-time inputs to the browser build. If `VITE_GOOGLE_CLIENT_ID` exists only in `.env.production`, the production build will see it, but `npm run dev` will not.
+- After changing `.env.production`, rebuild before re-testing: `npm run build && npm run preview`.
+- `npm run dev` is not the authoritative way to test PWA behavior in this repo because `vite-plugin-pwa` development service worker support is not enabled in [vite.config.ts](/Users/mundanelunacy/Projects/meishi/vite.config.ts).
+- Use `npm run build && npm run preview` when testing service worker registration, install prompts, offline shell behavior, or update prompts.
+- If temporary dev-server PWA testing is needed, enable `devOptions: { enabled: true }` in the `VitePWA(...)` config, but treat previewing the production build as the final verification path.
+- If an older PWA build is still showing stale behavior, clear site data or unregister the service worker before re-testing.
 
 See [AGENTS.md](/Users/mundanelunacy/Projects/meishi/AGENTS.md) for the project-specific development loop future agents should follow.

@@ -1,4 +1,5 @@
 export type SupportedLlmProvider = "openai" | "anthropic" | "gemini";
+export type GoogleAuthMode = "real" | "mock";
 
 export interface AppSettings {
   llmProvider: SupportedLlmProvider;
@@ -8,6 +9,7 @@ export interface AppSettings {
 }
 
 export interface GoogleAuthState {
+  mode: GoogleAuthMode;
   accessToken: string | null;
   scope: string | null;
   expiresAt: number | null;

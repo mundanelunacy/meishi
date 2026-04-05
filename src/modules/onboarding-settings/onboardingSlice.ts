@@ -1,4 +1,4 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../../app/store";
 import type { AppSettings, GoogleAuthState, SupportedLlmProvider } from "../../shared/types/models";
 import {
@@ -6,7 +6,9 @@ import {
   defaultSettings,
   loadPersistedState,
   persistOnboardingState,
-} from "../local-data/storage";
+} from "../local-data";
+import { googleAuthClient } from "../google-auth/googleIdentity";
+import { requiresRealGoogleClientId } from "../../app/env";
 
 const persisted = typeof window === "undefined" ? { settings: defaultSettings } : loadPersistedState();
 
@@ -17,11 +19,7 @@ interface OnboardingState {
 
 const initialState: OnboardingState = {
   settings: persisted.settings,
-  googleAuth: persisted.googleAuth ?? {
-    accessToken: null,
-    scope: null,
-    expiresAt: null,
-  },
+  googleAuth: googleAuthClient.getInitialState(persisted.googleAuth),
 };
 
 function persistState(state: OnboardingState) {
@@ -60,20 +58,12 @@ const onboardingSlice = createSlice({
       persistState(state);
     },
     signOutGoogle(state) {
-      state.googleAuth = {
-        accessToken: null,
-        scope: null,
-        expiresAt: null,
-      };
+      state.googleAuth = googleAuthClient.getInitialState(state.googleAuth);
       persistState(state);
     },
     clearAllSettings(state) {
       state.settings = defaultSettings;
-      state.googleAuth = {
-        accessToken: null,
-        scope: null,
-        expiresAt: null,
-      };
+      state.googleAuth = googleAuthClient.getInitialState();
       clearPersistedState();
     },
   },
@@ -97,5 +87,24 @@ export const selectHasCompletedOnboarding = (state: RootState) =>
   Boolean(state.onboarding.settings.onboardingCompletedAt);
 export const selectHasLlmConfiguration = (state: RootState) =>
   state.onboarding.settings.llmApiKey.trim().length > 0;
-export const selectHasGoogleToken = (state: RootState) =>
+export const selectHasGoogleAuthorization = (state: RootState) =>
   Boolean(state.onboarding.googleAuth.accessToken);
+export const selectHasGoogleToken = selectHasGoogleAuthorization;
+
+export const selectAppReadiness = createSelector(
+  [
+    selectHasLlmConfiguration,
+    selectHasGoogleAuthorization,
+    selectHasCompletedOnboarding,
+    selectGoogleAuth,
+  ],
+  (hasLlmConfiguration, hasGoogleAuthorization, hasCompletedOnboarding, googleAuth) => ({
+    hasLlmConfiguration,
+    hasGoogleAuthorization,
+    hasCompletedOnboarding,
+    isCaptureReady:
+      hasLlmConfiguration && hasGoogleAuthorization && hasCompletedOnboarding,
+    requiresGoogleClientId: requiresRealGoogleClientId(),
+    googleAuthMode: googleAuth.mode,
+  })
+);

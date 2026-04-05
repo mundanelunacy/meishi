@@ -6,8 +6,9 @@ import { Button } from "../../shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../shared/ui/card";
 import { Alert } from "../../shared/ui/alert";
 import { createCapturedCardImages } from "./imageProcessing";
-import { loadCapturedImages, saveCapturedImages } from "../local-data/database";
+import { loadCapturedImages, saveCapturedImages, saveDraft } from "../local-data";
 import {
+  createContactDraft,
   selectCapturedImages,
   populateDraftFromExtraction,
   setCapturedImages,
@@ -58,7 +59,9 @@ export function CaptureWorkspace() {
 
     const result = await extractBusinessCard({ images });
     if ("data" in result) {
-      dispatch(populateDraftFromExtraction(result.data));
+      const nextDraft = createContactDraft(images, result.data);
+      dispatch(populateDraftFromExtraction({ extraction: result.data, draft: nextDraft }));
+      await saveDraft(nextDraft);
       pushToast("Extraction finished. Review the draft before syncing.");
       navigate({ to: "/review" });
       return;

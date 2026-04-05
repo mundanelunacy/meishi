@@ -1,12 +1,17 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { RootState } from "../../app/store";
 import type {
   GoogleCreateContactResponse,
   GoogleUpdatePhotoResponse,
   CreateContactPayload,
 } from "../../shared/types/google";
-import type { VerifiedContact } from "../../shared/types/models";
+import type { GoogleAuthState, VerifiedContact } from "../../shared/types/models";
 import { base64FromDataUrl } from "../../shared/lib/utils";
+
+interface GooglePeopleApiState {
+  onboarding: {
+    googleAuth: Pick<GoogleAuthState, "accessToken" | "mode">;
+  };
+}
 
 function buildContactPayload(contact: VerifiedContact): CreateContactPayload {
   return {
@@ -40,8 +45,17 @@ export const googlePeopleApi = createApi({
   endpoints: (builder) => ({
     createContact: builder.mutation<GoogleCreateContactResponse, VerifiedContact>({
       async queryFn(contact, api) {
-        const state = api.getState() as RootState;
-        const accessToken = state.onboarding.googleAuth.accessToken;
+        const state = api.getState() as GooglePeopleApiState;
+        const { accessToken, mode } = state.onboarding.googleAuth;
+
+        if (mode === "mock") {
+          return {
+            data: {
+              resourceName: `people/mock-${contact.id}`,
+              etag: "mock-etag",
+            },
+          };
+        }
 
         if (!accessToken) {
           return {
@@ -91,8 +105,18 @@ export const googlePeopleApi = createApi({
       { resourceName: string; dataUrl: string }
     >({
       async queryFn(args, api) {
-        const state = api.getState() as RootState;
-        const accessToken = state.onboarding.googleAuth.accessToken;
+        const state = api.getState() as GooglePeopleApiState;
+        const { accessToken, mode } = state.onboarding.googleAuth;
+
+        if (mode === "mock") {
+          return {
+            data: {
+              person: {
+                resourceName: args.resourceName,
+              },
+            },
+          };
+        }
 
         if (!accessToken) {
           return {

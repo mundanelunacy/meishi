@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { KeyRound, ShieldAlert } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { hasGoogleClientId } from "../../app/env";
+import { requiresRealGoogleClientId, usesMockGoogleAuth } from "../../app/env";
 import { Button } from "../../shared/ui/button";
 import {
   Card,
@@ -18,6 +18,7 @@ import { Alert } from "../../shared/ui/alert";
 import { pushToast } from "../../shared/ui/toastBus";
 import {
   completeOnboarding,
+  selectAppReadiness,
   selectGoogleAuth,
   selectSettings,
   setGoogleAuthState,
@@ -25,34 +26,38 @@ import {
   setLlmProvider,
   setPreferredOpenAiModel,
 } from "./onboardingSlice";
-import { getGoogleScope, requestGoogleAccessToken } from "../google-auth/googleIdentity";
+import {
+  getGoogleScope,
+  googleAuthClient,
+  requestGoogleAccessToken,
+} from "../google-auth/googleIdentity";
 
 export function OnboardingPanel() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const settings = useAppSelector(selectSettings);
   const googleAuth = useAppSelector(selectGoogleAuth);
+  const readiness = useAppSelector(selectAppReadiness);
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const llmReady = settings.llmApiKey.trim().length > 0;
-  const googleReady = Boolean(googleAuth.accessToken);
-  const canContinue = llmReady && googleReady;
+  const canContinue = readiness.hasLlmConfiguration && readiness.hasGoogleAuthorization;
 
   async function handleGoogleConnect() {
     setIsAuthorizing(true);
     setErrorMessage(null);
 
     try {
-      const response = await requestGoogleAccessToken(googleAuth.accessToken ? "" : "consent");
-      dispatch(
-        setGoogleAuthState({
-          accessToken: response.access_token,
-          scope: response.scope,
-          expiresAt: Date.now() + response.expires_in * 1000,
-        })
+      const nextAuthState = await requestGoogleAccessToken({
+        prompt: googleAuth.accessToken ? "" : "consent",
+        hint: googleAuth.accountHint,
+      });
+      dispatch(setGoogleAuthState(nextAuthState));
+      pushToast(
+        nextAuthState.mode === "mock"
+          ? "Mock Google session ready for local testing."
+          : "Google Contacts access granted."
       );
-      pushToast("Google Contacts access granted.");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to authorize Google Contacts.";
@@ -88,7 +93,12 @@ export function OnboardingPanel() {
                 </p>
               </div>
             </div>
-            {!hasGoogleClientId() ? (
+            {usesMockGoogleAuth() ? (
+              <Alert className="border-accent/40 bg-accent/10 text-foreground">
+                Development mode is using mock Google auth. You can test the app flow locally, but this is not a real Google Contacts session.
+              </Alert>
+            ) : null}
+            {requiresRealGoogleClientId() ? (
               <Alert>
                 Set <code>VITE_GOOGLE_CLIENT_ID</code> in your Vite environment before Google sign-in will work.
               </Alert>
@@ -145,8 +155,19 @@ export function OnboardingPanel() {
             <p className="mb-4 text-sm text-muted-foreground">
               The app requests the <code>{getGoogleScope()}</code> scope and re-acquires short-lived access tokens when needed.
             </p>
-            <Button onClick={handleGoogleConnect} disabled={isAuthorizing || !hasGoogleClientId()}>
-              {googleReady ? "Refresh Google access" : "Connect Google account"}
+            <div className="mb-4 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full bg-background px-3 py-1 font-medium text-foreground">
+                Mode: {googleAuth.mode === "mock" ? "Developer mock" : "Google OAuth"}
+              </span>
+              <span className="rounded-full bg-background px-3 py-1 text-muted-foreground">
+                Status: {readiness.hasGoogleAuthorization ? "Authorized" : "Not connected"}
+              </span>
+            </div>
+            <Button
+              onClick={handleGoogleConnect}
+              disabled={isAuthorizing || !googleAuthClient.isConfigured()}
+            >
+              {readiness.hasGoogleAuthorization ? "Refresh Google access" : "Connect Google account"}
             </Button>
           </section>
 

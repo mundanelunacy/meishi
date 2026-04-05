@@ -13,6 +13,7 @@
 - RTK Query mutation for `people.updateContactPhoto`
 - Sync status tracking
 - Local recording of sync results
+- Mock-mode sync responses for local development when Google auth is explicitly mocked
 
 ## Interfaces
 
@@ -34,3 +35,4 @@
 
 - Google Contacts does not support arbitrary multi-image business-card attachments in this flow.
 - Mutating contact creation and photo upload should remain sequential.
+- Mock-mode responses must remain clearly limited to local development and should not obscure the real production Google API boundary.

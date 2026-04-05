@@ -5,6 +5,7 @@
 - Load Google Identity Services in the browser.
 - Request Google Contacts access tokens through the GIS token model.
 - Revoke Google access when the user signs out.
+- Provide a single typed auth client surface that hides whether the app is using real GIS or development mock auth.
 
 ## Features
 
@@ -12,10 +13,13 @@
 - Token request helper
 - Scope definition for Google Contacts sync
 - Sign-out and revoke helper
+- Development-safe mock auth client for local testing
 
 ## Interfaces
 
 - Exposes:
+  - `googleAuthClient`
+  - `createGoogleAuthClient`
   - `loadGoogleIdentityScript`
   - `requestGoogleAccessToken`
   - `revokeGoogleAccessToken`
@@ -29,5 +33,7 @@
 
 ## Constraints
 
-- Requires `VITE_GOOGLE_CLIENT_ID`.
+- Real auth requires `VITE_GOOGLE_CLIENT_ID`.
+- `VITE_GOOGLE_AUTH_MODE=mock|real` can override the default mode selection.
 - Access tokens are short-lived and should not be treated as durable local settings.
+- Mock auth is for local development only and should never be presented as a real Google session.

@@ -7,10 +7,16 @@ export interface StoredCaptureSession {
   createdAt: string;
 }
 
+interface StoredSyncOutcome extends SyncOutcome {
+  id: string;
+}
+
+const ACTIVE_CAPTURE_SESSION_ID = "active-session";
+
 class MeishiDatabase extends Dexie {
   images!: Table<CapturedCardImage, string>;
   drafts!: Table<ContactDraft, string>;
-  syncHistory!: Table<SyncOutcome, string>;
+  syncHistory!: Table<StoredSyncOutcome, string>;
   sessions!: Table<StoredCaptureSession, string>;
 
   constructor() {
@@ -21,6 +27,12 @@ class MeishiDatabase extends Dexie {
       syncHistory: "contactResourceName, syncedAt",
       sessions: "id, createdAt",
     });
+    this.version(2).stores({
+      images: "id, capturedAt",
+      drafts: "id, updatedAt",
+      syncHistory: "id, contactResourceName, syncedAt",
+      sessions: "id, createdAt",
+    });
   }
 }
 
@@ -29,14 +41,14 @@ export const db = new MeishiDatabase();
 export async function saveCapturedImages(images: CapturedCardImage[]) {
   await db.images.bulkPut(images);
   await db.sessions.put({
-    id: "active-session",
+    id: ACTIVE_CAPTURE_SESSION_ID,
     imageIds: images.map((image) => image.id),
     createdAt: new Date().toISOString(),
   });
 }
 
 export async function loadCapturedImages() {
-  const session = await db.sessions.get("active-session");
+  const session = await db.sessions.get(ACTIVE_CAPTURE_SESSION_ID);
   if (!session) {
     return [];
   }
@@ -55,5 +67,8 @@ export async function loadLatestDraft() {
 }
 
 export async function saveSyncOutcome(outcome: SyncOutcome) {
-  await db.syncHistory.put(outcome, outcome.contactResourceName);
+  await db.syncHistory.put({
+    id: crypto.randomUUID(),
+    ...outcome,
+  });
 }

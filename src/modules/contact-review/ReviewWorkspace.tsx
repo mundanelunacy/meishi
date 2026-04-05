@@ -1,9 +1,10 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import type { ContactDraft } from "../../shared/types/models";
 import { Button } from "../../shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../shared/ui/card";
 import { Input } from "../../shared/ui/input";
@@ -18,12 +19,7 @@ import {
   restoreDraft,
   updateDraft,
 } from "./reviewDraftSlice";
-import {
-  loadCapturedImages,
-  loadLatestDraft,
-  saveDraft,
-  saveSyncOutcome,
-} from "../local-data/database";
+import { loadCapturedImages, loadLatestDraft, saveDraft, saveSyncOutcome } from "../local-data";
 import {
   useCreateContactMutation,
   useUpdateContactPhotoMutation,
@@ -47,6 +43,35 @@ const reviewSchema = z.object({
 
 type ReviewFormValues = z.infer<typeof reviewSchema>;
 
+const AUTOSAVE_DELAY_MS = 400;
+
+function getDraftFields(values: ReviewFormValues) {
+  return {
+    fullName: values.fullName,
+    firstName: values.firstName,
+    lastName: values.lastName,
+    organization: values.organization,
+    title: values.title,
+    email: values.email,
+    phone: values.phone,
+    website: values.website,
+    notes: values.notes,
+    address: values.address,
+  } satisfies Pick<
+    ContactDraft,
+    | "fullName"
+    | "firstName"
+    | "lastName"
+    | "organization"
+    | "title"
+    | "email"
+    | "phone"
+    | "website"
+    | "notes"
+    | "address"
+  >;
+}
+
 export function ReviewWorkspace() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -54,6 +79,8 @@ export function ReviewWorkspace() {
   const images = useAppSelector(selectCapturedImages);
   const [createContact, createContactState] = useCreateContactMutation();
   const [updateContactPhoto] = useUpdateContactPhotoMutation();
+  const autosaveTimeoutRef = useRef<number | null>(null);
+  const hydratedDraftSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (draft || images.length) {
@@ -89,6 +116,12 @@ export function ReviewWorkspace() {
       return;
     }
 
+    const nextSignature = `${draft.id}:${images.map((image) => image.id).join(",")}`;
+    if (hydratedDraftSignatureRef.current === nextSignature) {
+      return;
+    }
+
+    hydratedDraftSignatureRef.current = nextSignature;
     form.reset({
       fullName: draft.fullName,
       firstName: draft.firstName,
@@ -103,6 +136,50 @@ export function ReviewWorkspace() {
       selectedPhotoImageId: images[0]?.id,
     });
   }, [draft, form, images]);
+
+  useEffect(() => {
+    if (!draft) {
+      return;
+    }
+
+    const subscription = form.watch((values) => {
+      if (autosaveTimeoutRef.current) {
+        window.clearTimeout(autosaveTimeoutRef.current);
+      }
+
+      autosaveTimeoutRef.current = window.setTimeout(() => {
+        const draftFields = getDraftFields({
+          fullName: values.fullName ?? "",
+          firstName: values.firstName ?? "",
+          lastName: values.lastName ?? "",
+          organization: values.organization ?? "",
+          title: values.title ?? "",
+          email: values.email ?? "",
+          phone: values.phone ?? "",
+          website: values.website ?? "",
+          notes: values.notes ?? "",
+          address: values.address ?? "",
+          selectedPhotoImageId: values.selectedPhotoImageId,
+        });
+
+        dispatch(updateDraft(draftFields));
+        void saveDraft({
+          ...draft,
+          ...draftFields,
+          sourceImageIds: draft.sourceImageIds,
+          confidenceNotes: draft.confidenceNotes,
+          updatedAt: new Date().toISOString(),
+        });
+      }, AUTOSAVE_DELAY_MS);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      if (autosaveTimeoutRef.current) {
+        window.clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+  }, [dispatch, draft, form]);
 
   if (!draft) {
     return (
@@ -122,10 +199,11 @@ export function ReviewWorkspace() {
 
   async function onSubmit(values: ReviewFormValues) {
     const selectedPhoto = images.find((image) => image.id === values.selectedPhotoImageId);
-    dispatch(updateDraft(values));
+    const draftFields = getDraftFields(values);
+    dispatch(updateDraft(draftFields));
     await saveDraft({
       ...draft,
-      ...values,
+      ...draftFields,
       sourceImageIds: draft.sourceImageIds,
       confidenceNotes: draft.confidenceNotes,
       updatedAt: new Date().toISOString(),

@@ -15,7 +15,10 @@ const initialState: ReviewDraftState = {
   verifiedContact: null,
 };
 
-function newDraft(images: CapturedCardImage[], extraction?: OpenAiExtractionResponse): ContactDraft {
+export function createContactDraft(
+  images: CapturedCardImage[],
+  extraction?: OpenAiExtractionResponse
+): ContactDraft {
   const timestamp = new Date().toISOString();
   return {
     id: crypto.randomUUID(),
@@ -42,11 +45,14 @@ const reviewDraftSlice = createSlice({
   reducers: {
     setCapturedImages(state, action: PayloadAction<CapturedCardImage[]>) {
       state.images = action.payload;
-      state.draft = state.draft ?? newDraft(action.payload);
+      state.draft = state.draft ?? createContactDraft(action.payload);
       state.verifiedContact = null;
     },
-    populateDraftFromExtraction(state, action: PayloadAction<OpenAiExtractionResponse>) {
-      state.draft = newDraft(state.images, action.payload);
+    populateDraftFromExtraction(
+      state,
+      action: PayloadAction<{ extraction: OpenAiExtractionResponse; draft: ContactDraft }>
+    ) {
+      state.draft = action.payload.draft;
       state.verifiedContact = null;
     },
     restoreDraft(

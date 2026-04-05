@@ -9,7 +9,9 @@
 ## Features
 
 - `usePwaLifecycle` hook
-- App update prompt support
+- Install prompt support
+- Prompt-based app update support
+- Offline-ready messaging for shell/local data only
 - Registration error logging
 
 ## Interfaces
@@ -23,3 +25,5 @@
 
 - Cache only shell assets and runtime-safe resources.
 - Do not imply that capture, extraction, or sync are available offline when external APIs are required.
+- Keep service-worker updates explicit instead of forcing background reloads during an active capture/review session.
+- In this repo, test real PWA lifecycle behavior with `npm run build && npm run preview`; dev-server PWA behavior is not active unless `devOptions.enabled` is explicitly turned on in `vite.config.ts`.

@@ -9,7 +9,9 @@
 
 - `localStorage` helpers for onboarding/settings persistence
 - Dexie-based IndexedDB for images, sessions, drafts, and sync history
-- Recovery helpers for active capture and latest draft
+- Recovery helpers for active capture and the latest autosaved draft
+- Append-only sync outcome recording for create-plus-photo flows
+- Deliberate stripping of durable Google access tokens before persistence
 
 ## Interfaces
 
@@ -26,13 +28,15 @@
 ## Data ownership
 
 - `localStorage`
-  - settings only
+  - settings
+  - light Google auth metadata only
 - IndexedDB
   - card images
   - active session
-  - draft
-  - sync history
+  - latest draft
+  - append-only sync history
 
 ## Constraints
 
 - Do not store durable Google access tokens here.
+- Keep review-draft autosave recoverable after navigation or refresh.

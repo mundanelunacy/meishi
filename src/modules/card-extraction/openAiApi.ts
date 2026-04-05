@@ -1,7 +1,12 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { RootState } from "../../app/store";
 import { businessCardExtractionSchema } from "./extractionSchema";
-import type { ExtractionRequest } from "../../shared/types/models";
+import type { AppSettings, ExtractionRequest } from "../../shared/types/models";
+
+interface OpenAiApiState {
+  onboarding: {
+    settings: Pick<AppSettings, "llmApiKey" | "preferredOpenAiModel" | "llmProvider">;
+  };
+}
 
 function buildInput(request: ExtractionRequest) {
   return [
@@ -73,7 +78,7 @@ export const openAiApi = createApi({
       ExtractionRequest
     >({
       async queryFn(request, api) {
-        const state = api.getState() as RootState;
+        const state = api.getState() as OpenAiApiState;
         const { llmApiKey, preferredOpenAiModel, llmProvider } = state.onboarding.settings;
 
         if (llmProvider !== "openai") {

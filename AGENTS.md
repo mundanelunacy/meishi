@@ -30,6 +30,8 @@
 3. Prefer typed helpers and local validation over ad hoc component logic.
 4. Keep browser-only constraints in mind when choosing dependencies or APIs.
 5. If the change affects another module, update the interface contract explicitly rather than relying on hidden coupling.
+6. Treat `src/modules/local-data` as the persistence boundary. Import from its module entrypoint instead of reaching into `storage.ts` or `database.ts` directly.
+7. Do not persist durable Google auth tokens. Only light metadata such as scope and account hint belongs in browser storage.
 
 ## Test-debug loop
 
@@ -53,6 +55,14 @@
    - contact photo upload.
 8. When debugging UI issues, reproduce them at the route/module boundary first, then narrow down to shared UI primitives only if necessary.
 9. Before finishing, rerun the narrowest meaningful checks plus `npm run lint` if UI or shared code changed.
+10. For PWA work, use `npm run build && npm run preview` for real install/offline/update verification unless `devOptions.enabled` has been explicitly turned on in `vite.config.ts`.
+11. Remember that `VITE_*` env vars are compiled into the browser build. Production-only values in `.env.production` will not appear in `npm run dev`.
+
+## Implementation notes
+
+- Review draft edits currently autosave with a short debounce in `src/modules/contact-review/ReviewWorkspace.tsx`. Be careful not to introduce form-reset behavior that wipes in-progress edits.
+- IndexedDB sync history is append-only. The public `SyncOutcome` interface stays stable while local storage adds its own generated record key internally.
+- PWA offline messaging must stay explicit: the app shell and local data can recover offline, but extraction and Google sync still require network access.
 
 ## Tool selection quick guide
 
