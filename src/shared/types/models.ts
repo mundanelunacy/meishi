@@ -52,9 +52,16 @@ export interface ContactDraft {
   id: string;
   sourceImageIds: string[];
   fullName: string;
+  namePrefix: string;
   firstName: string;
+  phoneticFirstName: string;
+  phoneticMiddleName: string;
+  phoneticLastName: string;
   lastName: string;
+  nickname: string;
+  fileAs: string;
   organization: string;
+  department: string;
   title: string;
   email: string;
   phone: string;

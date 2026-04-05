@@ -74,9 +74,16 @@ const customFieldSchema = z.object({
 
 const reviewSchema = z.object({
   fullName: z.string(),
+  namePrefix: z.string(),
   firstName: z.string(),
+  phoneticFirstName: z.string(),
+  phoneticMiddleName: z.string(),
+  phoneticLastName: z.string(),
   lastName: z.string(),
+  nickname: z.string(),
+  fileAs: z.string(),
   organization: z.string(),
+  department: z.string(),
   title: z.string(),
   notes: z.string(),
   emails: z.array(multiValueFieldSchema),
@@ -146,9 +153,16 @@ function buildFormValues(
 ): ReviewFormValues {
   return {
     fullName: draft?.fullName ?? "",
+    namePrefix: draft?.namePrefix ?? "",
     firstName: draft?.firstName ?? "",
+    phoneticFirstName: draft?.phoneticFirstName ?? "",
+    phoneticMiddleName: draft?.phoneticMiddleName ?? "",
+    phoneticLastName: draft?.phoneticLastName ?? "",
     lastName: draft?.lastName ?? "",
+    nickname: draft?.nickname ?? "",
+    fileAs: draft?.fileAs ?? "",
     organization: draft?.organization ?? "",
+    department: draft?.department ?? "",
     title: draft?.title ?? "",
     notes: draft?.notes ?? "",
     emails: normalizeMultiValueFields(draft?.emails, draft?.email ?? ""),
@@ -189,9 +203,16 @@ function normalizeWatchedValues(
 ): ReviewFormValues {
   return {
     fullName: values.fullName ?? "",
+    namePrefix: values.namePrefix ?? "",
     firstName: values.firstName ?? "",
+    phoneticFirstName: values.phoneticFirstName ?? "",
+    phoneticMiddleName: values.phoneticMiddleName ?? "",
+    phoneticLastName: values.phoneticLastName ?? "",
     lastName: values.lastName ?? "",
+    nickname: values.nickname ?? "",
+    fileAs: values.fileAs ?? "",
     organization: values.organization ?? "",
+    department: values.department ?? "",
     title: values.title ?? "",
     notes: values.notes ?? "",
     emails: normalizeWatchedMultiValueFields(values.emails),
@@ -243,9 +264,16 @@ function getDraftFields(values: ReviewFormValues) {
 
   return {
     fullName: values.fullName,
+    namePrefix: values.namePrefix,
     firstName: values.firstName,
+    phoneticFirstName: values.phoneticFirstName,
+    phoneticMiddleName: values.phoneticMiddleName,
+    phoneticLastName: values.phoneticLastName,
     lastName: values.lastName,
+    nickname: values.nickname,
+    fileAs: values.fileAs,
     organization: values.organization,
+    department: values.department,
     title: values.title,
     email: emails[0]?.value ?? "",
     phone: phones[0]?.value ?? "",
@@ -262,9 +290,16 @@ function getDraftFields(values: ReviewFormValues) {
   } satisfies Pick<
     ContactDraft,
     | "fullName"
+    | "namePrefix"
     | "firstName"
+    | "phoneticFirstName"
+    | "phoneticMiddleName"
+    | "phoneticLastName"
     | "lastName"
+    | "nickname"
+    | "fileAs"
     | "organization"
+    | "department"
     | "title"
     | "email"
     | "phone"
@@ -551,6 +586,9 @@ export function ReviewWorkspace() {
             <Field label="Full name" htmlFor="review-full-name">
               <Input id="review-full-name" {...form.register("fullName")} />
             </Field>
+            <Field label="Name prefix" htmlFor="review-name-prefix">
+              <Input id="review-name-prefix" {...form.register("namePrefix")} />
+            </Field>
             <Field label="Title" htmlFor="review-title">
               <Input id="review-title" {...form.register("title")} />
             </Field>
@@ -559,6 +597,36 @@ export function ReviewWorkspace() {
             </Field>
             <Field label="Last name" htmlFor="review-last-name">
               <Input id="review-last-name" {...form.register("lastName")} />
+            </Field>
+            <Field
+              label="Phonetic first"
+              htmlFor="review-phonetic-first-name"
+            >
+              <Input
+                id="review-phonetic-first-name"
+                {...form.register("phoneticFirstName")}
+              />
+            </Field>
+            <Field
+              label="Phonetic middle"
+              htmlFor="review-phonetic-middle-name"
+            >
+              <Input
+                id="review-phonetic-middle-name"
+                {...form.register("phoneticMiddleName")}
+              />
+            </Field>
+            <Field label="Phonetic last" htmlFor="review-phonetic-last-name">
+              <Input
+                id="review-phonetic-last-name"
+                {...form.register("phoneticLastName")}
+              />
+            </Field>
+            <Field label="Nickname" htmlFor="review-nickname">
+              <Input id="review-nickname" {...form.register("nickname")} />
+            </Field>
+            <Field label="File as" htmlFor="review-file-as">
+              <Input id="review-file-as" {...form.register("fileAs")} />
             </Field>
             <Field
               label="Organization"
@@ -570,6 +638,12 @@ export function ReviewWorkspace() {
                 {...form.register("organization")}
               />
             </Field>
+            <Field label="Department" htmlFor="review-department">
+              <Input
+                id="review-department"
+                {...form.register("department")}
+              />
+            </Field>
           </div>
 
           <RepeatableFieldSection
@@ -579,9 +653,6 @@ export function ReviewWorkspace() {
             fieldArray={emailsFieldArray}
             register={form.register}
             name="emails"
-            valuePlaceholder="name@example.com"
-            typePlaceholder="work"
-            labelPlaceholder="Press"
             legend="Email"
           />
 
@@ -592,9 +663,6 @@ export function ReviewWorkspace() {
             fieldArray={phonesFieldArray}
             register={form.register}
             name="phones"
-            valuePlaceholder="+82 10-1234-5678"
-            typePlaceholder="mobile"
-            labelPlaceholder="Desk"
             legend="Phone"
           />
 
@@ -605,9 +673,6 @@ export function ReviewWorkspace() {
             fieldArray={addressesFieldArray}
             register={form.register}
             name="addresses"
-            valuePlaceholder="123 Main St, Seoul"
-            typePlaceholder="work"
-            labelPlaceholder="HQ"
             legend="Address"
             multiline
           />
@@ -619,9 +684,6 @@ export function ReviewWorkspace() {
             fieldArray={websitesFieldArray}
             register={form.register}
             name="websites"
-            valuePlaceholder="https://example.com"
-            typePlaceholder="work"
-            labelPlaceholder="Portfolio"
             legend="Website"
           />
 
@@ -632,9 +694,6 @@ export function ReviewWorkspace() {
             fieldArray={relatedPeopleFieldArray}
             register={form.register}
             name="relatedPeople"
-            valuePlaceholder="Jane Doe"
-            typePlaceholder="assistant"
-            labelPlaceholder="EA"
             legend="Related person"
           />
 
@@ -645,9 +704,6 @@ export function ReviewWorkspace() {
             fieldArray={significantDatesFieldArray}
             register={form.register}
             name="significantDates"
-            valuePlaceholder="2026-04-05"
-            typePlaceholder="anniversary"
-            labelPlaceholder="Joined company"
             legend="Significant date"
             valueInputType="date"
           />
@@ -677,9 +733,16 @@ export function ReviewWorkspace() {
               images={images}
               values={{
                 fullName: currentValues.fullName ?? "",
+                namePrefix: currentValues.namePrefix ?? "",
                 firstName: currentValues.firstName ?? "",
+                phoneticFirstName: currentValues.phoneticFirstName ?? "",
+                phoneticMiddleName: currentValues.phoneticMiddleName ?? "",
+                phoneticLastName: currentValues.phoneticLastName ?? "",
                 lastName: currentValues.lastName ?? "",
+                nickname: currentValues.nickname ?? "",
+                fileAs: currentValues.fileAs ?? "",
                 organization: currentValues.organization ?? "",
+                department: currentValues.department ?? "",
                 title: currentValues.title ?? "",
                 notes: currentValues.notes ?? "",
                 emails: currentValues.emails ?? [],
@@ -746,9 +809,6 @@ function RepeatableFieldSection({
   fieldArray,
   register,
   name,
-  valuePlaceholder,
-  typePlaceholder,
-  labelPlaceholder,
   legend,
   multiline = false,
   valueInputType = "text",
@@ -765,9 +825,6 @@ function RepeatableFieldSection({
   };
   register: UseFormRegister<ReviewFormValues>;
   name: RepeatableFieldName;
-  valuePlaceholder: string;
-  typePlaceholder: string;
-  labelPlaceholder: string;
   legend: string;
   multiline?: boolean;
   valueInputType?: "text" | "date";
@@ -824,14 +881,12 @@ function RepeatableFieldSection({
                       id={`${name}-${index}-value`}
                       className="min-h-[96px]"
                       {...register(`${name}.${index}.value` as const)}
-                      placeholder={valuePlaceholder}
                     />
                   ) : (
                     <Input
                       id={`${name}-${index}-value`}
                       type={valueInputType}
                       {...register(`${name}.${index}.value` as const)}
-                      placeholder={valuePlaceholder}
                     />
                   )}
                 </Field>
@@ -839,14 +894,12 @@ function RepeatableFieldSection({
                   <Input
                     id={`${name}-${index}-type`}
                     {...register(`${name}.${index}.type` as const)}
-                    placeholder={typePlaceholder}
                   />
                 </Field>
                 <Field label="Label" htmlFor={`${name}-${index}-label`}>
                   <Input
                     id={`${name}-${index}-label`}
                     {...register(`${name}.${index}.label` as const)}
-                    placeholder={labelPlaceholder}
                   />
                 </Field>
               </div>
@@ -916,14 +969,12 @@ function CustomFieldSection({
                   <Input
                     id={`custom-fields-${index}-key`}
                     {...register(`customFields.${index}.key` as const)}
-                    placeholder="X-ASSISTANT"
                   />
                 </Field>
                 <Field label="Value" htmlFor={`custom-fields-${index}-value`}>
                   <Input
                     id={`custom-fields-${index}-value`}
                     {...register(`customFields.${index}.value` as const)}
-                    placeholder="Jane Doe"
                   />
                 </Field>
               </div>

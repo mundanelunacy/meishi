@@ -9,6 +9,7 @@
 ## Features
 
 - Split review workspace with image selection and editable fields
+- Google-Contacts-aligned scalar editing for name/company details such as prefix, phonetic name parts, nickname, file-as, and department
 - Dynamic Google-Contacts-style repeatable sections for emails, phone numbers, addresses, websites, related people, significant dates, and custom fields
 - Confidence-note display from extraction
 - Draft persistence and restore support

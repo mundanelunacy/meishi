@@ -158,3 +158,39 @@
 - `npm run test`
 - `npm run lint`
 - `npm run test -- src/modules/contact-review/ReviewWorkspace.test.tsx`
+
+### Capture experience and camera behavior
+
+- Added an adaptive capture-mode boundary in `src/modules/card-capture` that prefers the native camera file input on mobile devices and opens an in-browser live camera preview on desktop-class browsers.
+- Added rear-camera preference detection with front-camera and generic-video fallbacks so desktop webcam capture stays usable even when device labels or facing constraints are incomplete.
+- Added a large live-preview capture dialog for webcam flows, including snapshot capture from `getUserMedia()` and clearer permission/device error messaging.
+- Added per-image deletion from the active capture session while preserving IndexedDB-backed session recovery.
+- Added an SVG favicon link in `index.html`.
+
+### Google Contacts-aligned name and company fields
+
+- Extended the extraction schema, persisted draft model, and review form with Google-Contacts-style scalar fields for name prefix, phonetic name parts, nickname, file-as, and department.
+- Updated the shared extraction prompt so bilingual cards can map non-Latin names into the primary name fields and Latin-script equivalents into the phonetic fields.
+- Expanded Google People payload generation and developer vCard preview output to include honorific prefix, phonetic names, nickname, file-as, and department.
+- Updated the People API create-contact request mask to request the new `nicknames` and `fileAses` fields.
+
+### Documentation
+
+- Updated the root `README.md` to clarify that the review workspace now covers Google-Contacts-style scalar name and company fields in addition to repeatable contact collections.
+- Updated `src/modules/card-capture/README.md` to document the new mobile-native vs desktop-live-preview split, rear-camera preference/fallback behavior, file-input fallback, per-image removal, and the browser-hint limitation of `capture="environment"`.
+- Updated `src/modules/card-extraction/README.md` to document Google-Contacts-aligned top-level extraction for richer name and company details.
+- Updated `src/modules/contact-review/README.md` to document scalar editing support for the new name and company fields.
+- Updated `src/modules/google-contacts/README.md` to document Google People mapping for the expanded name and company model.
+
+### Tests added and updated
+
+- Added unit coverage for capture-experience selection and preferred camera-facing-mode fallback behavior.
+- Expanded capture workspace tests to cover active-session image deletion, native camera input selection on mobile, webcam preview on desktop, and file-input fallback when webcam APIs are unavailable.
+- Expanded extraction schema and structured extraction tests for the new Google-Contacts-aligned name and company fields.
+- Expanded review workspace, contact mapping, and local-data tests to cover the richer scalar fields through review, persistence, Google payload generation, and vCard output.
+
+### Verification run
+
+- `npm run typecheck`
+- `npm run test -- src/modules/card-capture/CaptureWorkspace.test.tsx src/modules/card-capture/cameraFacingMode.test.ts src/modules/card-capture/captureExperience.test.ts src/modules/card-extraction/extractionSchema.test.ts src/modules/card-extraction/structuredExtraction.test.ts src/modules/contact-review/ReviewWorkspace.test.tsx src/modules/google-contacts/contactMapping.test.ts src/modules/local-data/database.test.ts`
+- `npm run lint`

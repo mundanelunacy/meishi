@@ -6,9 +6,16 @@ const contact: VerifiedContact = {
   id: "draft-1",
   sourceImageIds: ["img-1"],
   fullName: "Ada Lovelace",
+  namePrefix: "Countess",
   firstName: "Ada",
+  phoneticFirstName: "A-da",
+  phoneticMiddleName: "By-ron",
+  phoneticLastName: "Love-lace",
   lastName: "Lovelace",
+  nickname: "Ada",
+  fileAs: "Lovelace, Ada",
   organization: "Analytical Engines",
+  department: "Research",
   title: "Founder",
   email: "ada@example.com",
   phone: "+82 10-1234-5678",
@@ -37,9 +44,16 @@ const contact: VerifiedContact = {
   confidenceNotes: [],
   extractionSnapshot: {
     fullName: "Ada Lovelace",
+    namePrefix: "Countess",
     firstName: "Ada",
+    phoneticFirstName: "A-da",
+    phoneticMiddleName: "By-ron",
+    phoneticLastName: "Love-lace",
     lastName: "Lovelace",
+    nickname: "Ada",
+    fileAs: "Lovelace, Ada",
     organization: "Analytical Engines",
+    department: "Research",
     title: "Founder",
     email: "ada@example.com",
     emails: [
@@ -74,8 +88,12 @@ describe("contactMapping", () => {
       names: [
         {
           displayName: "Ada Lovelace",
+          honorificPrefix: "Countess",
           givenName: "Ada",
           familyName: "Lovelace",
+          phoneticGivenName: "A-da",
+          phoneticMiddleName: "By-ron",
+          phoneticFamilyName: "Love-lace",
         },
       ],
       emailAddresses: [
@@ -86,7 +104,11 @@ describe("contactMapping", () => {
         { value: "+82 10-1234-5678", type: "work" },
         { value: "+82 10-9999-8888", type: "cell" },
       ],
-      organizations: [{ name: "Analytical Engines", title: "Founder" }],
+      organizations: [
+        { name: "Analytical Engines", department: "Research", title: "Founder" },
+      ],
+      nicknames: [{ value: "Ada", type: "default" }],
+      fileAses: [{ value: "Lovelace, Ada" }],
       biographies: [
         {
           value:
@@ -107,7 +129,14 @@ describe("contactMapping", () => {
   it("omits empty fields in the Google People payload and vCard output", () => {
     const minimalContact = {
       ...contact,
+      namePrefix: "",
+      phoneticFirstName: "",
+      phoneticMiddleName: "",
+      phoneticLastName: "",
+      nickname: "",
+      fileAs: "",
       organization: "",
+      department: "",
       title: "",
       phone: "",
       website: "",
@@ -124,7 +153,14 @@ describe("contactMapping", () => {
         ...contact.extractionSnapshot!,
         email: "ada@example.com",
         emails: [{ value: "ada@example.com", type: "WORK", label: "" }],
+        namePrefix: "",
+        phoneticFirstName: "",
+        phoneticMiddleName: "",
+        phoneticLastName: "",
+        nickname: "",
+        fileAs: "",
         organization: "",
+        department: "",
         title: "",
         phone: "",
         phones: [],
@@ -149,6 +185,8 @@ describe("contactMapping", () => {
       emailAddresses: [{ value: "ada@example.com", type: "work" }],
       phoneNumbers: undefined,
       organizations: undefined,
+      nicknames: undefined,
+      fileAses: undefined,
       biographies: undefined,
       urls: undefined,
       addresses: undefined,
@@ -164,6 +202,13 @@ describe("contactMapping", () => {
     const vCard = buildContactVCard(contact);
 
     expect(vCard).toContain("EMAIL;TYPE=WORK:ada@example.com");
+    expect(vCard).toContain("N:Lovelace;Ada;;Countess;");
+    expect(vCard).toContain("NICKNAME:Ada");
+    expect(vCard).toContain("SORT-STRING:Lovelace\\, Ada");
+    expect(vCard).toContain("ORG:Analytical Engines;Research");
+    expect(vCard).toContain("X-PHONETIC-FIRST-NAME:A-da");
+    expect(vCard).toContain("X-PHONETIC-MIDDLE-NAME:By-ron");
+    expect(vCard).toContain("X-PHONETIC-LAST-NAME:Love-lace");
     expect(vCard).toContain("EMAIL;TYPE=INTERNET,PRESS:press@example.com");
     expect(vCard).toContain("TEL;TYPE=WORK:+82 10-1234-5678");
     expect(vCard).toContain("TEL;TYPE=CELL:+82 10-9999-8888");

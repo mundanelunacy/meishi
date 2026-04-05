@@ -12,6 +12,7 @@
 - RTK Query mutations for `people.createContact`
 - RTK Query mutation for `people.updateContactPhoto`
 - Pure `VerifiedContact` mappers for Google payload and vCard preview
+- Google People mapping for extended name/company fields including prefix, phonetic name parts, nickname, file-as, and department
 - Multi-value mapping for emails, phones, URLs, and addresses
 - Related people, significant dates, and user-defined custom field mapping aligned with the Google Contacts edit model
 - Sync status tracking

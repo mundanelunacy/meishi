@@ -5,9 +5,16 @@ describe("businessCardExtractionSchema", () => {
   it("accepts a complete extraction payload", () => {
     const result = businessCardExtractionSchema.parse({
       fullName: "Ada Lovelace",
+      namePrefix: "Countess",
       firstName: "Ada",
+      phoneticFirstName: "",
+      phoneticMiddleName: "Byron",
+      phoneticLastName: "",
       lastName: "Lovelace",
+      nickname: "Ada",
+      fileAs: "Lovelace, Ada",
       organization: "Analytical Engines",
+      department: "Research",
       title: "Mathematician",
       email: "ada@example.com",
       emails: [{ value: "ada@example.com", type: "WORK", label: "" }],
@@ -26,6 +33,7 @@ describe("businessCardExtractionSchema", () => {
     });
 
     expect(result.fullName).toBe("Ada Lovelace");
+    expect(result.fileAs).toBe("Lovelace, Ada");
     expect(result.confidenceNotes).toHaveLength(1);
   });
 
@@ -33,9 +41,16 @@ describe("businessCardExtractionSchema", () => {
     expect(() =>
       businessCardExtractionSchema.parse({
         fullName: "Ada Lovelace",
+        namePrefix: "",
         firstName: "Ada",
+        phoneticFirstName: "",
+        phoneticMiddleName: "",
+        phoneticLastName: "",
         lastName: "Lovelace",
+        nickname: "",
+        fileAs: "",
         organization: "",
+        department: "",
         title: "",
         email: "",
         emails: [],

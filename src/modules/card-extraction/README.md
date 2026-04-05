@@ -12,6 +12,7 @@
 - OpenAI Responses API integration with strict JSON schema output
 - Anthropic Messages API integration with forced tool-based structured output
 - Structured output schema validation with Zod
+- Google-Contacts-aligned top-level extraction for name/company details such as prefix, phonetic name parts, nickname, file-as, and department
 - Repeatable vCard-style extraction for emails, phones, URLs, addresses, related people, and significant dates
 - Preservation buckets for non-standard fields (`X-` fields) and ambiguous text
 - Shared advanced extraction prompt used by both providers as additive guidance

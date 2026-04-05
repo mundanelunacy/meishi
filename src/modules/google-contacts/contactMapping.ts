@@ -11,9 +11,19 @@ export function buildContactPayload(contact: VerifiedContact): CreateContactPayl
   return {
     names: [
       {
-        displayName: contact.fullName || undefined,
-        givenName: contact.firstName || undefined,
-        familyName: contact.lastName || undefined,
+        ...(contact.fullName ? { displayName: contact.fullName } : {}),
+        ...(contact.namePrefix ? { honorificPrefix: contact.namePrefix } : {}),
+        ...(contact.firstName ? { givenName: contact.firstName } : {}),
+        ...(contact.lastName ? { familyName: contact.lastName } : {}),
+        ...(contact.phoneticFirstName
+          ? { phoneticGivenName: contact.phoneticFirstName }
+          : {}),
+        ...(contact.phoneticMiddleName
+          ? { phoneticMiddleName: contact.phoneticMiddleName }
+          : {}),
+        ...(contact.phoneticLastName
+          ? { phoneticFamilyName: contact.phoneticLastName }
+          : {}),
       },
     ],
     emailAddresses: contact.emails.length
@@ -29,14 +39,19 @@ export function buildContactPayload(contact: VerifiedContact): CreateContactPayl
         }))
       : undefined,
     organizations:
-      contact.organization || contact.title
+      contact.organization || contact.department || contact.title
         ? [
             {
-              name: contact.organization || undefined,
-              title: contact.title || undefined,
+              ...(contact.organization ? { name: contact.organization } : {}),
+              ...(contact.department ? { department: contact.department } : {}),
+              ...(contact.title ? { title: contact.title } : {}),
             },
           ]
         : undefined,
+    nicknames: contact.nickname
+      ? [{ value: contact.nickname, type: "default" }]
+      : undefined,
+    fileAses: contact.fileAs ? [{ value: contact.fileAs }] : undefined,
     biographies: notes ? [{ value: notes }] : undefined,
     urls: contact.websites.length
       ? contact.websites.map((url) => ({
@@ -88,9 +103,14 @@ export function buildContactVCard(contact: VerifiedContact) {
     "BEGIN:VCARD",
     "VERSION:3.0",
     line("FN", contact.fullName),
-    line("N", formatName(contact)),
-    line("ORG", contact.organization),
+    structuredLine("N", buildNameComponents(contact)),
+    line("NICKNAME", contact.nickname),
+    line("SORT-STRING", contact.fileAs),
+    structuredLine("ORG", buildOrganizationComponents(contact)),
     line("TITLE", contact.title),
+    line("X-PHONETIC-FIRST-NAME", contact.phoneticFirstName),
+    line("X-PHONETIC-MIDDLE-NAME", contact.phoneticMiddleName),
+    line("X-PHONETIC-LAST-NAME", contact.phoneticLastName),
     ...contact.emails.map((email) => typedLine("EMAIL", email.value, email.type, email.label)),
     ...contact.phones.map((phone) => typedLine("TEL", phone.value, phone.type, phone.label)),
     ...contact.websites.map((url) => typedLine("URL", url.value, url.type, url.label)),
@@ -109,21 +129,21 @@ export function buildContactVCard(contact: VerifiedContact) {
   return lines.join("\n");
 }
 
-function formatName(contact: VerifiedContact) {
-  const hasAnyName = Boolean(contact.firstName || contact.lastName || contact.fullName);
-  if (!hasAnyName) {
-    return "";
-  }
-
-  return escapeVCardValue(`${contact.lastName};${contact.firstName};;;`);
-}
-
 function line(key: string, value: string) {
   if (!value) {
     return "";
   }
 
   return `${key}:${escapeVCardValue(value)}`;
+}
+
+function structuredLine(key: string, values: string[]) {
+  const hasAnyValue = values.some((value) => value.length > 0);
+  if (!hasAnyValue) {
+    return "";
+  }
+
+  return `${key}:${values.map(escapeVCardValue).join(";")}`;
 }
 
 function typedLine(key: string, value: string, type: string, label: string) {
@@ -147,6 +167,20 @@ function normalizeParam(value: string) {
     .replace(/[^A-Z0-9-]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function buildNameComponents(contact: VerifiedContact) {
+  return [
+    contact.lastName,
+    contact.firstName,
+    "",
+    contact.namePrefix,
+    "",
+  ];
+}
+
+function buildOrganizationComponents(contact: VerifiedContact) {
+  return [contact.organization, contact.department];
 }
 
 function parseDateValue(value: string) {

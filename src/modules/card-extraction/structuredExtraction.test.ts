@@ -34,9 +34,16 @@ describe("structuredExtraction", () => {
                 {
                   text: JSON.stringify({
                     fullName: "Ada Lovelace",
+                    namePrefix: "Countess",
                     firstName: "Ada",
+                    phoneticFirstName: "",
+                    phoneticMiddleName: "Byron",
+                    phoneticLastName: "",
                     lastName: "Lovelace",
+                    nickname: "Ada",
+                    fileAs: "Lovelace, Ada",
                     organization: "Analytical Engines",
+                    department: "Research",
                     title: "Founder",
                     email: "ada@example.com",
                     emails: [
@@ -71,6 +78,7 @@ describe("structuredExtraction", () => {
     });
 
     expect(result.fullName).toBe("Ada Lovelace");
+    expect(result.department).toBe("Research");
     expect(result.emails).toHaveLength(2);
     expect(result.xFields[0]?.name).toBe("X-ASSISTANT");
     expect(fetchImpl).toHaveBeenCalledOnce();
@@ -86,9 +94,16 @@ describe("structuredExtraction", () => {
               name: "submit_business_card_extraction",
               input: {
                 fullName: "Grace Hopper",
+                namePrefix: "Rear Admiral",
                 firstName: "Grace",
+                phoneticFirstName: "",
+                phoneticMiddleName: "Brewster",
+                phoneticLastName: "",
                 lastName: "Hopper",
+                nickname: "Amazing Grace",
+                fileAs: "Hopper, Grace",
                 organization: "US Navy",
+                department: "Research",
                 title: "Rear Admiral",
                 email: "grace@example.com",
                 emails: [{ value: "grace@example.com", type: "WORK", label: "" }],
@@ -121,6 +136,7 @@ describe("structuredExtraction", () => {
     });
 
     expect(result.organization).toBe("US Navy");
+    expect(result.fileAs).toBe("Hopper, Grace");
     expect(fetchImpl).toHaveBeenCalledOnce();
   });
 

@@ -42,7 +42,7 @@ export const googlePeopleApi = createApi({
 
         try {
           const response = await fetch(
-            "https://people.googleapis.com/v1/people:createContact?personFields=names,emailAddresses,phoneNumbers,organizations,biographies,urls,addresses,relations,events,userDefined",
+            "https://people.googleapis.com/v1/people:createContact?personFields=names,emailAddresses,phoneNumbers,organizations,nicknames,fileAses,biographies,urls,addresses,relations,events,userDefined",
             {
               method: "POST",
               headers: {
