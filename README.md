@@ -102,6 +102,118 @@ npm install
 npm run dev
 ```
 
+## Firebase deployment
+
+This repo can be deployed with Firebase Hosting for the Vite-built SPA and
+Cloud Functions for server-side endpoints that should not run in the browser.
+
+- Hosting serves the built app from `dist`
+- Functions are built from `functions/src` into `functions/lib`
+- `firebase deploy` runs both the functions predeploy checks and the hosting
+  deploy defined in [firebase.json](/Users/mundanelunacy/Projects/meishi/firebase.json)
+
+### Project files
+
+- [firebase.json](/Users/mundanelunacy/Projects/meishi/firebase.json):
+  deploy targets, hosting rewrite, and functions predeploy commands
+- [.firebaserc](/Users/mundanelunacy/Projects/meishi/.firebaserc):
+  default Firebase project alias
+- [functions/package.json](/Users/mundanelunacy/Projects/meishi/functions/package.json):
+  functions-specific build, lint, emulator, and deploy scripts
+- [functions/README.md](/Users/mundanelunacy/Projects/meishi/functions/README.md):
+  detailed functions workspace notes
+
+### One-time setup
+
+1. Install dependencies in both workspaces:
+
+```bash
+npm install
+npm --prefix functions install
+```
+
+2. Install the Firebase CLI if needed:
+
+```bash
+npm install -g firebase-tools
+```
+
+3. Authenticate and confirm the active project:
+
+```bash
+firebase login
+firebase use meishi-492400
+```
+
+### Local workflow
+
+Build and verify the browser app:
+
+```bash
+npm run build
+```
+
+Build and verify the functions workspace:
+
+```bash
+npm --prefix functions run lint
+npm --prefix functions run build
+```
+
+Run the functions emulator from the functions workspace:
+
+```bash
+npm --prefix functions run serve
+```
+
+Deploy both Hosting and Functions:
+
+```bash
+firebase deploy
+```
+
+Deploy only one target when iterating:
+
+```bash
+firebase deploy --only hosting
+firebase deploy --only functions
+```
+
+### Hosting behavior
+
+- Hosting publishes the Vite production build from `dist`
+- All routes rewrite to `/index.html`, which is required for the TanStack
+  Router SPA
+- `VITE_*` values are compiled into the browser build at build time, so update
+  env files before running `npm run build`
+
+### Functions behavior
+
+- Functions use their own Node/TypeScript workspace under `functions/`
+- Predeploy runs the functions workspace `lint` and `build` scripts before any
+  deploy proceeds
+- The functions workspace intentionally keeps its own legacy ESLint config in
+  [functions/.eslintrc.js](/Users/mundanelunacy/Projects/meishi/functions/.eslintrc.js)
+  and forces `ESLINT_USE_FLAT_CONFIG=false` in its lint script so it does not
+  inherit the root flat config from
+  [eslint.config.js](/Users/mundanelunacy/Projects/meishi/eslint.config.js)
+- Put server-only secrets and privileged API calls in functions, not in the
+  browser bundle
+
+### Troubleshooting
+
+- If `firebase deploy` fails during `functions predeploy`, run
+  `npm --prefix functions run lint` and `npm --prefix functions run build`
+  directly first
+- If ESLint reports that `--ext` is invalid while deploying functions, the
+  functions lint command is being interpreted with flat config instead of the
+  local legacy config. The functions lint script should keep
+  `ESLINT_USE_FLAT_CONFIG=false`
+- If Hosting deploy succeeds but routing is broken on refresh, confirm the SPA
+  rewrite in [firebase.json](/Users/mundanelunacy/Projects/meishi/firebase.json)
+- If browser code cannot see an env var after deploy, confirm it starts with
+  `VITE_` and that the app was rebuilt before deploying Hosting
+
 ## Environment files
 
 Vite loads env files from the repo root automatically. Meishi now assumes this layout:
