@@ -27,7 +27,7 @@ quota control, not a true check for Google refresh-token expiry.
 
 Firestore is currently server-only in this repo. The browser app does not use
 the Firestore Web SDK, and the root
-[firestore.rules](/Users/mundanelunacy/Projects/meishi/firestore.rules) file
+[firestore.rules](../firestore.rules) file
 intentionally denies all client reads and writes. Only Admin SDK access from
 Functions is expected to touch `googleContactsCredentials`.
 
@@ -89,7 +89,7 @@ npm --prefix functions run logs
 ## Deploy path
 
 When you run `firebase deploy` from the repo root, Firebase reads the functions
-target from [firebase.json](/Users/mundanelunacy/Projects/meishi/firebase.json)
+target from [firebase.json](../firebase.json)
 and then executes:
 
 1. `npm --prefix "$RESOURCE_DIR" run lint`
@@ -103,10 +103,10 @@ functions deploy and a combined `firebase deploy`.
 
 This workspace still uses a legacy ESLint config in `.eslintrc.js`, while the
 repo root uses flat config in
-[eslint.config.js](/Users/mundanelunacy/Projects/meishi/eslint.config.js).
+[eslint.config.js](../eslint.config.js).
 
 Because of that split, the `lint` script in
-[functions/package.json](/Users/mundanelunacy/Projects/meishi/functions/package.json)
+[functions/package.json](./package.json)
 explicitly sets:
 
 ```bash
@@ -159,7 +159,7 @@ The current exported Google auth handlers are:
   - `GOOGLE_OAUTH_CLIENT_ID`
   - `GOOGLE_OAUTH_CLIENT_SECRET`
 - Google OAuth redirect URIs are selected from the code allowlist in
-  [functions/src/googleContactsAuth.ts](/Users/mundanelunacy/Projects/meishi/functions/src/googleContactsAuth.ts)
+  [functions/src/googleContactsAuth.ts](./src/googleContactsAuth.ts)
   based on the caller origin, not from Secret Manager or env vars
 
 ## Troubleshooting

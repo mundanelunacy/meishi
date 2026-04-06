@@ -27,7 +27,7 @@ npm --prefix functions install
 
 ## Environment Setup
 
-Start from [.env.example](/Users/mundanelunacy/Projects/meishi/.env.example).
+Start from [.env.example](./.env.example).
 
 The browser app expects these `VITE_*` variables:
 
@@ -116,7 +116,7 @@ If you want to test real Google connect/sync locally, configure the Functions se
 - `GOOGLE_OAUTH_CLIENT_ID`
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 
-Redirect URIs are not read from Secret Manager or env vars anymore. They are selected from the allowlist in [functions/src/googleContactsAuth.ts](/Users/mundanelunacy/Projects/meishi/functions/src/googleContactsAuth.ts) based on the caller origin.
+Redirect URIs are not read from Secret Manager or env vars anymore. They are selected from the allowlist in [functions/src/googleContactsAuth.ts](./functions/src/googleContactsAuth.ts) based on the caller origin.
 
 The current allowlist includes these callback URLs:
 

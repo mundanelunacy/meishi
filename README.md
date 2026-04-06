@@ -111,20 +111,20 @@ Cloud Functions for server-side endpoints that should not run in the browser.
 - Hosting serves the built app from `dist`
 - Functions are built from `functions/src` into `functions/lib`
 - `firebase deploy` runs both the functions predeploy checks and the hosting
-  deploy defined in [firebase.json](/Users/mundanelunacy/Projects/meishi/firebase.json)
+  deploy defined in [firebase.json](./firebase.json)
 
 ### Project files
 
-- [firebase.json](/Users/mundanelunacy/Projects/meishi/firebase.json):
+- [firebase.json](./firebase.json):
   deploy targets, hosting rewrite, and functions predeploy commands
-- [.firebaserc](/Users/mundanelunacy/Projects/meishi/.firebaserc):
+- [.firebaserc](./.firebaserc):
   default Firebase project alias
-- [firestore.rules](/Users/mundanelunacy/Projects/meishi/firestore.rules):
+- [firestore.rules](./firestore.rules):
   prototype Firestore Security Rules that deny all browser access because
   Firestore is server-only in the current architecture
-- [functions/package.json](/Users/mundanelunacy/Projects/meishi/functions/package.json):
+- [functions/package.json](./functions/package.json):
   functions-specific build, lint, emulator, and deploy scripts
-- [functions/README.md](/Users/mundanelunacy/Projects/meishi/functions/README.md):
+- [functions/README.md](./functions/README.md):
   detailed functions workspace notes
 
 ### One-time setup
@@ -198,7 +198,7 @@ firebase deploy --only functions
   deploy proceeds
 - Firestore is a server-only credential store in the current app shape:
   browser clients do not use the Firestore Web SDK, and
-  [firestore.rules](/Users/mundanelunacy/Projects/meishi/firestore.rules)
+  [firestore.rules](./firestore.rules)
   intentionally deny all client reads and writes
 - Functions now own the Google Contacts token broker:
   - `beginGoogleContactsAuth`
@@ -212,10 +212,10 @@ firebase deploy --only functions
 - This cleanup is quota-driven retention, not true Google refresh-token expiry
   detection; users with deleted records must reconnect Google Contacts
 - The functions workspace intentionally keeps its own legacy ESLint config in
-  [functions/.eslintrc.js](/Users/mundanelunacy/Projects/meishi/functions/.eslintrc.js)
+  [functions/.eslintrc.js](./functions/.eslintrc.js)
   and forces `ESLINT_USE_FLAT_CONFIG=false` in its lint script so it does not
   inherit the root flat config from
-  [eslint.config.js](/Users/mundanelunacy/Projects/meishi/eslint.config.js)
+  [eslint.config.js](./eslint.config.js)
 - Put server-only secrets and privileged API calls in functions, not in the
   browser bundle
 - If a future feature needs browser-side Firestore access, revisit the
@@ -231,7 +231,7 @@ firebase deploy --only functions
   local legacy config. The functions lint script should keep
   `ESLINT_USE_FLAT_CONFIG=false`
 - If Hosting deploy succeeds but routing is broken on refresh, confirm the SPA
-  rewrite in [firebase.json](/Users/mundanelunacy/Projects/meishi/firebase.json)
+  rewrite in [firebase.json](./firebase.json)
 - If browser code cannot see an env var after deploy, confirm it starts with
   `VITE_` and that the app was rebuilt before deploying Hosting
 
@@ -249,7 +249,7 @@ Vite loads env files from the repo root automatically. Meishi now assumes this l
 - `.env.development`: local development overrides for `npm run dev`
 - `.env.production`: production build values for `npm run build`
 - Only variables prefixed with `VITE_` are exposed to browser code
-- Start from [.env.example](/Users/mundanelunacy/Projects/meishi/.env.example)
+- Start from [.env.example](./.env.example)
 
 ## Local testing notes
 
@@ -258,7 +258,7 @@ Vite loads env files from the repo root automatically. Meishi now assumes this l
 - `VITE_FIREBASE_USE_EMULATORS=true` connects the browser to the local Firebase Auth and Functions emulators.
 - `VITE_*` variables are compile-time inputs to the browser build. If a required Firebase value exists only in `.env.production`, the production build will see it, but `npm run dev` will not.
 - After changing `.env.production`, rebuild before re-testing: `npm run build && npm run preview`.
-- `npm run dev` is not the authoritative way to test PWA behavior in this repo because `vite-plugin-pwa` development service worker support is not enabled in [vite.config.ts](/Users/mundanelunacy/Projects/meishi/vite.config.ts).
+- `npm run dev` is not the authoritative way to test PWA behavior in this repo because `vite-plugin-pwa` development service worker support is not enabled in [vite.config.ts](./vite.config.ts).
 - When testing through the Vite dev server with `npm run dev`, mobile native-camera capture on `/capture` can still trigger page refreshes after returning from the camera flow. Treat that as an open issue to address in future capture/runtime work, and prefer `npm run build && npm run preview` when validating mobile capture behavior.
 - Use `npm run build && npm run preview` when testing service worker registration, install prompts, offline shell behavior, or update prompts.
 - If temporary dev-server PWA testing is needed, enable `devOptions: { enabled: true }` in the `VitePWA(...)` config, but treat previewing the production build as the final verification path.
@@ -269,4 +269,4 @@ Vite loads env files from the repo root automatically. Meishi now assumes this l
 - For review diagnostics, `/review?debug=1` shows the raw extraction snapshot,
   derived vCard, and derived Google payload sections.
 
-See [AGENTS.md](/Users/mundanelunacy/Projects/meishi/AGENTS.md) for the project-specific development loop future agents should follow.
+See [AGENTS.md](./AGENTS.md) for the project-specific development loop future agents should follow.
