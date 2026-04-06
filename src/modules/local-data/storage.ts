@@ -5,14 +5,14 @@ const SETTINGS_KEY = "meishi.settings";
 
 export interface PersistedOnboardingState {
   settings: AppSettings;
-  googleAuth?: Pick<GoogleAuthState, "scope" | "accountHint">;
+  googleAuth?: Pick<GoogleAuthState, "scope" | "accountEmail" | "connectedAt">;
 }
 
 const defaultSettings: AppSettings = {
   llmProvider: "openai",
   openAiApiKey: "",
   anthropicApiKey: "",
-  preferredOpenAiModel: "gpt-4.1-mini",
+  preferredOpenAiModel: "gpt-5.4-mini",
   preferredAnthropicModel: "claude-sonnet-4-20250514",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
 };
@@ -32,11 +32,14 @@ function readLocalStorage() {
 function sanitizeSettings(settings: unknown): AppSettings {
   const candidate = isRecord(settings) ? settings : {};
   const llmProvider = candidate.llmProvider;
-  const legacyApiKey = typeof candidate.llmApiKey === "string" ? candidate.llmApiKey : "";
+  const legacyApiKey =
+    typeof candidate.llmApiKey === "string" ? candidate.llmApiKey : "";
 
   return {
     llmProvider:
-      llmProvider === "openai" || llmProvider === "anthropic" || llmProvider === "gemini"
+      llmProvider === "openai" ||
+      llmProvider === "anthropic" ||
+      llmProvider === "gemini"
         ? llmProvider
         : defaultSettings.llmProvider,
     openAiApiKey:
@@ -56,31 +59,40 @@ function sanitizeSettings(settings: unknown): AppSettings {
         ? candidate.preferredAnthropicModel
         : defaultSettings.preferredAnthropicModel,
     extractionPrompt:
-      typeof candidate.extractionPrompt === "string" && candidate.extractionPrompt.trim().length > 0
+      typeof candidate.extractionPrompt === "string" &&
+      candidate.extractionPrompt.trim().length > 0
         ? candidate.extractionPrompt
         : defaultSettings.extractionPrompt,
     onboardingCompletedAt:
-      typeof candidate.onboardingCompletedAt === "string" ? candidate.onboardingCompletedAt : undefined,
+      typeof candidate.onboardingCompletedAt === "string"
+        ? candidate.onboardingCompletedAt
+        : undefined,
   };
 }
 
 function sanitizeGoogleAuthMetadata(
-  googleAuth: unknown
+  googleAuth: unknown,
 ): PersistedOnboardingState["googleAuth"] | undefined {
   if (!isRecord(googleAuth)) {
     return undefined;
   }
 
   const scope = typeof googleAuth.scope === "string" ? googleAuth.scope : null;
-  const accountHint = typeof googleAuth.accountHint === "string" ? googleAuth.accountHint : undefined;
+  const accountEmail =
+    typeof googleAuth.accountEmail === "string"
+      ? googleAuth.accountEmail
+      : undefined;
+  const connectedAt =
+    typeof googleAuth.connectedAt === "string" ? googleAuth.connectedAt : null;
 
-  if (scope === null && accountHint === undefined) {
+  if (scope === null && accountEmail === undefined && connectedAt === null) {
     return undefined;
   }
 
   return {
     scope,
-    accountHint,
+    accountEmail,
+    connectedAt,
   };
 }
 
@@ -110,7 +122,7 @@ export function persistOnboardingState(state: PersistedOnboardingState) {
       JSON.stringify({
         settings: sanitizeSettings(state.settings),
         googleAuth: sanitizeGoogleAuthMetadata(state.googleAuth),
-      })
+      }),
     );
   } catch {
     // Ignore browser storage failures so reducer writes remain safe.

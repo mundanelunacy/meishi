@@ -17,7 +17,7 @@ const baseSettings: AppSettings = {
   llmProvider: "openai",
   openAiApiKey: "sk-test",
   anthropicApiKey: "sk-ant-test",
-  preferredOpenAiModel: "gpt-4.1-mini",
+  preferredOpenAiModel: "gpt-5.4-mini",
   preferredAnthropicModel: "claude-sonnet-4-20250514",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
 };
@@ -47,17 +47,33 @@ describe("structuredExtraction", () => {
                     email: "ada@example.com",
                     emails: [
                       { value: "ada@example.com", type: "WORK", label: "" },
-                      { value: "press@example.com", type: "INTERNET", label: "PRESS" },
+                      {
+                        value: "press@example.com",
+                        type: "INTERNET",
+                        label: "PRESS",
+                      },
                     ],
                     phone: "+82 10-1234-5678",
-                    phones: [{ value: "+82 10-1234-5678", type: "WORK", label: "" }],
+                    phones: [
+                      { value: "+82 10-1234-5678", type: "WORK", label: "" },
+                    ],
                     website: "https://example.com",
-                    urls: [{ value: "https://example.com", type: "WORK", label: "" }],
+                    urls: [
+                      { value: "https://example.com", type: "WORK", label: "" },
+                    ],
                     notes: "Met at conference",
                     address: "Seoul",
                     addresses: [{ value: "Seoul", type: "WORK", label: "" }],
-                    relations: [{ value: "Jane Doe", type: "assistant", label: "EA" }],
-                    events: [{ value: "2026-04-05", type: "anniversary", label: "Met" }],
+                    relations: [
+                      { value: "Jane Doe", type: "assistant", label: "EA" },
+                    ],
+                    events: [
+                      {
+                        value: "2026-04-05",
+                        type: "anniversary",
+                        label: "Met",
+                      },
+                    ],
                     xFields: [{ name: "X-ASSISTANT", value: "Jane Doe" }],
                     ambiguousText: ["Tower B, Level 7"],
                     confidenceNotes: ["Name inferred from card header"],
@@ -66,8 +82,8 @@ describe("structuredExtraction", () => {
               ],
             },
           ],
-        })
-      )
+        }),
+      ),
     );
 
     const result = await extractBusinessCardWithProvider({
@@ -105,7 +121,9 @@ describe("structuredExtraction", () => {
                 department: "Research",
                 title: "Rear Admiral",
                 email: "grace@example.com",
-                emails: [{ value: "grace@example.com", type: "WORK", label: "" }],
+                emails: [
+                  { value: "grace@example.com", type: "WORK", label: "" },
+                ],
                 phone: "",
                 phones: [],
                 website: "",
@@ -121,8 +139,8 @@ describe("structuredExtraction", () => {
               },
             },
           ],
-        })
-      )
+        }),
+      ),
     );
 
     const result = await extractBusinessCardWithProvider({
@@ -155,8 +173,8 @@ describe("structuredExtraction", () => {
               ],
             },
           ],
-        })
-      )
+        }),
+      ),
     );
 
     await expect(
@@ -164,7 +182,7 @@ describe("structuredExtraction", () => {
         request: { images: [sampleImage] },
         settings: baseSettings,
         fetchImpl,
-      })
+      }),
     ).rejects.toThrow();
   });
 
@@ -177,8 +195,10 @@ describe("structuredExtraction", () => {
           llmProvider: "anthropic",
           anthropicApiKey: "",
         },
-      })
-    ).rejects.toThrow("Add an Anthropic API key in settings before extraction.");
+      }),
+    ).rejects.toThrow(
+      "Add an Anthropic API key in settings before extraction.",
+    );
   });
 
   it("returns an explicit unsupported-provider error for gemini", async () => {
@@ -189,7 +209,7 @@ describe("structuredExtraction", () => {
           ...baseSettings,
           llmProvider: "gemini",
         },
-      })
+      }),
     ).rejects.toThrow("Gemini extraction is not implemented yet.");
   });
 });

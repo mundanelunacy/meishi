@@ -9,10 +9,15 @@ This workspace contains the Firebase Cloud Functions code for Meishi.
 - Runs its own lint and TypeScript checks before deploy
 - Provides the place for secrets-backed or privileged integrations that should
   not live in the browser bundle
+- Brokers Google OAuth code exchange, refresh-token storage, access-token minting,
+  and disconnect/revoke behavior for Google Contacts sync
 
 The main app is still a browser-first PWA. Add Cloud Functions only for work
 that should move off the client, such as secret-bearing API calls, webhook
 handlers, or server-side orchestration.
+
+The current Google auth flow uses Functions as a token broker. The browser never
+stores the Google OAuth client secret or refresh token.
 
 ## Workspace layout
 
@@ -127,6 +132,12 @@ firebase deploy --only functions
 - Keep server-only secrets out of `VITE_*` variables and out of browser code
 - Prefer putting privileged credentials, API keys, and any sensitive
   orchestration behind Functions instead of exposing them to the client
+- Current Google auth secrets expected by this workspace:
+  - `GOOGLE_OAUTH_CLIENT_ID`
+  - `GOOGLE_OAUTH_CLIENT_SECRET`
+- Google OAuth redirect URIs are selected from the code allowlist in
+  [functions/src/googleContactsAuth.ts](/Users/mundanelunacy/Projects/meishi/functions/src/googleContactsAuth.ts)
+  based on the caller origin, not from Secret Manager or env vars
 
 ## Troubleshooting
 

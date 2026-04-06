@@ -38,5 +38,5 @@
 
 ## Constraints
 
-- Do not store durable Google access tokens here.
+- Do not store Google access tokens or refresh tokens here.
 - Keep review-draft autosave recoverable after navigation or refresh.

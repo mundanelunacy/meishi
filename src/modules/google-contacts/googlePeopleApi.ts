@@ -3,14 +3,44 @@ import type {
   GoogleCreateContactResponse,
   GoogleUpdatePhotoResponse,
 } from "../../shared/types/google";
-import type { GoogleAuthState, VerifiedContact } from "../../shared/types/models";
+import type { VerifiedContact } from "../../shared/types/models";
 import { base64FromDataUrl } from "../../shared/lib/utils";
+import {
+  getValidGoogleAccessToken,
+  invalidateGoogleAccessTokenCache,
+} from "../google-auth/googleIdentity";
 import { buildContactPayload } from "./contactMapping";
 
-interface GooglePeopleApiState {
-  onboarding: {
-    googleAuth: Pick<GoogleAuthState, "accessToken" | "mode">;
-  };
+async function fetchWithGoogleAccessToken(
+  input: RequestInfo | URL,
+  init: Omit<RequestInit, "headers"> & {
+    headers?: Record<string, string>;
+  }
+) {
+  let accessToken = await getValidGoogleAccessToken();
+  let response = await fetch(input, {
+    ...init,
+    headers: {
+      ...init.headers,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (response.status !== 401) {
+    return response;
+  }
+
+  invalidateGoogleAccessTokenCache();
+  accessToken = await getValidGoogleAccessToken();
+  response = await fetch(input, {
+    ...init,
+    headers: {
+      ...init.headers,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  return response;
 }
 
 export const googlePeopleApi = createApi({
@@ -18,35 +48,13 @@ export const googlePeopleApi = createApi({
   baseQuery: fakeBaseQuery(),
   endpoints: (builder) => ({
     createContact: builder.mutation<GoogleCreateContactResponse, VerifiedContact>({
-      async queryFn(contact, api) {
-        const state = api.getState() as GooglePeopleApiState;
-        const { accessToken, mode } = state.onboarding.googleAuth;
-
-        if (mode === "mock") {
-          return {
-            data: {
-              resourceName: `people/mock-${contact.id}`,
-              etag: "mock-etag",
-            },
-          };
-        }
-
-        if (!accessToken) {
-          return {
-            error: {
-              status: 401,
-              data: "Google authorization is required before syncing contacts.",
-            },
-          };
-        }
-
+      async queryFn(contact) {
         try {
-          const response = await fetch(
+          const response = await fetchWithGoogleAccessToken(
             "https://people.googleapis.com/v1/people:createContact?personFields=names,emailAddresses,phoneNumbers,organizations,nicknames,fileAses,biographies,urls,addresses,relations,events,userDefined",
             {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${accessToken}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify(buildContactPayload(contact)),
@@ -78,36 +86,13 @@ export const googlePeopleApi = createApi({
       GoogleUpdatePhotoResponse,
       { resourceName: string; dataUrl: string }
     >({
-      async queryFn(args, api) {
-        const state = api.getState() as GooglePeopleApiState;
-        const { accessToken, mode } = state.onboarding.googleAuth;
-
-        if (mode === "mock") {
-          return {
-            data: {
-              person: {
-                resourceName: args.resourceName,
-              },
-            },
-          };
-        }
-
-        if (!accessToken) {
-          return {
-            error: {
-              status: 401,
-              data: "Google authorization is required before uploading a contact photo.",
-            },
-          };
-        }
-
+      async queryFn(args) {
         try {
-          const response = await fetch(
+          const response = await fetchWithGoogleAccessToken(
             `https://people.googleapis.com/v1/${args.resourceName}:updateContactPhoto?personFields=photos`,
             {
               method: "PATCH",
               headers: {
-                Authorization: `Bearer ${accessToken}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({

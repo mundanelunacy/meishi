@@ -1,96 +1,143 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it, vi } from "vitest";
-import type { AppEnv } from "../../app/env";
-import { createGoogleAuthClient } from "./googleIdentity";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-interface TokenClientConfig {
-  callback: (response: {
-    access_token: string;
-    expires_in: number;
-    scope: string;
-  }) => void;
-}
+const firebaseAuth = {
+  currentUser: {
+    uid: "firebase-uid-1",
+  },
+};
 
-function createEnv(overrides: Partial<AppEnv>): AppEnv {
-  return {
-    googleClientId: "",
-    googleAuthMode: "mock",
-    isDevelopment: true,
-    ...overrides,
-  };
-}
+const signInAnonymouslyMock = vi.fn(async () => ({
+  user: {
+    uid: "firebase-uid-1",
+  },
+}));
+
+const signOutMock = vi.fn(async () => undefined);
+
+const callableMocks = {
+  beginGoogleContactsAuth: vi.fn(),
+  completeGoogleContactsAuth: vi.fn(),
+  disconnectGoogleContacts: vi.fn(),
+  getGoogleAccessToken: vi.fn(),
+  getGoogleAuthStatus: vi.fn(),
+};
+
+vi.mock("../../app/env", () => ({
+  hasFirebaseConfiguration: () => true,
+}));
+
+vi.mock("../../app/firebase", () => ({
+  getFirebaseAuth: () => firebaseAuth,
+  getFirebaseFunctions: () => ({}),
+}));
+
+vi.mock("firebase/auth", () => ({
+  onAuthStateChanged: vi.fn(
+    (
+      auth: typeof firebaseAuth,
+      callback: (user: typeof auth.currentUser) => void,
+    ) => {
+      callback(auth.currentUser);
+      return () => undefined;
+    },
+  ),
+  signInAnonymously: signInAnonymouslyMock,
+  signOut: signOutMock,
+}));
+
+vi.mock("firebase/functions", () => ({
+  httpsCallable: vi.fn(
+    (_functions: unknown, name: keyof typeof callableMocks) =>
+      callableMocks[name],
+  ),
+}));
 
 describe("googleIdentity", () => {
-  it("returns a local testing session for mock auth", async () => {
-    const client = createGoogleAuthClient(
-      createEnv({
-        googleAuthMode: "mock",
-      })
-    );
-
-    expect(client.mode).toBe("mock");
-    expect(client.isConfigured()).toBe(true);
-
-    const token = await client.requestAccessToken();
-
-    expect(token.mode).toBe("mock");
-    expect(token.accessToken).toContain("mock-google-token-");
-    expect(token.scope).toBe(client.getScope());
-    expect(token.accountHint).toBe("developer@local.test");
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    firebaseAuth.currentUser = {
+      uid: "firebase-uid-1",
+    };
   });
 
-  it("requests a real GIS token when real auth is configured", async () => {
-    const requestAccessToken = vi.fn((options?: { prompt?: string; hint?: string }) => {
-      const config = (window as Window & typeof globalThis & {
-        __callback: TokenClientConfig["callback"];
-      }).__callback;
-      config({
-        access_token: "real-token",
-        expires_in: 1800,
-        scope: "https://www.googleapis.com/auth/contacts",
-      });
-      expect(options).toEqual({
-        prompt: "consent",
-        hint: "user@example.com",
-      });
-    });
+  it("creates a signed-out initial state from lightweight metadata", async () => {
+    const { createInitialGoogleAuthState } = await import("./googleIdentity");
 
-    Object.assign(window, {
-      google: {
-        accounts: {
-          oauth2: {
-            initTokenClient: vi.fn((config: TokenClientConfig) => {
-              Object.assign(window, { __callback: config.callback });
-              return {
-                requestAccessToken,
-              };
-            }),
-            revoke: vi.fn(),
-          },
+    expect(
+      createInitialGoogleAuthState({
+        scope: "https://www.googleapis.com/auth/contacts",
+        accountEmail: "developer@example.com",
+        connectedAt: "2026-04-06T00:00:00.000Z",
+      }),
+    ).toEqual({
+      status: "connecting",
+      firebaseUid: null,
+      scope: "https://www.googleapis.com/auth/contacts",
+      accountEmail: "developer@example.com",
+      connectedAt: "2026-04-06T00:00:00.000Z",
+    });
+  });
+
+  it("initializes auth state from the backend status for the current Firebase user", async () => {
+    callableMocks.getGoogleAuthStatus.mockResolvedValue({
+      data: {
+        googleAuth: {
+          status: "connected",
+          firebaseUid: "firebase-uid-1",
+          scope: "https://www.googleapis.com/auth/contacts",
+          accountEmail: "developer@example.com",
+          connectedAt: "2026-04-06T00:00:00.000Z",
         },
       },
     });
 
-    const client = createGoogleAuthClient(
-      createEnv({
-        googleAuthMode: "real",
-        googleClientId: "client-id",
-      })
-    );
+    const { initializeGoogleAuth } = await import("./googleIdentity");
+    const state = await initializeGoogleAuth();
 
-    const token = await client.requestAccessToken({
-      prompt: "consent",
-      hint: "user@example.com",
-    });
-
-    expect(token).toMatchObject({
-      mode: "real",
-      accessToken: "real-token",
+    expect(state).toEqual({
+      status: "connected",
+      firebaseUid: "firebase-uid-1",
       scope: "https://www.googleapis.com/auth/contacts",
-      accountHint: "user@example.com",
+      accountEmail: "developer@example.com",
+      connectedAt: "2026-04-06T00:00:00.000Z",
     });
-    expect(token.expiresAt).toBeGreaterThan(Date.now());
-    expect(requestAccessToken).toHaveBeenCalledTimes(1);
+    expect(signInAnonymouslyMock).not.toHaveBeenCalled();
+  });
+
+  it("caches short-lived Google access tokens in memory", async () => {
+    callableMocks.getGoogleAccessToken.mockResolvedValue({
+      data: {
+        accessToken: "fresh-google-token",
+        expiresIn: 3600,
+      },
+    });
+
+    const { getValidGoogleAccessToken } = await import("./googleIdentity");
+
+    await expect(getValidGoogleAccessToken()).resolves.toBe(
+      "fresh-google-token",
+    );
+    await expect(getValidGoogleAccessToken()).resolves.toBe(
+      "fresh-google-token",
+    );
+    expect(callableMocks.getGoogleAccessToken).toHaveBeenCalledTimes(1);
+  });
+
+  it("surfaces a popup-blocked error when Google authorization cannot open", async () => {
+    callableMocks.beginGoogleContactsAuth.mockResolvedValue({
+      data: {
+        authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+      },
+    });
+    vi.spyOn(window, "open").mockReturnValue(null);
+
+    const { connectGoogleContacts } = await import("./googleIdentity");
+
+    await expect(connectGoogleContacts()).rejects.toThrow(
+      "Google authorization popup was blocked by the browser.",
+    );
   });
 });

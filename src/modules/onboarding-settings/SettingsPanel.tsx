@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { hasFirebaseConfiguration } from "../../app/env";
 import { Button } from "../../shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../shared/ui/card";
 import { Input } from "../../shared/ui/input";
@@ -19,9 +20,8 @@ import {
   signOutGoogle,
 } from "./onboardingSlice";
 import {
-  googleAuthClient,
-  requestGoogleAccessToken,
-  revokeGoogleAccessToken,
+  connectGoogleContacts,
+  disconnectGoogleContacts,
 } from "../google-auth/googleIdentity";
 import { pushToast } from "../../shared/ui/toastBus";
 
@@ -34,17 +34,22 @@ export function SettingsPanel() {
 
   async function handleReconnectGoogle() {
     try {
-      const nextAuthState = await requestGoogleAccessToken({
-        prompt: googleAuth.accessToken ? "" : "consent",
-        hint: googleAuth.accountHint,
-      });
-      dispatch(setGoogleAuthState(nextAuthState));
-      pushToast(
-        nextAuthState.mode === "mock"
-          ? "Mock Google session refreshed."
-          : "Google authorization refreshed."
+      dispatch(
+        setGoogleAuthState({
+          ...googleAuth,
+          status: "connecting",
+        })
       );
+      const nextAuthState = await connectGoogleContacts();
+      dispatch(setGoogleAuthState(nextAuthState));
+      pushToast("Google authorization refreshed.");
     } catch (error) {
+      dispatch(
+        setGoogleAuthState({
+          ...googleAuth,
+          status: googleAuth.connectedAt ? "connected" : "signed_out",
+        })
+      );
       pushToast(error instanceof Error ? error.message : "Unable to reconnect Google.");
     }
   }
@@ -127,23 +132,28 @@ export function SettingsPanel() {
         <CardHeader>
           <CardTitle>Google authorization and local data</CardTitle>
           <CardDescription>
-            Google access tokens are short-lived and reacquired on demand. Stored LLM configuration remains local to this browser profile.
+            Google access tokens are minted by Firebase Functions on demand and refreshed with the stored backend token. Stored LLM configuration remains local to this browser profile.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
-            {googleAuth.mode === "mock"
-              ? "Developer mock auth is active. Sync calls will stay in local demo mode until real Google OAuth is configured."
-              : googleAuth.accessToken
-                ? "Google Contacts is currently authorized in this session."
-                : "Google Contacts is not currently authorized in this session."}
+            {googleAuth.status === "connected"
+              ? "Google Contacts is currently connected through Firebase-backed token refresh."
+              : googleAuth.status === "connecting"
+                ? "Google Contacts authorization is currently in progress."
+                : "Google Contacts is not currently connected."}
           </Alert>
+
+          {!hasFirebaseConfiguration() ? (
+            <Alert>Set the required <code>VITE_FIREBASE_*</code> values before reconnecting Google.</Alert>
+          ) : null}
 
           <div className="rounded-[24px] bg-muted/50 p-4 text-sm">
             <p className="font-medium text-foreground">Current Google session</p>
             <p className="mt-1 text-muted-foreground">
-              Mode: {googleAuth.mode === "mock" ? "Developer mock" : "Google OAuth"}
-              {googleAuth.accountHint ? ` • Account: ${googleAuth.accountHint}` : ""}
+              Status: {googleAuth.status}
+              {googleAuth.accountEmail ? ` • Account: ${googleAuth.accountEmail}` : ""}
+              {googleAuth.firebaseUid ? ` • Firebase UID: ${googleAuth.firebaseUid}` : ""}
             </p>
           </div>
 
@@ -153,7 +163,7 @@ export function SettingsPanel() {
               onClick={() => {
                 void handleReconnectGoogle();
               }}
-              disabled={!googleAuthClient.isConfigured()}
+              disabled={!hasFirebaseConfiguration()}
             >
               Reconnect Google
             </Button>
@@ -161,9 +171,13 @@ export function SettingsPanel() {
               type="button"
               variant="outline"
               onClick={() => {
-                void revokeGoogleAccessToken(googleAuth.accessToken).finally(() => {
-                  dispatch(signOutGoogle());
-                });
+                void disconnectGoogleContacts()
+                  .then(() => {
+                    dispatch(signOutGoogle());
+                  })
+                  .catch((error) => {
+                    pushToast(error instanceof Error ? error.message : "Unable to sign out Google.");
+                  });
               }}
             >
               Sign out Google

@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
@@ -60,17 +66,17 @@ const preloadedState = {
       llmProvider: "openai" as const,
       openAiApiKey: "sk-test",
       anthropicApiKey: "",
-      preferredOpenAiModel: "gpt-4.1-mini",
+      preferredOpenAiModel: "gpt-5.4-mini",
       preferredAnthropicModel: "claude-sonnet-4-20250514",
       extractionPrompt: "Use the printed title verbatim.",
       onboardingCompletedAt: "2026-04-05T00:00:00.000Z",
     },
     googleAuth: {
-      mode: "mock" as const,
-      accessToken: "mock-token",
+      status: "connected" as const,
+      firebaseUid: "firebase-uid-1",
       scope: "https://www.googleapis.com/auth/contacts",
-      expiresAt: Date.now() + 60_000,
-      accountHint: "developer@local.test",
+      accountEmail: "developer@example.com",
+      connectedAt: "2026-04-06T00:00:00.000Z",
     },
   },
   reviewDraft: {
@@ -113,7 +119,9 @@ const preloadedState = {
       websites: [{ value: "https://example.com", type: "WORK", label: "" }],
       addresses: [{ value: "Seoul", type: "WORK", label: "" }],
       relatedPeople: [{ value: "Jane Doe", type: "assistant", label: "EA" }],
-      significantDates: [{ value: "2026-04-05", type: "anniversary", label: "Met" }],
+      significantDates: [
+        { value: "2026-04-05", type: "anniversary", label: "Met" },
+      ],
       customFields: [{ key: "X-ASSISTANT", value: "Jane Doe" }],
       confidenceNotes: ["Low-confidence title"],
       extractionSnapshot: {
@@ -177,7 +185,7 @@ function renderWorkspace(overrideState?: Partial<typeof preloadedState>) {
   render(
     <Provider store={store}>
       <ReviewWorkspace />
-    </Provider>
+    </Provider>,
   );
 
   return { store };
@@ -232,7 +240,9 @@ describe("ReviewWorkspace", () => {
   it("hides the developer debug panel when the debug URL flag is absent", () => {
     renderWorkspace();
 
-    expect(screen.queryByText(/developer debug preview/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/developer debug preview/i),
+    ).not.toBeInTheDocument();
   });
 
   it("updates preview output from current form edits", async () => {
@@ -243,15 +253,15 @@ describe("ReviewWorkspace", () => {
 
     renderWorkspace();
     const user = userEvent.setup();
-    const phoneSection = screen
-      .getByText(/phone numbers/i)
-      .closest("section");
+    const phoneSection = screen.getByText(/phone numbers/i).closest("section");
 
     if (!phoneSection) {
       throw new Error("Phone numbers section not found.");
     }
 
-    await user.clear(within(phoneSection).getByDisplayValue("+82 10-1234-5678"));
+    await user.clear(
+      within(phoneSection).getByDisplayValue("+82 10-1234-5678"),
+    );
     await user.type(
       within(phoneSection).getByLabelText("Value"),
       "+82 10-2222-3333",
@@ -259,13 +269,17 @@ describe("ReviewWorkspace", () => {
     await user.clear(screen.getByLabelText(/file as/i));
     await user.type(screen.getByLabelText(/file as/i), "Ada Lovelace");
 
-    expect(screen.getByText(/derived google createcontact payload/i).nextElementSibling).toHaveTextContent(
-      "+82 10-2222-3333"
-    );
-    expect(screen.getByText(/derived google createcontact payload/i).nextElementSibling).toHaveTextContent(
-      "Ada Lovelace"
-    );
-    expect(screen.getByText(/derived vcard/i).nextElementSibling).toHaveTextContent("+82 10-2222-3333");
+    expect(
+      screen.getByText(/derived google createcontact payload/i)
+        .nextElementSibling,
+    ).toHaveTextContent("+82 10-2222-3333");
+    expect(
+      screen.getByText(/derived google createcontact payload/i)
+        .nextElementSibling,
+    ).toHaveTextContent("Ada Lovelace");
+    expect(
+      screen.getByText(/derived vcard/i).nextElementSibling,
+    ).toHaveTextContent("+82 10-2222-3333");
   });
 
   it("allows adding extra repeatable and custom fields", async () => {
@@ -349,7 +363,9 @@ describe("ReviewWorkspace", () => {
         }),
       ),
     );
-    expect(pushToastMock).toHaveBeenCalledWith("vCard downloaded to your device.");
+    expect(pushToastMock).toHaveBeenCalledWith(
+      "vCard downloaded to your device.",
+    );
     expect(syncContactMock).not.toHaveBeenCalled();
   });
 
@@ -377,9 +393,7 @@ describe("ReviewWorkspace", () => {
 
     renderWorkspace();
 
-    expect(
-      screen.getByRole("button", { name: /syncing/i }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: /syncing/i })).toBeDisabled();
   });
 
   it("shows partial-success warning toast when photo upload exhausts retries", async () => {
@@ -418,7 +432,9 @@ describe("ReviewWorkspace", () => {
     renderWorkspace();
 
     expect(
-      screen.getByText("Google authorization is required before syncing contacts."),
+      screen.getByText(
+        "Google authorization is required before syncing contacts.",
+      ),
     ).toBeInTheDocument();
   });
 });

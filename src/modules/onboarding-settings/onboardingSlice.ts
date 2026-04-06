@@ -7,8 +7,7 @@ import {
   loadPersistedState,
   persistOnboardingState,
 } from "../local-data";
-import { googleAuthClient } from "../google-auth/googleIdentity";
-import { requiresRealGoogleClientId } from "../../app/env";
+import { createInitialGoogleAuthState } from "../google-auth/googleIdentity";
 
 const persisted = typeof window === "undefined" ? { settings: defaultSettings } : loadPersistedState();
 
@@ -19,7 +18,7 @@ interface OnboardingState {
 
 const initialState: OnboardingState = {
   settings: persisted.settings,
-  googleAuth: googleAuthClient.getInitialState(persisted.googleAuth),
+  googleAuth: createInitialGoogleAuthState(persisted.googleAuth),
 };
 
 function persistState(state: OnboardingState) {
@@ -81,12 +80,12 @@ const onboardingSlice = createSlice({
       persistState(state);
     },
     signOutGoogle(state) {
-      state.googleAuth = googleAuthClient.getInitialState(state.googleAuth);
+      state.googleAuth = createInitialGoogleAuthState();
       persistState(state);
     },
     clearAllSettings(state) {
       state.settings = defaultSettings;
-      state.googleAuth = googleAuthClient.getInitialState();
+      state.googleAuth = createInitialGoogleAuthState();
       clearPersistedState();
     },
   },
@@ -114,7 +113,7 @@ export const selectHasCompletedOnboarding = (state: RootState) =>
 export const selectHasLlmConfiguration = (state: RootState) =>
   hasProviderConfiguration(state.onboarding.settings);
 export const selectHasGoogleAuthorization = (state: RootState) =>
-  Boolean(state.onboarding.googleAuth.accessToken);
+  state.onboarding.googleAuth.status === "connected";
 export const selectHasGoogleToken = selectHasGoogleAuthorization;
 
 export const selectAppReadiness = createSelector(
@@ -129,7 +128,6 @@ export const selectAppReadiness = createSelector(
     hasGoogleAuthorization,
     hasCompletedOnboarding,
     isCaptureReady: hasLlmConfiguration && hasGoogleAuthorization && hasCompletedOnboarding,
-    requiresGoogleClientId: requiresRealGoogleClientId(),
-    googleAuthMode: googleAuth.mode,
+    googleAuthStatus: googleAuth.status,
   })
 );

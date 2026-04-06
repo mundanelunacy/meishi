@@ -10,25 +10,26 @@ import { onboardingReducer } from "./onboardingSlice";
 import { OnboardingPanel } from "./OnboardingPanel";
 
 const navigateMock = vi.fn();
-const requestGoogleAccessTokenMock = vi.fn();
+const connectGoogleContactsMock = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
 }));
 
+vi.mock("../../app/env", () => ({
+  hasFirebaseConfiguration: () => true,
+}));
+
 vi.mock("../google-auth/googleIdentity", () => ({
+  connectGoogleContacts: (...args: unknown[]) => connectGoogleContactsMock(...args),
+  createInitialGoogleAuthState: () => ({
+    status: "signed_out",
+    firebaseUid: null,
+    scope: null,
+    accountEmail: undefined,
+    connectedAt: null,
+  }),
   getGoogleScope: () => "https://www.googleapis.com/auth/contacts",
-  googleAuthClient: {
-    isConfigured: () => true,
-    getInitialState: () => ({
-      mode: "mock",
-      accessToken: null,
-      scope: "https://www.googleapis.com/auth/contacts",
-      expiresAt: null,
-      accountHint: "developer@local.test",
-    }),
-  },
-  requestGoogleAccessToken: (...args: unknown[]) => requestGoogleAccessTokenMock(...args),
 }));
 
 function renderPanel() {
@@ -54,16 +55,16 @@ describe("OnboardingPanel", () => {
 
   beforeEach(() => {
     navigateMock.mockReset();
-    requestGoogleAccessTokenMock.mockReset();
+    connectGoogleContactsMock.mockReset();
   });
 
   it("connects Google auth and enables finishing onboarding", async () => {
-    requestGoogleAccessTokenMock.mockResolvedValue({
-      mode: "mock",
-      accessToken: "mock-token",
+    connectGoogleContactsMock.mockResolvedValue({
+      status: "connected",
+      firebaseUid: "firebase-uid-1",
       scope: "https://www.googleapis.com/auth/contacts",
-      expiresAt: Date.now() + 60_000,
-      accountHint: "developer@local.test",
+      accountEmail: "developer@example.com",
+      connectedAt: "2026-04-06T00:00:00.000Z",
     });
 
     renderPanel();
@@ -77,10 +78,7 @@ describe("OnboardingPanel", () => {
     await user.click(screen.getByRole("button", { name: /connect google account/i }));
 
     await waitFor(() => {
-      expect(requestGoogleAccessTokenMock).toHaveBeenCalledWith({
-        prompt: "consent",
-        hint: "developer@local.test",
-      });
+      expect(connectGoogleContactsMock).toHaveBeenCalledTimes(1);
     });
 
     await waitFor(() => {

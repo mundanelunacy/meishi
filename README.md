@@ -4,8 +4,8 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 
 ## Product flow
 
-1. On first load, the user authorizes Google Contacts access with Google Identity Services.
-   - In local development, the app can fall back to an explicit mock Google auth mode when a Google client ID is not configured.
+1. On first load, the user connects Google Contacts through Firebase-backed OAuth.
+   - The browser first establishes an anonymous Firebase Auth session, then completes a popup-based Google OAuth code flow whose refresh token is stored server-side.
 2. The user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, and can tune one shared advanced extraction prompt.
 3. The user captures one or more business-card images from a mobile camera or image library.
 4. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
@@ -35,7 +35,7 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 - First-run flow, provider selection, API key entry, readiness selectors, and settings management.
 
 ### `src/modules/google-auth`
-- Google auth client boundary for real GIS token acquisition and development-safe mock auth.
+- Firebase-backed Google auth client boundary for anonymous Firebase identity, popup OAuth connect, and on-demand access-token retrieval.
 
 ### `src/modules/card-capture`
 - Camera and file-library capture flows plus image normalization hooks.
@@ -65,28 +65,29 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
   - provider-specific API keys
   - preferred OpenAI and Anthropic models
   - shared advanced extraction prompt
-  - limited Google auth metadata such as scope and account hint, but not durable access tokens
+  - limited Google auth metadata such as scope, connected account email, and connection timestamp, but not Google bearer tokens
 - IndexedDB
   - captured images
   - active capture session
   - latest draft with autosaved review edits and persisted extraction snapshot
   - append-only sync history
 - In-memory Redux state
-  - current Google access token
+  - current Google connection status and Firebase UID
   - active draft edit state
   - sync session status
 
 ## Security posture
 
-This scaffold intentionally uses a browser-only BYOK model. That is acceptable for a trusted prototype, but not for a production multi-user app. User-entered LLM API keys are stored client-side, and provider requests originate from the browser.
+This scaffold still uses a browser-side BYOK model for LLM providers. That is acceptable for a trusted prototype, but not for a production multi-user app. User-entered LLM API keys are stored client-side, and provider requests originate from the browser.
 
-The app does not include a backend token broker, encrypted key vault, or server-side proxy. If the project moves beyond prototype use, those constraints should be revisited before rollout.
+Google Contacts auth no longer uses a browser-only token flow. Firebase Functions now act as the token broker for Google OAuth code exchange, refresh-token storage, and short-lived access-token refresh. LLM key handling remains client-side and should still be revisited before rollout.
 
 ## External API references
 
-- Google Identity Services token flow:
-  - [Using the token model](https://developers.google.com/identity/oauth2/web/guides/use-token-model)
-  - [OAuth 2.0 for Web](https://developers.google.com/identity/oauth2/web/guides/overview)
+- Google OAuth and Firebase:
+  - [OAuth 2.0 for Web Server Applications](https://developers.google.com/identity/protocols/oauth2/web-server)
+  - [Firebase Auth for Web](https://firebase.google.com/docs/auth/web/start)
+  - [Callable Functions](https://firebase.google.com/docs/functions/callable)
 - Google People API:
   - [people.createContact](https://developers.google.com/people/api/rest/v1/people/createContact)
   - [people.updateContactPhoto](https://developers.google.com/people/api/rest/v1/people/updateContactPhoto)
@@ -192,6 +193,11 @@ firebase deploy --only functions
 - Functions use their own Node/TypeScript workspace under `functions/`
 - Predeploy runs the functions workspace `lint` and `build` scripts before any
   deploy proceeds
+- Functions now own the Google Contacts token broker:
+  - `beginGoogleContactsAuth`
+  - `completeGoogleContactsAuth`
+  - `getGoogleAccessToken`
+  - `disconnectGoogleContacts`
 - The functions workspace intentionally keeps its own legacy ESLint config in
   [functions/.eslintrc.js](/Users/mundanelunacy/Projects/meishi/functions/.eslintrc.js)
   and forces `ESLINT_USE_FLAT_CONFIG=false` in its lint script so it does not
@@ -232,10 +238,10 @@ Vite loads env files from the repo root automatically. Meishi now assumes this l
 
 ## Local testing notes
 
-- `VITE_GOOGLE_CLIENT_ID` is required for real Google OAuth.
-- `VITE_GOOGLE_AUTH_MODE=real|mock` can force the auth mode.
-- In development, if `VITE_GOOGLE_CLIENT_ID` is missing and no explicit auth mode is set, Meishi defaults to mock Google auth so the onboarding, shell, capture, review, and demo sync flow remain testable.
-- `VITE_*` variables are compile-time inputs to the browser build. If `VITE_GOOGLE_CLIENT_ID` exists only in `.env.production`, the production build will see it, but `npm run dev` will not.
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_APP_ID` are required for Firebase-backed Google auth.
+- `VITE_FIREBASE_FUNCTIONS_REGION` optionally overrides the default `us-central1` Functions region.
+- `VITE_FIREBASE_USE_EMULATORS=true` connects the browser to the local Firebase Auth and Functions emulators.
+- `VITE_*` variables are compile-time inputs to the browser build. If a required Firebase value exists only in `.env.production`, the production build will see it, but `npm run dev` will not.
 - After changing `.env.production`, rebuild before re-testing: `npm run build && npm run preview`.
 - `npm run dev` is not the authoritative way to test PWA behavior in this repo because `vite-plugin-pwa` development service worker support is not enabled in [vite.config.ts](/Users/mundanelunacy/Projects/meishi/vite.config.ts).
 - When testing through the Vite dev server with `npm run dev`, mobile native-camera capture on `/capture` can still trigger page refreshes after returning from the camera flow. Treat that as an open issue to address in future capture/runtime work, and prefer `npm run build && npm run preview` when validating mobile capture behavior.
