@@ -37,7 +37,11 @@ vi.mock("../google-auth/googleIdentity", () => ({
   disconnectGoogleContacts: (...args: unknown[]) => disconnectGoogleContactsMock(...args),
 }));
 
-function renderPanel() {
+function renderPanel(
+  googleAuthOverride?: Partial<
+    ReturnType<typeof onboardingReducer>["googleAuth"]
+  >,
+) {
   const store = configureStore({
     reducer: {
       onboarding: onboardingReducer,
@@ -54,6 +58,7 @@ function renderPanel() {
           scope: "https://www.googleapis.com/auth/contacts",
           accountEmail: "developer@example.com",
           connectedAt: "2026-04-06T00:00:00.000Z",
+          ...googleAuthOverride,
         })
       ),
     },
@@ -79,7 +84,7 @@ describe("SettingsPanel", () => {
     disconnectGoogleContactsMock.mockClear();
   });
 
-  it("reconnects Google auth through the shared auth client", async () => {
+  it("connects Google when the status toggle is switched to connected", async () => {
     connectGoogleContactsMock.mockResolvedValue({
       status: "connected",
       firebaseUid: "firebase-uid-1",
@@ -88,10 +93,15 @@ describe("SettingsPanel", () => {
       connectedAt: "2026-04-06T00:00:00.000Z",
     });
 
-    const { store } = renderPanel();
+    const { store } = renderPanel({
+      status: "signed_out",
+      scope: null,
+      accountEmail: undefined,
+      connectedAt: null,
+    });
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: /reconnect google/i }));
+    await user.click(screen.getByRole("radio", { name: /^connected$/i }));
 
     await waitFor(() => {
       expect(connectGoogleContactsMock).toHaveBeenCalledTimes(1);
@@ -104,14 +114,16 @@ describe("SettingsPanel", () => {
     const { store } = renderPanel();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: /sign out google/i }));
+    await user.click(screen.getByRole("radio", { name: /^disconnected$/i }));
 
     await waitFor(() => {
       expect(disconnectGoogleContactsMock).toHaveBeenCalledTimes(1);
     });
 
     expect(store.getState().onboarding.googleAuth.status).toBe("signed_out");
-    expect(screen.getByText(/google contacts is not currently connected/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/no google account connected/i),
+    ).not.toBeInTheDocument();
   });
 
   it("persists advanced extraction settings in onboarding state", async () => {
@@ -125,5 +137,16 @@ describe("SettingsPanel", () => {
       "Use company name exactly as printed."
     );
     expect(screen.queryByLabelText(/developer debug mode/i)).not.toBeInTheDocument();
+  });
+
+  it("uses the landing-style provider form", async () => {
+    renderPanel();
+
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByLabelText(/llm provider/i), "anthropic");
+
+    expect(screen.getByLabelText(/anthropic api key/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/anthropic model/i)).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /claude sonnet 4\.6/i })).toBeInTheDocument();
   });
 });

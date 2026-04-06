@@ -1,6 +1,26 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Building2,
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Eraser,
+  FileText,
+  Link2,
+  Mail,
+  MapPin,
+  Minus,
+  Phone,
+  Plus,
+  Rows3,
+  Upload,
+  UserRound,
+  UsersRound,
+  UserRoundPlus,
+} from "lucide-react";
 import {
   useFieldArray,
   useForm,
@@ -33,6 +53,7 @@ import { Label } from "../../shared/ui/label";
 import { Textarea } from "../../shared/ui/textarea";
 import { Badge } from "../../shared/ui/badge";
 import { Alert } from "../../shared/ui/alert";
+import { Photoroll } from "../../shared/ui/photoroll";
 import {
   finalizeDraft,
   selectCapturedImages,
@@ -45,6 +66,11 @@ import { buildContactPayload, useSyncGoogleContact } from "../google-contacts";
 import { buildContactVCard, saveContactVCard } from "../vcard-export";
 import { pushToast } from "../../shared/ui/toastBus";
 import { buildPreservedNotes } from "../../shared/lib/contactFidelity";
+import { connectGoogleContacts } from "../google-auth/googleIdentity";
+import {
+  selectGoogleAuth,
+  setGoogleAuthState,
+} from "../onboarding-settings/onboardingSlice";
 
 const multiValueFieldSchema = z.object({
   value: z.string(),
@@ -234,6 +260,85 @@ function sanitizeCustomFields(fields: CustomContactField[]) {
     .filter((field) => field.key.length > 0 && field.value.length > 0);
 }
 
+function hasText(value: string | undefined) {
+  return (value ?? "").trim().length > 0;
+}
+
+function hasFieldValues(
+  fields:
+    | MultiValueContactField[]
+    | RelatedPersonField[]
+    | SignificantDateField[]
+    | CustomContactField[],
+) {
+  return fields.some((field) =>
+    Object.values(field).some(
+      (value) => typeof value === "string" && value.trim().length > 0,
+    ),
+  );
+}
+
+function shouldExpandOptionalFields(values: ReviewFormValues) {
+  return (
+    hasText(values.namePrefix) ||
+    hasText(values.nickname) ||
+    hasText(values.phoneticMiddleName) ||
+    hasFieldValues(values.relatedPeople) ||
+    hasFieldValues(values.significantDates)
+  );
+}
+
+function hasReviewData(values: ReviewFormValues) {
+  return (
+    hasText(values.fullName) ||
+    hasText(values.namePrefix) ||
+    hasText(values.firstName) ||
+    hasText(values.phoneticFirstName) ||
+    hasText(values.phoneticMiddleName) ||
+    hasText(values.phoneticLastName) ||
+    hasText(values.lastName) ||
+    hasText(values.nickname) ||
+    hasText(values.fileAs) ||
+    hasText(values.organization) ||
+    hasText(values.department) ||
+    hasText(values.title) ||
+    hasText(values.notes) ||
+    hasFieldValues(values.emails) ||
+    hasFieldValues(values.phones) ||
+    hasFieldValues(values.websites) ||
+    hasFieldValues(values.addresses) ||
+    hasFieldValues(values.relatedPeople) ||
+    hasFieldValues(values.significantDates) ||
+    hasFieldValues(values.customFields)
+  );
+}
+
+function buildEmptyFormValues(): ReviewFormValues {
+  return {
+    fullName: "",
+    namePrefix: "",
+    firstName: "",
+    phoneticFirstName: "",
+    phoneticMiddleName: "",
+    phoneticLastName: "",
+    lastName: "",
+    nickname: "",
+    fileAs: "",
+    organization: "",
+    department: "",
+    title: "",
+    notes: "",
+    emails: [],
+    phones: [],
+    websites: [],
+    addresses: [],
+    relatedPeople: [],
+    significantDates: [],
+    customFields: [],
+    selectedPhotoImageId: undefined,
+  };
+}
+
 function getDraftFields(values: ReviewFormValues) {
   const emails = sanitizeMultiValueFields(values.emails);
   const phones = sanitizeMultiValueFields(values.phones);
@@ -306,10 +411,13 @@ export function ReviewWorkspace() {
   const navigate = useNavigate();
   const draft = useAppSelector(selectDraft);
   const images = useAppSelector(selectCapturedImages);
+  const googleAuth = useAppSelector(selectGoogleAuth);
   const debugQueryEnabled = isDebugQueryEnabled();
   const { syncContact, isSyncing, errorMessage } = useSyncGoogleContact();
   const autosaveTimeoutRef = useRef<number | null>(null);
   const hydratedDraftSignatureRef = useRef<string | null>(null);
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
+  const [showMoreFields, setShowMoreFields] = useState(false);
 
   useEffect(() => {
     if (draft || images.length) {
@@ -329,7 +437,7 @@ export function ReviewWorkspace() {
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewSchema),
-    values: buildFormValues(draft, images),
+    defaultValues: buildFormValues(draft, images),
   });
 
   const emailsFieldArray = useFieldArray({
@@ -372,7 +480,9 @@ export function ReviewWorkspace() {
     }
 
     hydratedDraftSignatureRef.current = nextSignature;
-    form.reset(buildFormValues(draft, images));
+    const nextValues = buildFormValues(draft, images);
+    form.reset(nextValues);
+    setShowMoreFields(shouldExpandOptionalFields(nextValues));
   }, [draft, form, images]);
 
   useEffect(() => {
@@ -412,6 +522,8 @@ export function ReviewWorkspace() {
   }, [dispatch, draft, form]);
 
   const currentValues = normalizeWatchedValues(form.watch());
+  const selectedPhotoImageId = form.watch("selectedPhotoImageId");
+  const hasAnyReviewData = hasReviewData(currentValues);
 
   if (!draft) {
     return (
@@ -451,6 +563,26 @@ export function ReviewWorkspace() {
     const verifiedContact = buildVerifiedContact(activeDraft, values);
 
     try {
+      if (googleAuth.status !== "connected") {
+        setIsAuthorizing(true);
+        dispatch(setGoogleAuthState({ ...googleAuth, status: "connecting" }));
+
+        try {
+          const nextAuthState = await connectGoogleContacts();
+          dispatch(setGoogleAuthState(nextAuthState));
+        } catch (error) {
+          dispatch(
+            setGoogleAuthState({
+              ...googleAuth,
+              status: googleAuth.connectedAt ? "connected" : "signed_out",
+            }),
+          );
+          throw error;
+        } finally {
+          setIsAuthorizing(false);
+        }
+      }
+
       const result = await syncContact({
         contact: verifiedContact,
         images,
@@ -505,6 +637,36 @@ export function ReviewWorkspace() {
     }
   }
 
+  async function handleResetReview() {
+    if (!draft) {
+      return;
+    }
+
+    if (autosaveTimeoutRef.current) {
+      window.clearTimeout(autosaveTimeoutRef.current);
+      autosaveTimeoutRef.current = null;
+    }
+
+    const emptyValues = buildEmptyFormValues();
+    const emptyDraftFields = getDraftFields(emptyValues);
+    const resetDraftFields = {
+      ...emptyDraftFields,
+      confidenceNotes: [] as string[],
+    };
+    const resetDraft = {
+      ...activeDraft,
+      ...resetDraftFields,
+      sourceImageIds: activeDraft.sourceImageIds,
+      extractionSnapshot: activeDraft.extractionSnapshot,
+      updatedAt: new Date().toISOString(),
+    };
+
+    form.reset(emptyValues);
+    setShowMoreFields(false);
+    dispatch(updateDraft(resetDraftFields));
+    await saveDraft(resetDraft);
+  }
+
   return (
     <form
       className="grid min-h-[70vh] gap-6 lg:grid-cols-2"
@@ -512,129 +674,182 @@ export function ReviewWorkspace() {
     >
       <Card className="min-w-0 overflow-hidden">
         <CardHeader>
-          <CardTitle>Source images</CardTitle>
-          <CardDescription>
-            Keep the visual reference visible while you edit the extracted
-            fields. One image can be chosen as the Google contact photo.
-          </CardDescription>
+          <CardTitle>Photoroll</CardTitle>
         </CardHeader>
-        <CardContent className="grid min-w-0 gap-4">
-          {images.map((image) => (
-            <label
-              key={image.id}
-              className={`block min-w-0 max-w-full overflow-hidden rounded-xl border ${
-                form.watch("selectedPhotoImageId") === image.id
-                  ? "border-primary ring-2 ring-primary/25"
-                  : "border-border"
-              }`}
-            >
-              <div className="flex h-[min(70vh,100vw)] min-w-0 max-w-full items-center justify-center overflow-hidden bg-muted/20">
-                <img
-                  src={image.dataUrl}
-                  alt={image.fileName}
-                  className="block max-h-full max-w-full object-contain"
-                />
-              </div>
-              <div className="flex items-center justify-between gap-3 p-4 text-sm">
-                <div>
-                  <p className="font-medium">{image.fileName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Local capture only unless selected as contact photo.
-                  </p>
-                </div>
-                <input
-                  type="radio"
-                  value={image.id}
-                  checked={form.watch("selectedPhotoImageId") === image.id}
-                  onChange={() =>
-                    form.setValue("selectedPhotoImageId", image.id)
+        <CardContent>
+          <Photoroll
+            images={images}
+            getItemClassName={(image) =>
+              selectedPhotoImageId === image.id
+                ? "border-primary ring-2 ring-primary/25"
+                : undefined
+            }
+            renderOverlayAction={(image) => {
+              const isSelected = selectedPhotoImageId === image.id;
+
+              return (
+                <Button
+                  type="button"
+                  variant={isSelected ? "default" : "secondary"}
+                  size="sm"
+                  className={isSelected ? undefined : "bg-background/90"}
+                  aria-pressed={isSelected}
+                  aria-label={`Upload ${image.fileName}`}
+                  onClick={() =>
+                    form.setValue(
+                      "selectedPhotoImageId",
+                      isSelected ? undefined : image.id,
+                    )
                   }
-                />
-              </div>
-            </label>
-          ))}
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload
+                </Button>
+              );
+            }}
+          />
         </CardContent>
       </Card>
 
       <Card className="h-full">
         <CardHeader>
-          <CardTitle>Verify extracted contact</CardTitle>
-          <CardDescription>
-            Edit anything the model got wrong before syncing. The review form
-            expands to show extracted contact collections and lets you add more
-            values like Google Contacts does.
-          </CardDescription>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Verify contact</CardTitle>
+            {hasAnyReviewData ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 rounded-full p-0 text-muted-foreground"
+                aria-label="Clear reviewed contact data"
+                onClick={() => {
+                  void handleResetReview();
+                }}
+              >
+                <Eraser className="h-4 w-4" />
+              </Button>
+            ) : null}
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-7">
           {draft.confidenceNotes.length ? (
             <div className="flex flex-wrap gap-2">
               {draft.confidenceNotes.map((note) => (
-                <Badge key={note}>{note}</Badge>
+                <Badge
+                  key={note}
+                  className="bg-primary text-primary-foreground"
+                >
+                  {note}
+                </Badge>
               ))}
             </div>
           ) : null}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Full name" htmlFor="review-full-name">
-              <Input id="review-full-name" {...form.register("fullName")} />
-            </Field>
-            <Field label="Name prefix" htmlFor="review-name-prefix">
-              <Input id="review-name-prefix" {...form.register("namePrefix")} />
-            </Field>
-            <Field label="Title" htmlFor="review-title">
-              <Input id="review-title" {...form.register("title")} />
-            </Field>
-            <Field label="First name" htmlFor="review-first-name">
-              <Input id="review-first-name" {...form.register("firstName")} />
-            </Field>
-            <Field label="Last name" htmlFor="review-last-name">
-              <Input id="review-last-name" {...form.register("lastName")} />
-            </Field>
-            <Field label="Phonetic first" htmlFor="review-phonetic-first-name">
-              <Input
-                id="review-phonetic-first-name"
-                {...form.register("phoneticFirstName")}
-              />
-            </Field>
-            <Field
-              label="Phonetic middle"
-              htmlFor="review-phonetic-middle-name"
-            >
-              <Input
-                id="review-phonetic-middle-name"
-                {...form.register("phoneticMiddleName")}
-              />
-            </Field>
-            <Field label="Phonetic last" htmlFor="review-phonetic-last-name">
-              <Input
-                id="review-phonetic-last-name"
-                {...form.register("phoneticLastName")}
-              />
-            </Field>
-            <Field label="Nickname" htmlFor="review-nickname">
-              <Input id="review-nickname" {...form.register("nickname")} />
-            </Field>
-            <Field label="File as" htmlFor="review-file-as">
-              <Input id="review-file-as" {...form.register("fileAs")} />
-            </Field>
-            <Field
-              label="Organization"
-              htmlFor="review-organization"
-              className="sm:col-span-2"
-            >
-              <Input
-                id="review-organization"
-                {...form.register("organization")}
-              />
-            </Field>
-            <Field label="Department" htmlFor="review-department">
-              <Input id="review-department" {...form.register("department")} />
-            </Field>
-          </div>
+          <GoogleSection
+            icon={UserRound}
+            title="Name"
+            action={
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 rounded-full p-0 text-muted-foreground"
+                onClick={() => setShowMoreFields((value) => !value)}
+                aria-label={
+                  showMoreFields
+                    ? "Show fewer name fields"
+                    : "Show more name fields"
+                }
+              >
+                {showMoreFields ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            }
+          >
+            <div className="space-y-3">
+              {showMoreFields ? (
+                <GoogleField label="Prefix" htmlFor="review-name-prefix">
+                  <Input
+                    id="review-name-prefix"
+                    {...form.register("namePrefix")}
+                  />
+                </GoogleField>
+              ) : null}
+              <GoogleField label="First name" htmlFor="review-first-name">
+                <Input id="review-first-name" {...form.register("firstName")} />
+              </GoogleField>
+              <GoogleField label="Last name" htmlFor="review-last-name">
+                <Input id="review-last-name" {...form.register("lastName")} />
+              </GoogleField>
+              {showMoreFields ? (
+                <GoogleField label="Nickname" htmlFor="review-nickname">
+                  <Input id="review-nickname" {...form.register("nickname")} />
+                </GoogleField>
+              ) : null}
+              <GoogleField
+                label="Phonetic first"
+                htmlFor="review-phonetic-first-name"
+              >
+                <Input
+                  id="review-phonetic-first-name"
+                  {...form.register("phoneticFirstName")}
+                />
+              </GoogleField>
+              {showMoreFields ? (
+                <GoogleField
+                  label="Phonetic middle"
+                  htmlFor="review-phonetic-middle-name"
+                >
+                  <Input
+                    id="review-phonetic-middle-name"
+                    {...form.register("phoneticMiddleName")}
+                  />
+                </GoogleField>
+              ) : null}
+              <GoogleField
+                label="Phonetic last"
+                htmlFor="review-phonetic-last-name"
+              >
+                <Input
+                  id="review-phonetic-last-name"
+                  {...form.register("phoneticLastName")}
+                />
+              </GoogleField>
+              <GoogleField label="Display name" htmlFor="review-full-name">
+                <Input id="review-full-name" {...form.register("fullName")} />
+              </GoogleField>
+              <GoogleField label="File as" htmlFor="review-file-as">
+                <Input id="review-file-as" {...form.register("fileAs")} />
+              </GoogleField>
+            </div>
+          </GoogleSection>
+
+          <GoogleSection icon={Building2} title="Company">
+            <div className="space-y-3">
+              <GoogleField label="Company" htmlFor="review-organization">
+                <Input
+                  id="review-organization"
+                  {...form.register("organization")}
+                />
+              </GoogleField>
+              <GoogleField label="Job title" htmlFor="review-title">
+                <Input id="review-title" {...form.register("title")} />
+              </GoogleField>
+              <GoogleField label="Department" htmlFor="review-department">
+                <Input
+                  id="review-department"
+                  {...form.register("department")}
+                />
+              </GoogleField>
+            </div>
+          </GoogleSection>
 
           <RepeatableFieldSection
             title="Email addresses"
-            description="All extracted and manually added email addresses are editable here."
+            icon={Mail}
             addLabel="Add email"
             fieldArray={emailsFieldArray}
             register={form.register}
@@ -644,8 +859,8 @@ export function ReviewWorkspace() {
 
           <RepeatableFieldSection
             title="Phone numbers"
-            description="Store multiple direct, mobile, or office numbers."
-            addLabel="Add phone number"
+            icon={Phone}
+            addLabel="Add phone"
             fieldArray={phonesFieldArray}
             register={form.register}
             name="phones"
@@ -654,7 +869,7 @@ export function ReviewWorkspace() {
 
           <RepeatableFieldSection
             title="Addresses"
-            description="Use one card line per address, with optional type and label."
+            icon={MapPin}
             addLabel="Add address"
             fieldArray={addressesFieldArray}
             register={form.register}
@@ -664,8 +879,21 @@ export function ReviewWorkspace() {
           />
 
           <RepeatableFieldSection
+            title="Significant dates"
+            icon={CalendarDays}
+            addLabel="Add significant date"
+            fieldArray={significantDatesFieldArray}
+            register={form.register}
+            name="significantDates"
+            legend="Significant date"
+            valueInputType="date"
+            showAddButton={showMoreFields}
+            hideWhenEmpty={!showMoreFields}
+          />
+
+          <RepeatableFieldSection
             title="Websites"
-            description="Support multiple URLs such as company site, profile, or booking link."
+            icon={Link2}
             addLabel="Add website"
             fieldArray={websitesFieldArray}
             register={form.register}
@@ -675,23 +903,13 @@ export function ReviewWorkspace() {
 
           <RepeatableFieldSection
             title="Related people"
-            description="Model assistant, manager, spouse, or other related contacts."
+            icon={UsersRound}
             addLabel="Add related person"
             fieldArray={relatedPeopleFieldArray}
             register={form.register}
             name="relatedPeople"
             legend="Related person"
-          />
-
-          <RepeatableFieldSection
-            title="Significant dates"
-            description="Modeled after the Google Contacts edit view. Enter ISO dates for sync to Google; other text still remains in local notes/custom fields."
-            addLabel="Add significant date"
-            fieldArray={significantDatesFieldArray}
-            register={form.register}
-            name="significantDates"
-            legend="Significant date"
-            valueInputType="date"
+            hideWhenEmpty={!showMoreFields}
           />
 
           <CustomFieldSection
@@ -699,13 +917,26 @@ export function ReviewWorkspace() {
             register={form.register}
           />
 
-          <Field className="sm:col-span-2" label="Notes" htmlFor="review-notes">
-            <Textarea
-              id="review-notes"
-              {...form.register("notes")}
-              className="min-h-[120px]"
-            />
-          </Field>
+          <GoogleSection icon={FileText} title="Notes">
+            <GoogleField label="Notes" htmlFor="review-notes">
+              <Textarea
+                id="review-notes"
+                {...form.register("notes")}
+                className="min-h-[140px] rounded-xl"
+              />
+            </GoogleField>
+          </GoogleSection>
+
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full border-primary px-6 text-primary hover:bg-primary/5"
+              onClick={() => setShowMoreFields((value) => !value)}
+            >
+              {showMoreFields ? "Show less" : "Show more"}
+            </Button>
+          </div>
 
           {errorMessage ? (
             <Alert className="border-destructive/30 text-destructive">
@@ -743,26 +974,31 @@ export function ReviewWorkspace() {
             />
           ) : null}
 
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <Button
               type="button"
               variant="outline"
+              className="h-14 rounded-xl"
               onClick={() => {
                 void handleSaveVCard();
               }}
             >
+              <Download className="h-4 w-4" />
               Save vCard
             </Button>
-            <Button size="lg" type="submit" disabled={isSyncing}>
-              {isSyncing ? <Spinner /> : null}
-              {isSyncing ? "Syncing..." : "Save to Google Contacts"}
-            </Button>
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate({ to: "/capture" })}
+              size="lg"
+              type="submit"
+              className="h-14 rounded-xl"
+              disabled={isSyncing || isAuthorizing}
             >
-              Back to capture
+              <UserRoundPlus className="h-4 w-4" />
+              {isSyncing || isAuthorizing ? <Spinner /> : null}
+              {isAuthorizing
+                ? "Connecting Google..."
+                : isSyncing
+                  ? "Syncing..."
+                  : "Save to Google Contacts"}
             </Button>
           </div>
         </CardContent>
@@ -771,20 +1007,52 @@ export function ReviewWorkspace() {
   );
 }
 
-function Field({
+function GoogleSection({
+  icon: Icon,
+  title,
+  action,
+  children,
+}: {
+  icon: typeof UserRound;
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-label={title}
+      className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-4"
+    >
+      <div className="flex justify-center pt-4 text-muted-foreground">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0 space-y-3">
+        {action ? (
+          <div className="flex justify-end">{action}</div>
+        ) : (
+          <div className="h-2" aria-hidden="true" />
+        )}
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function GoogleField({
   label,
   htmlFor,
-  className,
   children,
 }: {
   label: string;
   htmlFor?: string;
-  className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className={className}>
-      <Label htmlFor={htmlFor} className="mb-2 block">
+    <div className="relative pt-2">
+      <Label
+        htmlFor={htmlFor}
+        className="absolute left-3 top-0 z-10 bg-background px-1 text-xs font-medium text-muted-foreground"
+      >
         {label}
       </Label>
       {children}
@@ -794,7 +1062,7 @@ function Field({
 
 function RepeatableFieldSection({
   title,
-  description,
+  icon,
   addLabel,
   fieldArray,
   register,
@@ -802,9 +1070,11 @@ function RepeatableFieldSection({
   legend,
   multiline = false,
   valueInputType = "text",
+  showAddButton,
+  hideWhenEmpty,
 }: {
   title: string;
-  description: string;
+  icon: typeof UserRound;
   addLabel: string;
   fieldArray: {
     fields: FieldArrayWithId<ReviewFormValues, RepeatableFieldName, "id">[];
@@ -818,88 +1088,93 @@ function RepeatableFieldSection({
   legend: string;
   multiline?: boolean;
   valueInputType?: "text" | "date";
+  showAddButton?: boolean;
+  hideWhenEmpty?: boolean;
 }) {
-  return (
-    <section className="space-y-3 rounded-xl border border-border bg-muted/25 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="font-medium text-foreground">{title}</p>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            fieldArray.append(
-              name === "relatedPeople"
-                ? emptyRelatedPerson()
-                : name === "significantDates"
-                  ? emptySignificantDate()
-                  : emptyMultiValueField(),
-            )
-          }
-        >
-          {addLabel}
-        </Button>
-      </div>
+  const shouldRender = !hideWhenEmpty || fieldArray.fields.length > 0;
+  const rowGridClassName = multiline
+    ? "grid gap-3 sm:grid-cols-[minmax(0,2.4fr)_minmax(5rem,0.45fr)_auto]"
+    : "grid gap-3 sm:grid-cols-[minmax(0,2.8fr)_minmax(5rem,0.45fr)_minmax(5rem,0.45fr)_auto]";
 
-      {fieldArray.fields.length ? (
-        <div className="space-y-3">
-          {fieldArray.fields.map((field, index) => (
-            <div
-              key={field.id}
-              className="rounded-lg border border-border bg-background p-4"
-            >
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-foreground">
-                  {legend} {index + 1}
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => fieldArray.remove(index)}
-                >
-                  Remove
-                </Button>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-[1.4fr_0.8fr_0.8fr]">
-                <Field label="Value" htmlFor={`${name}-${index}-value`}>
-                  {multiline ? (
-                    <Textarea
-                      id={`${name}-${index}-value`}
-                      className="min-h-[96px]"
-                      {...register(`${name}.${index}.value` as const)}
-                    />
-                  ) : (
-                    <Input
-                      id={`${name}-${index}-value`}
-                      type={valueInputType}
-                      {...register(`${name}.${index}.value` as const)}
-                    />
-                  )}
-                </Field>
-                <Field label="Type" htmlFor={`${name}-${index}-type`}>
-                  <Input
-                    id={`${name}-${index}-type`}
-                    {...register(`${name}.${index}.type` as const)}
+  if (!shouldRender) {
+    return null;
+  }
+
+  return (
+    <GoogleSection icon={icon} title={title}>
+      <div className="space-y-3">
+        {fieldArray.fields.map((field, index) => (
+          <div key={field.id} className="space-y-2">
+            <div className={rowGridClassName}>
+              <GoogleField label={legend} htmlFor={`${name}-${index}-value`}>
+                {multiline ? (
+                  <Textarea
+                    id={`${name}-${index}-value`}
+                    className="min-h-[96px] rounded-xl"
+                    {...register(`${name}.${index}.value` as const)}
                   />
-                </Field>
-                <Field label="Label" htmlFor={`${name}-${index}-label`}>
+                ) : (
+                  <Input
+                    id={`${name}-${index}-value`}
+                    type={valueInputType}
+                    className="rounded-xl"
+                    {...register(`${name}.${index}.value` as const)}
+                  />
+                )}
+              </GoogleField>
+              <GoogleField label="Type" htmlFor={`${name}-${index}-type`}>
+                <Input
+                  id={`${name}-${index}-type`}
+                  className="rounded-xl"
+                  {...register(`${name}.${index}.type` as const)}
+                />
+              </GoogleField>
+              {multiline ? null : (
+                <GoogleField label="Label" htmlFor={`${name}-${index}-label`}>
                   <Input
                     id={`${name}-${index}-label`}
+                    className="rounded-xl"
                     {...register(`${name}.${index}.label` as const)}
                   />
-                </Field>
+                </GoogleField>
+              )}
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-10 w-10 rounded-full border-border p-0 text-muted-foreground hover:bg-muted/60"
+                  onClick={() => fieldArray.remove(index)}
+                  aria-label={`Remove ${legend.toLowerCase()} ${index + 1}`}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <Alert>No {title.toLowerCase()} yet.</Alert>
-      )}
-    </section>
+          </div>
+        ))}
+
+        {showAddButton === false && fieldArray.fields.length > 0 ? null : (
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full justify-center bg-primary/10 text-primary hover:bg-primary/15"
+            onClick={() =>
+              fieldArray.append(
+                name === "relatedPeople"
+                  ? emptyRelatedPerson()
+                  : name === "significantDates"
+                    ? emptySignificantDate()
+                    : emptyMultiValueField(),
+              )
+            }
+          >
+            <Plus className="h-4 w-4" />
+            {addLabel}
+          </Button>
+        )}
+      </div>
+    </GoogleSection>
   );
 }
 
@@ -915,66 +1190,55 @@ function CustomFieldSection({
   register: UseFormRegister<ReviewFormValues>;
 }) {
   return (
-    <section className="space-y-3 rounded-xl border border-border bg-muted/25 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="font-medium text-foreground">Custom fields</p>
-          <p className="text-sm text-muted-foreground">
-            Use this for non-standard card data or anything you want preserved
-            as a custom/X- field.
-          </p>
-        </div>
+    <GoogleSection icon={Rows3} title="Custom fields">
+      <div className="space-y-3">
+        {fieldArray.fields.map((field, index) => (
+          <div
+            key={field.id}
+            className="grid gap-3 sm:grid-cols-[1.1fr_1.1fr_auto]"
+          >
+            <GoogleField
+              label="Custom field"
+              htmlFor={`custom-fields-${index}-value`}
+            >
+              <Input
+                id={`custom-fields-${index}-value`}
+                className="rounded-xl"
+                {...register(`customFields.${index}.value` as const)}
+              />
+            </GoogleField>
+            <GoogleField label="Label" htmlFor={`custom-fields-${index}-key`}>
+              <Input
+                id={`custom-fields-${index}-key`}
+                className="rounded-xl"
+                {...register(`customFields.${index}.key` as const)}
+              />
+            </GoogleField>
+            <div className="flex items-end">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-full text-muted-foreground"
+                onClick={() => fieldArray.remove(index)}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+        ))}
+
         <Button
           type="button"
-          variant="outline"
-          size="sm"
+          variant="secondary"
+          className="w-full justify-center bg-primary/10 text-primary hover:bg-primary/15"
           onClick={() => fieldArray.append(emptyCustomField())}
         >
+          <Plus className="h-4 w-4" />
           Add custom field
         </Button>
       </div>
-
-      {fieldArray.fields.length ? (
-        <div className="space-y-3">
-          {fieldArray.fields.map((field, index) => (
-            <div
-              key={field.id}
-              className="rounded-lg border border-border bg-background p-4"
-            >
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-foreground">
-                  Custom field {index + 1}
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => fieldArray.remove(index)}
-                >
-                  Remove
-                </Button>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-[0.9fr_1.1fr]">
-                <Field label="Key" htmlFor={`custom-fields-${index}-key`}>
-                  <Input
-                    id={`custom-fields-${index}-key`}
-                    {...register(`customFields.${index}.key` as const)}
-                  />
-                </Field>
-                <Field label="Value" htmlFor={`custom-fields-${index}-value`}>
-                  <Input
-                    id={`custom-fields-${index}-value`}
-                    {...register(`customFields.${index}.value` as const)}
-                  />
-                </Field>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <Alert>No custom fields yet.</Alert>
-      )}
-    </section>
+    </GoogleSection>
   );
 }
 

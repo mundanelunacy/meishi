@@ -3,18 +3,19 @@
 ## Responsibilities
 
 - Provide the top-level application frame.
-- Render navigation for onboarding, capture, review, and settings routes.
-- Surface app-wide readiness signals such as LLM provider, Google auth state, and onboarding status.
+- Render navigation for landing, capture, review, settings, and external links.
+- Surface app-wide onboarding-driven route gating for capture/review navigation.
 - Host PWA update prompts and installation-safe shell behavior.
-- Surface environment warnings when Firebase-backed Google auth is not yet connected.
 
 ## Features
 
 - Hero/header treatment for the PWA
+- Brand link back to the landing page
 - Route outlet and navigation state
-- Readiness banner and status badges
+- Centered two-option primary navigation for capture/review that reads as a toggle, with a right-aligned overflow menu in the desktop header and in the fixed mobile bottom bar
+- Mobile swipe gestures on the primary navigation surface to move left/right between capture and review
 - PWA update notification hook integration
-- App-wide status badges and setup gating cues
+- App-wide setup gating cues for locked routes
 
 ## Interfaces
 

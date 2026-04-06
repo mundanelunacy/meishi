@@ -32,6 +32,7 @@ vi.mock("../local-data", async (importOriginal) => {
 });
 
 const syncContactMock = vi.fn();
+const connectGoogleContactsMock = vi.fn();
 const useSyncGoogleContactMock = vi.fn(() => ({
   syncContact: syncContactMock,
   isSyncing: false,
@@ -53,6 +54,17 @@ vi.mock("../vcard-export", async (importOriginal) => {
   return {
     ...actual,
     saveContactVCard: (...args: unknown[]) => saveContactVCardMock(...args),
+  };
+});
+
+vi.mock("../google-auth/googleIdentity", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("../google-auth/googleIdentity")
+  >();
+  return {
+    ...actual,
+    connectGoogleContacts: (...args: unknown[]) =>
+      connectGoogleContactsMock(...args),
   };
 });
 
@@ -194,6 +206,14 @@ function renderWorkspace(overrideState?: Partial<typeof preloadedState>) {
 describe("ReviewWorkspace", () => {
   beforeEach(() => {
     syncContactMock.mockReset();
+    connectGoogleContactsMock.mockReset();
+    connectGoogleContactsMock.mockResolvedValue({
+      status: "connected",
+      firebaseUid: "firebase-uid-1",
+      scope: "https://www.googleapis.com/auth/contacts",
+      accountEmail: "developer@example.com",
+      connectedAt: "2026-04-06T00:00:00.000Z",
+    });
     syncContactMock.mockResolvedValue({
       outcome: {
         contactResourceName: "people/123",
@@ -245,6 +265,39 @@ describe("ReviewWorkspace", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("connects Google on demand before syncing when signed out", async () => {
+    const { store } = renderWorkspace({
+      onboarding: {
+        ...preloadedState.onboarding,
+        googleAuth: {
+          status: "signed_out",
+          firebaseUid: "firebase-uid-1",
+          scope: null,
+          accountEmail: undefined,
+          connectedAt: null,
+        },
+      },
+    });
+
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole("button", { name: /save to google contacts/i }),
+    );
+
+    await waitFor(() => {
+      expect(connectGoogleContactsMock).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(syncContactMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(store.getState().onboarding.googleAuth.status).toBe("connected");
+    expect(pushToastMock).toHaveBeenCalledWith(
+      "Verified contact synced to Google Contacts.",
+    );
+  });
+
   it("updates preview output from current form edits", async () => {
     Object.defineProperty(window, "location", {
       configurable: true,
@@ -253,17 +306,13 @@ describe("ReviewWorkspace", () => {
 
     renderWorkspace();
     const user = userEvent.setup();
-    const phoneSection = screen.getByText(/phone numbers/i).closest("section");
-
-    if (!phoneSection) {
-      throw new Error("Phone numbers section not found.");
-    }
+    const phoneSection = screen.getByLabelText("Phone numbers");
 
     await user.clear(
       within(phoneSection).getByDisplayValue("+82 10-1234-5678"),
     );
     await user.type(
-      within(phoneSection).getByLabelText("Value"),
+      within(phoneSection).getByLabelText("Phone"),
       "+82 10-2222-3333",
     );
     await user.clear(screen.getByLabelText(/file as/i));
@@ -290,16 +339,10 @@ describe("ReviewWorkspace", () => {
 
     renderWorkspace();
     const user = userEvent.setup();
-    const emailSection = screen
-      .getByText(/^Email addresses$/)
-      .closest("section");
-
-    if (!emailSection) {
-      throw new Error("Email addresses section not found.");
-    }
+    const emailSection = screen.getByLabelText("Email addresses");
 
     await user.click(screen.getByRole("button", { name: /add email/i }));
-    const emailInputs = within(emailSection).getAllByLabelText("Value");
+    const emailInputs = within(emailSection).getAllByLabelText("Email");
     await user.type(emailInputs[emailInputs.length - 1], "team@example.com");
     await user.click(screen.getByRole("button", { name: /add custom field/i }));
 
@@ -307,16 +350,113 @@ describe("ReviewWorkspace", () => {
     expect(screen.getAllByText(/custom field/i).length).toBeGreaterThan(0);
   });
 
-  it("renders the new Google Contacts-aligned name and company fields", () => {
+  it("auto-expands optional sections when extracted hidden fields have data", async () => {
     renderWorkspace();
 
-    expect(screen.getByLabelText(/name prefix/i)).toHaveValue("Countess");
+    expect(screen.getByText("Photoroll")).toBeInTheDocument();
+    await screen.findByRole("button", { name: /^show less$/i });
     expect(screen.getByLabelText(/phonetic first/i)).toHaveValue("A-da");
-    expect(screen.getByLabelText(/phonetic middle/i)).toHaveValue("By-ron");
     expect(screen.getByLabelText(/phonetic last/i)).toHaveValue("Love-lace");
-    expect(screen.getByLabelText(/nickname/i)).toHaveValue("Ada");
     expect(screen.getByLabelText(/file as/i)).toHaveValue("Lovelace, Ada");
     expect(screen.getByLabelText(/department/i)).toHaveValue("Research");
+    expect(screen.getByLabelText("Related people")).toBeInTheDocument();
+    expect(document.getElementById("review-name-prefix")).toHaveValue("Countess");
+    expect(document.getElementById("review-phonetic-middle-name")).toHaveValue(
+      "By-ron",
+    );
+    expect(document.getElementById("review-nickname")).toHaveValue("Ada");
+  });
+
+  it("starts with optional sections collapsed when extracted hidden fields are empty", async () => {
+    renderWorkspace({
+      reviewDraft: {
+        ...preloadedState.reviewDraft,
+        draft: {
+          ...preloadedState.reviewDraft.draft,
+          namePrefix: "",
+          phoneticMiddleName: "",
+          nickname: "",
+          relatedPeople: [],
+          significantDates: [],
+        },
+      },
+    });
+
+    expect(screen.getByRole("button", { name: /^show more$/i })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/name prefix/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/phonetic middle/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Related people")).not.toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /^show more$/i }));
+
+    expect(
+      screen.getByRole("button", { name: /show fewer name fields/i }),
+    ).toBeInTheDocument();
+    expect(document.getElementById("review-name-prefix")).toBeInTheDocument();
+    expect(
+      document.getElementById("review-phonetic-middle-name"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Related people")).toBeInTheDocument();
+  });
+
+  it("toggles which photoroll image will be uploaded to Google", async () => {
+    renderWorkspace({
+      reviewDraft: {
+        ...preloadedState.reviewDraft,
+        images: [
+          ...preloadedState.reviewDraft.images,
+          {
+            id: "img-2",
+            dataUrl: "data:image/png;base64,YmFjaw==",
+            fileName: "back.png",
+            mimeType: "image/png",
+            capturedAt: "2026-04-05T00:05:00.000Z",
+            width: 1200,
+            height: 800,
+          },
+        ],
+        draft: {
+          ...preloadedState.reviewDraft.draft,
+          sourceImageIds: ["img-1", "img-2"],
+        },
+      },
+    });
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", { name: /upload back\.png/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /save to google contacts/i }),
+    );
+
+    await waitFor(() =>
+      expect(syncContactMock).toHaveBeenCalledWith({
+        contact: expect.objectContaining({
+          selectedPhotoImageId: "img-2",
+        }),
+        images: expect.any(Array),
+      }),
+    );
+
+    syncContactMock.mockClear();
+
+    await user.click(
+      screen.getByRole("button", { name: /upload back\.png/i }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: /save to google contacts/i }),
+    );
+
+    await waitFor(() =>
+      expect(syncContactMock).toHaveBeenCalledWith({
+        contact: expect.objectContaining({
+          selectedPhotoImageId: undefined,
+        }),
+        images: expect.any(Array),
+      }),
+    );
   });
 
   it("submits through the google-contacts module sync entrypoint", async () => {
@@ -350,8 +490,8 @@ describe("ReviewWorkspace", () => {
     renderWorkspace();
     const user = userEvent.setup();
 
-    await user.clear(screen.getByLabelText(/full name/i));
-    await user.type(screen.getByLabelText(/full name/i), "Ada Byron");
+    await user.clear(screen.getByLabelText(/display name/i));
+    await user.type(screen.getByLabelText(/display name/i), "Ada Byron");
     await user.click(screen.getByRole("button", { name: /save vcard/i }));
 
     await waitFor(() =>
@@ -367,6 +507,48 @@ describe("ReviewWorkspace", () => {
       "vCard downloaded to your device.",
     );
     expect(syncContactMock).not.toHaveBeenCalled();
+  });
+
+  it("clears the reviewed form and finalized contact state from the broom action", async () => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: new URL("https://example.test/review?debug=1"),
+    });
+
+    const { store } = renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /save vcard/i }));
+
+    await waitFor(() =>
+      expect(saveContactVCardMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fullName: "Ada Lovelace",
+        }),
+      ),
+    );
+    expect(store.getState().reviewDraft.verifiedContact).not.toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: /clear reviewed contact data/i }),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /clear reviewed contact data/i })).not.toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("Low-confidence title")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/display name/i)).toHaveValue("");
+    expect(store.getState().reviewDraft.draft?.fullName).toBe("");
+    expect(store.getState().reviewDraft.draft?.confidenceNotes).toEqual([]);
+    expect(store.getState().reviewDraft.verifiedContact).toBeNull();
+    expect(
+      screen.getByText(/derived google createcontact payload/i)
+        .nextElementSibling,
+    ).not.toHaveTextContent("Ada Lovelace");
+    expect(
+      screen.getByText(/derived vcard/i).nextElementSibling,
+    ).not.toHaveTextContent("Ada Lovelace");
   });
 
   it("shows the share-sheet success toast when native sharing is used", async () => {

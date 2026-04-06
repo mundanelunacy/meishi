@@ -127,7 +127,7 @@ export const selectAppReadiness = createSelector(
     hasLlmConfiguration,
     hasGoogleAuthorization,
     hasCompletedOnboarding,
-    isCaptureReady: hasLlmConfiguration && hasGoogleAuthorization && hasCompletedOnboarding,
+    isCaptureReady: hasLlmConfiguration && hasCompletedOnboarding,
     googleAuthStatus: googleAuth.status,
   })
 );

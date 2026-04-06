@@ -99,6 +99,7 @@ const reviewDraftSlice = createSlice({
         ...action.payload,
         updatedAt: new Date().toISOString(),
       };
+      state.verifiedContact = null;
     },
     finalizeDraft(state, action: PayloadAction<{ selectedPhotoImageId?: string }>) {
       if (!state.draft) {

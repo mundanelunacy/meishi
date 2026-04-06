@@ -37,6 +37,7 @@ import {
   setCapturedImages,
 } from "../contact-review/reviewDraftSlice";
 import { useExtractBusinessCardMutation } from "../card-extraction/extractionApi";
+import { Photoroll } from "../../shared/ui/photoroll";
 import { pushToast } from "../../shared/ui/toastBus";
 
 function readExtractionError(error: unknown) {
@@ -418,44 +419,64 @@ export function CaptureWorkspace() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Capture business cards</CardTitle>
-            <CardDescription>
-              Mobile devices prefer the native camera experience. Desktop
-              devices use the in-browser live preview, and some browsers may
-              still show a chooser because camera capture is only a hint.
-            </CardDescription>
+            <CardTitle>Photoroll</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-4 rounded-xl border border-dashed border-border bg-muted/30 px-6 py-6">
-              <div className="flex flex-col items-center justify-center gap-3 py-4 text-center">
-                <Camera className="h-8 w-8 text-primary" />
-                <div className="space-y-1">
-                  <p className="font-medium">
-                    {captureExperience === "native-camera-input"
-                      ? "Open native camera"
-                      : "Open live camera"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {captureExperience === "native-camera-input"
-                      ? "Mobile devices prefer the native camera flow with a rear-camera hint."
-                      : "Desktop devices open the webcam in a larger capture dialog, and the front camera is used when no rear camera exists."}
-                  </p>
-                </div>
+          <CardContent>
+            <Photoroll
+              images={images}
+              renderOverlayAction={(image) => (
                 <Button
                   type="button"
-                  size="lg"
-                  className="w-full sm:w-auto"
-                  onClick={handleOpenCamera}
-                  disabled={isStartingCamera}
+                  variant="secondary"
+                  size="sm"
+                  className="bg-background/90"
+                  onClick={() => void handleRemoveImage(image.id)}
+                  aria-label={`Delete ${image.fileName}`}
                 >
-                  {isStartingCamera ? (
-                    <Spinner />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                  {isStartingCamera ? "Opening camera..." : "Open camera"}
+                  <Trash2 className="h-4 w-4" />
+                  Delete
                 </Button>
-              </div>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Capture business cards</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex aspect-square h-auto flex-col justify-center gap-3 rounded-2xl px-4 py-6 text-center"
+                onClick={handleOpenCamera}
+                disabled={isStartingCamera}
+              >
+                {isStartingCamera ? (
+                  <Spinner />
+                ) : (
+                  <Camera className="h-8 w-8 text-primary" />
+                )}
+                <span className="text-base font-semibold">
+                  {isStartingCamera ? "Opening camera..." : "Open Camera"}
+                </span>
+              </Button>
+
+              <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-background px-4 py-6 text-center transition-colors hover:bg-muted/40">
+                <ImagePlus className="h-8 w-8 text-primary" />
+                <span className="text-base font-semibold">
+                  Add images from library
+                </span>
+                <input
+                  className="hidden"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(event) => void handleFileInputChange(event)}
+                />
+              </label>
 
               <input
                 ref={cameraInputRef}
@@ -467,18 +488,6 @@ export function CaptureWorkspace() {
                 onChange={(event) => void handleFileInputChange(event)}
               />
             </div>
-
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-medium">
-              <ImagePlus className="h-4 w-4" />
-              Add images from library
-              <input
-                className="hidden"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(event) => void handleFileInputChange(event)}
-              />
-            </label>
 
             <Button
               type="button"
@@ -500,61 +509,6 @@ export function CaptureWorkspace() {
                 {cameraError}
               </Alert>
             ) : null}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Active capture session</CardTitle>
-            <CardDescription>
-              Captured images are kept in IndexedDB so you can recover the
-              current session after navigation or refresh.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {images.length ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {images.map((image) => (
-                  <div
-                    key={image.id}
-                    className="overflow-hidden rounded-xl border border-border bg-background"
-                  >
-                    <div className="relative">
-                      <img
-                        src={image.dataUrl}
-                        alt={image.fileName}
-                        className="aspect-[4/3] w-full object-cover"
-                      />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="absolute right-3 top-3 bg-background/90"
-                        onClick={() => void handleRemoveImage(image.id)}
-                        aria-label={`Delete ${image.fileName}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
-                    </div>
-                    <div className="space-y-1 p-4 text-xs text-muted-foreground">
-                      <p className="font-medium text-foreground">
-                        {image.fileName}
-                      </p>
-                      <p>
-                        {image.width}×{image.height} •{" "}
-                        {new Date(image.capturedAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <Alert>
-                No images captured yet. Start with the camera or photo library
-                above.
-              </Alert>
-            )}
           </CardContent>
         </Card>
       </div>

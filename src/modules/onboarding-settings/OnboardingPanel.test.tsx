@@ -90,6 +90,23 @@ describe("OnboardingPanel", () => {
     expect(navigateMock).toHaveBeenCalledWith({ to: "/capture" });
   });
 
+  it("enables finishing onboarding once an API key is present", async () => {
+    renderPanel();
+
+    const user = userEvent.setup();
+    const continueButton = screen.getByRole("button", {
+      name: /continue to capture/i,
+    });
+
+    expect(continueButton).toBeDisabled();
+
+    await user.type(screen.getByLabelText(/api key/i), "sk-test");
+
+    await waitFor(() => {
+      expect(continueButton).toBeEnabled();
+    });
+  });
+
   it("switches provider-specific fields when Anthropic is selected", async () => {
     renderPanel();
 
@@ -98,6 +115,7 @@ describe("OnboardingPanel", () => {
 
     expect(screen.getByLabelText(/anthropic api key/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/anthropic model/i)).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /claude sonnet 4\.6/i })).toBeInTheDocument();
   });
 
   it("explains the Google consent scope more precisely", () => {

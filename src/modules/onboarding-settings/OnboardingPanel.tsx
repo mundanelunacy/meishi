@@ -33,6 +33,7 @@ import {
   connectGoogleContacts,
   getGoogleScope,
 } from "../google-auth/googleIdentity";
+import { getSupportedModelOptions } from "./modelOptions";
 
 export function OnboardingPanel() {
   const dispatch = useAppDispatch();
@@ -51,9 +52,12 @@ export function OnboardingPanel() {
     selectedProvider === "anthropic"
       ? settings.preferredAnthropicModel
       : settings.preferredOpenAiModel;
+  const providerModelOptions = getSupportedModelOptions(
+    selectedProvider,
+    providerModel,
+  );
 
-  const canContinue =
-    readiness.hasLlmConfiguration && readiness.hasGoogleAuthorization;
+  const canContinue = readiness.hasLlmConfiguration;
 
   async function handleGoogleConnect() {
     setIsAuthorizing(true);
@@ -175,13 +179,8 @@ export function OnboardingPanel() {
                   ? "Anthropic model"
                   : "OpenAI model"}
               </Label>
-              <Input
+              <Select
                 id="model"
-                placeholder={
-                  selectedProvider === "anthropic"
-                    ? "claude-sonnet-4-20250514"
-                    : "gpt-5.4-mini"
-                }
                 value={providerModel}
                 onChange={(event) => {
                   const nextValue = event.target.value;
@@ -192,7 +191,13 @@ export function OnboardingPanel() {
 
                   dispatch(setPreferredOpenAiModel(nextValue));
                 }}
-              />
+              >
+                {providerModelOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </div>
           </section>
 
@@ -255,8 +260,8 @@ export function OnboardingPanel() {
               Continue to capture
             </Button>
             <span className="text-sm text-muted-foreground">
-              Ready when Google access and the selected provider configuration
-              are both present.
+              Ready when the selected provider is configured. Google access is
+              only needed when you save to Google Contacts.
             </span>
           </div>
         </CardContent>

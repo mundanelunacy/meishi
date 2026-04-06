@@ -6,17 +6,20 @@
 - Persist the chosen LLM provider, provider-specific API keys, provider models, and one shared extraction prompt.
 - Track onboarding completion.
 - Manage Google auth state handoff from the Firebase-backed auth module.
-- Act as the app readiness authority for future route and module gating.
+- Act as the app readiness authority for LLM-dependent routes while keeping Google sync opt-in.
 
 ## Features
 
 - First-run onboarding panel
 - Provider picker with OpenAI and Anthropic support
 - Provider-specific BYOK API key entry
+- Provider-specific model selection from the app's current supported-model list
 - Shared advanced extraction guidance setting appended to fixed structured-output and fidelity rules
 - Settings screen for later edits and local reset
+- Settings screen that reuses the landing-page provider form, exposes a simple Google connection toggle, and separates advanced controls
 - Route readiness selectors
 - Firebase-backed Google connection status and reconnect/disconnect controls
+- Landing-page setup that treats Google Contacts authorization as optional until sync time
 
 ## Interfaces
 
@@ -40,3 +43,4 @@
 - Google readiness is based on a renewable backend-backed connection, not the presence of a bearer token in Redux.
 - Onboarding copy should explain that Google consent text is broader than the app's current create-plus-photo-upload flow because the People API requires the full contacts scope.
 - Route readiness must be based on the currently selected provider’s configuration, not a generic API key flag.
+- Capture readiness should not require pre-authorized Google access because review can export a local vCard without Google.
