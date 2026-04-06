@@ -1,5 +1,55 @@
 # Changelog
 
+## 2026-04-06
+
+### Firebase-backed Google auth and token brokering
+
+- Replaced the browser-only Google Identity Services token flow with a Firebase-backed Google Contacts auth flow.
+- Added a new `functions/` workspace with callable Firebase Functions for:
+  - starting Google OAuth,
+  - completing the OAuth code exchange,
+  - reporting Google auth status,
+  - minting short-lived Google access tokens on demand,
+  - disconnecting and revoking stored Google credentials.
+- Moved durable Google credential handling server-side so the browser no longer stores Google bearer tokens or refresh tokens.
+- Added popup callback handling at `/auth/google/callback` and updated the browser auth client to bootstrap an anonymous Firebase session before connecting Google Contacts.
+
+### Firebase hosting, env, and local emulator support
+
+- Added Firebase project configuration via `.firebaserc` and `firebase.json`, including:
+  - Hosting for the built SPA,
+  - Functions predeploy lint/build checks,
+  - local Auth, Functions, and Firestore emulator settings.
+- Added root Firebase env handling in `src/app/env.ts` and `src/app/firebase.ts` for browser Firebase initialization, optional Functions region override, and emulator wiring.
+- Updated onboarding and settings to require `VITE_FIREBASE_*` configuration instead of the previous direct Google client ID setup.
+- Added `.env.example`, updated ignore rules, and expanded the root README with Firebase deploy, troubleshooting, and environment guidance.
+
+### Google credential retention and sync behavior
+
+- Added a scheduled cleanup path for stored Google credential records, with daily retention enforcement for `googleContactsCredentials` entries older than 90 days.
+- Added Firestore-backed credential retention helpers and test coverage for retention logic.
+- Updated the Google People API client to request short-lived access tokens through the new auth boundary and retry once on `401` after invalidating the cached token.
+- Preserved the app’s existing Google Contacts create-contact and photo-upload flow while moving token refresh responsibility out of Redux state and into the Google auth module.
+
+### Browser app integration updates
+
+- Refactored `src/modules/google-auth` around Firebase auth state, callable-functions status checks, popup result messaging, and cached short-lived access tokens.
+- Updated onboarding copy and readiness behavior to reflect the new Google auth architecture and the broader contacts scope wording required by Google’s consent screen.
+- Added a dedicated Google auth callback page and route.
+- Expanded the shared `GoogleAuthState` shape to track connection status, Firebase UID, connected account metadata, and connection timestamp instead of a browser-held access token.
+- Updated local settings persistence to retain only light Google metadata needed to restore UI state after refresh.
+
+### Documentation, tests, and repo tooling
+
+- Added `functions/README.md` plus updates to the root README and affected module READMEs to document the Firebase-backed auth flow, deployment model, retention cleanup, and new environment expectations.
+- Added `LOCAL-DEV.md` and repo-local Firebase/Genkit-related agent skill references under `.agents/skills` to support local development and documentation workflows in this branch.
+- Added and updated tests for:
+  - Firebase-aware env resolution,
+  - Google auth client initialization and reconnect flows,
+  - onboarding/settings behavior around Firebase-backed auth,
+  - Google People API token refresh behavior,
+  - Google credential retention helpers.
+
 ## 2026-04-05
 
 ### Capture session deletion race fix
