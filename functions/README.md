@@ -25,6 +25,12 @@ cleanup. The scheduled job deletes `googleContactsCredentials` records whose
 `connectedAt` timestamp is more than 90 days old. This is a storage policy for
 quota control, not a true check for Google refresh-token expiry.
 
+Firestore is currently server-only in this repo. The browser app does not use
+the Firestore Web SDK, and the root
+[firestore.rules](/Users/mundanelunacy/Projects/meishi/firestore.rules) file
+intentionally denies all client reads and writes. Only Admin SDK access from
+Functions is expected to touch `googleContactsCredentials`.
+
 ## Workspace layout
 
 - `src/`: authored TypeScript source
@@ -147,6 +153,8 @@ The current exported Google auth handlers are:
 - Keep server-only secrets out of `VITE_*` variables and out of browser code
 - Prefer putting privileged credentials, API keys, and any sensitive
   orchestration behind Functions instead of exposing them to the client
+- Treat Firestore as part of that privileged backend boundary unless the app
+  explicitly adds a reviewed browser-side use case and corresponding rules
 - Current Google auth secrets expected by this workspace:
   - `GOOGLE_OAUTH_CLIENT_ID`
   - `GOOGLE_OAUTH_CLIENT_SECRET`

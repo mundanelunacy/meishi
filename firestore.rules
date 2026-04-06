@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // This security rules file assumes the following data structures:
+    //
+    // Collection: googleContactsCredentials
+    // Document ID: {uid} (Firebase Auth UID)
+    // Fields:
+    //   - refreshToken: string (required, server-only secret, immutable to clients)
+    //   - scope: string|null (optional, OAuth scope metadata)
+    //   - accountEmail: string|null (optional, connected Google account email)
+    //   - connectedAt: string (required, ISO 8601 timestamp string)
+    //   - updatedAt: timestamp (required, server timestamp)
+    //
+    // The current Meishi app accesses Firestore only through Firebase Functions
+    // using the Admin SDK. Browser clients are intentionally denied all access.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (
+          request.resource.data[field] is string &&
+          request.resource.data[field].size() >= minLen &&
+          request.resource.data[field].size() <= maxLen
+        );
+    }
+
+    function isValidDateString(value) {
+      return value is string &&
+        value.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$");
+    }
+
+    // Domain validator retained so the rules can be hardened from a known schema
+    // baseline if client Firestore access is ever introduced later.
+    function isValidGoogleContactsCredential(data) {
+      return hasOnlyAllowedFields([
+          "refreshToken",
+          "scope",
+          "accountEmail",
+          "connectedAt",
+          "updatedAt",
+        ]) &&
+        hasRequiredFields(["refreshToken", "connectedAt", "updatedAt"]) &&
+        data.refreshToken is string &&
+        data.refreshToken.size() > 0 &&
+        isValidOptionalString("scope", 1, 500) &&
+        isValidOptionalString("accountEmail", 3, 320) &&
+        isValidDateString(data.connectedAt) &&
+        data.updatedAt is timestamp;
+    }
+
+    match /googleContactsCredentials/{uid} {
+      // Firestore stores refresh tokens and account metadata here.
+      // All legitimate access goes through Firebase Functions/Admin SDK.
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

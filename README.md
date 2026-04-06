@@ -119,6 +119,9 @@ Cloud Functions for server-side endpoints that should not run in the browser.
   deploy targets, hosting rewrite, and functions predeploy commands
 - [.firebaserc](/Users/mundanelunacy/Projects/meishi/.firebaserc):
   default Firebase project alias
+- [firestore.rules](/Users/mundanelunacy/Projects/meishi/firestore.rules):
+  prototype Firestore Security Rules that deny all browser access because
+  Firestore is server-only in the current architecture
 - [functions/package.json](/Users/mundanelunacy/Projects/meishi/functions/package.json):
   functions-specific build, lint, emulator, and deploy scripts
 - [functions/README.md](/Users/mundanelunacy/Projects/meishi/functions/README.md):
@@ -193,6 +196,10 @@ firebase deploy --only functions
 - Functions use their own Node/TypeScript workspace under `functions/`
 - Predeploy runs the functions workspace `lint` and `build` scripts before any
   deploy proceeds
+- Firestore is a server-only credential store in the current app shape:
+  browser clients do not use the Firestore Web SDK, and
+  [firestore.rules](/Users/mundanelunacy/Projects/meishi/firestore.rules)
+  intentionally deny all client reads and writes
 - Functions now own the Google Contacts token broker:
   - `beginGoogleContactsAuth`
   - `completeGoogleContactsAuth`
@@ -211,6 +218,8 @@ firebase deploy --only functions
   [eslint.config.js](/Users/mundanelunacy/Projects/meishi/eslint.config.js)
 - Put server-only secrets and privileged API calls in functions, not in the
   browser bundle
+- If a future feature needs browser-side Firestore access, revisit the
+  deny-all rules first rather than weakening them ad hoc
 
 ### Troubleshooting
 
