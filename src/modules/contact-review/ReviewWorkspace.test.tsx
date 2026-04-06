@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { onboardingReducer } from "../onboarding-settings/onboardingSlice";
 import { reviewDraftReducer } from "./reviewDraftSlice";
 import { ReviewWorkspace } from "./ReviewWorkspace";
@@ -25,16 +25,33 @@ vi.mock("../local-data", async (importOriginal) => {
   };
 });
 
-vi.mock("../google-contacts/googlePeopleApi", () => ({
-  useCreateContactMutation: () => [
-    vi.fn(),
-    {
-      isLoading: false,
-      isError: false,
-      error: null,
-    },
-  ],
-  useUpdateContactPhotoMutation: () => [vi.fn(), {}],
+const syncContactMock = vi.fn();
+const useSyncGoogleContactMock = vi.fn(() => ({
+  syncContact: syncContactMock,
+  isSyncing: false,
+  errorMessage: null,
+}));
+const pushToastMock = vi.fn();
+const saveContactVCardMock = vi.fn();
+
+vi.mock("../google-contacts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../google-contacts")>();
+  return {
+    ...actual,
+    useSyncGoogleContact: () => useSyncGoogleContactMock(),
+  };
+});
+
+vi.mock("../vcard-export", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../vcard-export")>();
+  return {
+    ...actual,
+    saveContactVCard: (...args: unknown[]) => saveContactVCardMock(...args),
+  };
+});
+
+vi.mock("../../shared/ui/toastBus", () => ({
+  pushToast: (message: string) => pushToastMock(message),
 }));
 
 const preloadedState = {
@@ -167,6 +184,27 @@ function renderWorkspace(overrideState?: Partial<typeof preloadedState>) {
 }
 
 describe("ReviewWorkspace", () => {
+  beforeEach(() => {
+    syncContactMock.mockReset();
+    syncContactMock.mockResolvedValue({
+      outcome: {
+        contactResourceName: "people/123",
+        photoUploaded: true,
+        localOnlyImageIds: [],
+        syncedAt: "2026-04-06T00:00:00.000Z",
+      },
+    });
+    useSyncGoogleContactMock.mockReset();
+    useSyncGoogleContactMock.mockReturnValue({
+      syncContact: syncContactMock,
+      isSyncing: false,
+      errorMessage: null,
+    });
+    pushToastMock.mockReset();
+    saveContactVCardMock.mockReset();
+    saveContactVCardMock.mockResolvedValue("downloaded");
+  });
+
   afterEach(() => {
     cleanup();
     Object.defineProperty(window, "location", {
@@ -265,5 +303,122 @@ describe("ReviewWorkspace", () => {
     expect(screen.getByLabelText(/nickname/i)).toHaveValue("Ada");
     expect(screen.getByLabelText(/file as/i)).toHaveValue("Lovelace, Ada");
     expect(screen.getByLabelText(/department/i)).toHaveValue("Research");
+  });
+
+  it("submits through the google-contacts module sync entrypoint", async () => {
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", { name: /save to google contacts/i }),
+    );
+
+    await waitFor(() => expect(syncContactMock).toHaveBeenCalledTimes(1));
+    expect(syncContactMock).toHaveBeenCalledWith({
+      contact: expect.objectContaining({
+        id: "draft-1",
+        fullName: "Ada Lovelace",
+        selectedPhotoImageId: "img-1",
+        verifiedAt: expect.any(String),
+      }),
+      images: expect.arrayContaining([
+        expect.objectContaining({
+          id: "img-1",
+        }),
+      ]),
+    });
+    expect(pushToastMock).toHaveBeenCalledWith(
+      "Verified contact synced to Google Contacts.",
+    );
+  });
+
+  it("exports a vCard from the current reviewed form values", async () => {
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.clear(screen.getByLabelText(/full name/i));
+    await user.type(screen.getByLabelText(/full name/i), "Ada Byron");
+    await user.click(screen.getByRole("button", { name: /save vcard/i }));
+
+    await waitFor(() =>
+      expect(saveContactVCardMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fullName: "Ada Byron",
+          selectedPhotoImageId: "img-1",
+          verifiedAt: expect.any(String),
+        }),
+      ),
+    );
+    expect(pushToastMock).toHaveBeenCalledWith("vCard downloaded to your device.");
+    expect(syncContactMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the share-sheet success toast when native sharing is used", async () => {
+    saveContactVCardMock.mockResolvedValue("shared");
+
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /save vcard/i }));
+
+    await waitFor(() =>
+      expect(pushToastMock).toHaveBeenCalledWith(
+        "vCard opened in the share sheet.",
+      ),
+    );
+  });
+
+  it("disables submit for the full sync operation", () => {
+    useSyncGoogleContactMock.mockReturnValue({
+      syncContact: syncContactMock,
+      isSyncing: true,
+      errorMessage: null,
+    });
+
+    renderWorkspace();
+
+    expect(
+      screen.getByRole("button", { name: /syncing/i }),
+    ).toBeDisabled();
+  });
+
+  it("shows partial-success warning toast when photo upload exhausts retries", async () => {
+    syncContactMock.mockResolvedValue({
+      outcome: {
+        contactResourceName: "people/123",
+        photoUploaded: false,
+        localOnlyImageIds: ["img-2"],
+        syncedAt: "2026-04-06T00:00:00.000Z",
+      },
+      warningMessage:
+        "Google contact created, but the photo upload failed after 3 attempts.",
+    });
+
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", { name: /save to google contacts/i }),
+    );
+
+    await waitFor(() =>
+      expect(pushToastMock).toHaveBeenCalledWith(
+        "Google contact created, but the photo upload failed after 3 attempts.",
+      ),
+    );
+  });
+
+  it("renders the module-provided sync error message", () => {
+    useSyncGoogleContactMock.mockReturnValue({
+      syncContact: syncContactMock,
+      isSyncing: false,
+      errorMessage: "Google authorization is required before syncing contacts.",
+    });
+
+    renderWorkspace();
+
+    expect(
+      screen.getByText("Google authorization is required before syncing contacts."),
+    ).toBeInTheDocument();
   });
 });

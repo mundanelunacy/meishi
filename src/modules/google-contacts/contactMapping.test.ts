@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { VerifiedContact } from "../../shared/types/models";
-import { buildContactPayload, buildContactVCard } from "./contactMapping";
+import { buildContactPayload } from "./contactMapping";
 
 const contact: VerifiedContact = {
   id: "draft-1",
@@ -126,7 +126,7 @@ describe("contactMapping", () => {
     });
   });
 
-  it("omits empty fields in the Google People payload and vCard output", () => {
+  it("omits empty fields in the Google People payload", () => {
     const minimalContact = {
       ...contact,
       namePrefix: "",
@@ -194,32 +194,5 @@ describe("contactMapping", () => {
       events: undefined,
       userDefined: undefined,
     });
-    expect(buildContactVCard(minimalContact)).not.toContain("ORG:");
-    expect(buildContactVCard(minimalContact)).not.toContain("TEL:");
-  });
-
-  it("emits repeated vCard fields and preserved X-fields without losing fidelity", () => {
-    const vCard = buildContactVCard(contact);
-
-    expect(vCard).toContain("EMAIL;TYPE=WORK:ada@example.com");
-    expect(vCard).toContain("N:Lovelace;Ada;;Countess;");
-    expect(vCard).toContain("NICKNAME:Ada");
-    expect(vCard).toContain("SORT-STRING:Lovelace\\, Ada");
-    expect(vCard).toContain("ORG:Analytical Engines;Research");
-    expect(vCard).toContain("X-PHONETIC-FIRST-NAME:A-da");
-    expect(vCard).toContain("X-PHONETIC-MIDDLE-NAME:By-ron");
-    expect(vCard).toContain("X-PHONETIC-LAST-NAME:Love-lace");
-    expect(vCard).toContain("EMAIL;TYPE=INTERNET,PRESS:press@example.com");
-    expect(vCard).toContain("TEL;TYPE=WORK:+82 10-1234-5678");
-    expect(vCard).toContain("TEL;TYPE=CELL:+82 10-9999-8888");
-    expect(vCard).toContain("RELATED;TYPE=ASSISTANT,EA:Jane Doe");
-    expect(vCard).toContain(
-      "X-SIGNIFICANT-DATE;TYPE=ANNIVERSARY,MET:2026-04-05",
-    );
-    expect(vCard).toContain("X-ASSISTANT:Jane Doe");
-    expect(vCard).toContain("X-AMBIGUOUS-TEXT:Tower B\\, Level 7");
-    expect(vCard).toContain(
-      "NOTE:Met at conference\\nX-ASSISTANT: Jane Doe\\nX-AMBIGUOUS-TEXT: Tower B\\, Level 7",
-    );
   });
 });

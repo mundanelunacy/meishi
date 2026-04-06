@@ -2,7 +2,6 @@ import type { CreateContactPayload } from "../../shared/types/google";
 import type { VerifiedContact } from "../../shared/types/models";
 import {
   buildPreservedNotes,
-  buildPreservedXFields,
 } from "../../shared/lib/contactFidelity";
 
 export function buildContactPayload(contact: VerifiedContact): CreateContactPayload {
@@ -93,94 +92,6 @@ export function buildContactPayload(contact: VerifiedContact): CreateContactPayl
         }))
       : undefined,
   };
-}
-
-export function buildContactVCard(contact: VerifiedContact) {
-  const notes = buildPreservedNotes(contact.notes, contact.customFields);
-  const xFields = buildPreservedXFields(contact.customFields);
-
-  const lines = [
-    "BEGIN:VCARD",
-    "VERSION:3.0",
-    line("FN", contact.fullName),
-    structuredLine("N", buildNameComponents(contact)),
-    line("NICKNAME", contact.nickname),
-    line("SORT-STRING", contact.fileAs),
-    structuredLine("ORG", buildOrganizationComponents(contact)),
-    line("TITLE", contact.title),
-    line("X-PHONETIC-FIRST-NAME", contact.phoneticFirstName),
-    line("X-PHONETIC-MIDDLE-NAME", contact.phoneticMiddleName),
-    line("X-PHONETIC-LAST-NAME", contact.phoneticLastName),
-    ...contact.emails.map((email) => typedLine("EMAIL", email.value, email.type, email.label)),
-    ...contact.phones.map((phone) => typedLine("TEL", phone.value, phone.type, phone.label)),
-    ...contact.websites.map((url) => typedLine("URL", url.value, url.type, url.label)),
-    ...contact.addresses.map((address) => typedLine("ADR", address.value, address.type, address.label)),
-    ...contact.relatedPeople.map((relation) =>
-      typedLine("RELATED", relation.value, relation.type, relation.label)
-    ),
-    ...contact.significantDates.map((event) =>
-      typedLine("X-SIGNIFICANT-DATE", event.value, event.type, event.label)
-    ),
-    line("NOTE", notes),
-    ...xFields.map((field) => line(field.name, field.value)),
-    "END:VCARD",
-  ].filter(Boolean);
-
-  return lines.join("\n");
-}
-
-function line(key: string, value: string) {
-  if (!value) {
-    return "";
-  }
-
-  return `${key}:${escapeVCardValue(value)}`;
-}
-
-function structuredLine(key: string, values: string[]) {
-  const hasAnyValue = values.some((value) => value.length > 0);
-  if (!hasAnyValue) {
-    return "";
-  }
-
-  return `${key}:${values.map(escapeVCardValue).join(";")}`;
-}
-
-function typedLine(key: string, value: string, type: string, label: string) {
-  if (!value) {
-    return "";
-  }
-
-  const params = [normalizeParam(type), normalizeParam(label)].filter(Boolean);
-  const suffix = params.length ? `;TYPE=${params.join(",")}` : "";
-  return `${key}${suffix}:${escapeVCardValue(value)}`;
-}
-
-function escapeVCardValue(value: string) {
-  return value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
-}
-
-function normalizeParam(value: string) {
-  return value
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-function buildNameComponents(contact: VerifiedContact) {
-  return [
-    contact.lastName,
-    contact.firstName,
-    "",
-    contact.namePrefix,
-    "",
-  ];
-}
-
-function buildOrganizationComponents(contact: VerifiedContact) {
-  return [contact.organization, contact.department];
 }
 
 function parseDateValue(value: string) {

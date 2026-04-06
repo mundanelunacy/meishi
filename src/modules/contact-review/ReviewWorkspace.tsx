@@ -43,22 +43,13 @@ import {
   loadCapturedImages,
   loadLatestDraft,
   saveDraft,
-  saveSyncOutcome,
 } from "../local-data";
 import {
-  useCreateContactMutation,
-  useUpdateContactPhotoMutation,
-} from "../google-contacts/googlePeopleApi";
-import { pushToast } from "../../shared/ui/toastBus";
-import {
-  startSync,
-  syncFailed,
-  syncSucceeded,
-} from "../google-contacts/syncSessionSlice";
-import {
   buildContactPayload,
-  buildContactVCard,
-} from "../google-contacts/contactMapping";
+  useSyncGoogleContact,
+} from "../google-contacts";
+import { buildContactVCard, saveContactVCard } from "../vcard-export";
+import { pushToast } from "../../shared/ui/toastBus";
 import { buildPreservedNotes } from "../../shared/lib/contactFidelity";
 
 const multiValueFieldSchema = z.object({
@@ -322,8 +313,7 @@ export function ReviewWorkspace() {
   const draft = useAppSelector(selectDraft);
   const images = useAppSelector(selectCapturedImages);
   const debugQueryEnabled = isDebugQueryEnabled();
-  const [createContact, createContactState] = useCreateContactMutation();
-  const [updateContactPhoto] = useUpdateContactPhotoMutation();
+  const { syncContact, isSyncing, errorMessage } = useSyncGoogleContact();
   const autosaveTimeoutRef = useRef<number | null>(null);
   const hydratedDraftSignatureRef = useRef<string | null>(null);
 
@@ -451,9 +441,6 @@ export function ReviewWorkspace() {
   const activeDraft = draft;
 
   async function onSubmit(values: ReviewFormValues) {
-    const selectedPhoto = images.find(
-      (image) => image.id === values.selectedPhotoImageId,
-    );
     const draftFields = getDraftFields(values);
     dispatch(updateDraft(draftFields));
     await saveDraft({
@@ -467,48 +454,60 @@ export function ReviewWorkspace() {
     dispatch(
       finalizeDraft({ selectedPhotoImageId: values.selectedPhotoImageId }),
     );
-    dispatch(startSync());
-
-    const verifiedContact = {
-      ...activeDraft,
-      ...draftFields,
-      selectedPhotoImageId: values.selectedPhotoImageId,
-      verifiedAt: new Date().toISOString(),
-    } satisfies ContactDraft & {
-      selectedPhotoImageId?: string;
-      verifiedAt: string;
-    };
+    const verifiedContact = buildVerifiedContact(activeDraft, values);
 
     try {
-      const created = await createContact(verifiedContact).unwrap();
+      const result = await syncContact({
+        contact: verifiedContact,
+        images,
+      });
 
-      let photoUploaded = false;
-      if (selectedPhoto) {
-        await updateContactPhoto({
-          resourceName: created.resourceName,
-          dataUrl: selectedPhoto.dataUrl,
-        }).unwrap();
-        photoUploaded = true;
+      pushToast(
+        result.warningMessage ??
+          "Verified contact synced to Google Contacts.",
+      );
+    } catch (error) {
+      pushToast(
+        error instanceof Error
+          ? error.message
+          : "Unable to create Google contact.",
+      );
+    }
+  }
+
+  async function handleSaveVCard() {
+    const values = form.getValues();
+    const draftFields = getDraftFields(values);
+    const updatedDraft = {
+      ...activeDraft,
+      ...draftFields,
+      sourceImageIds: activeDraft.sourceImageIds,
+      confidenceNotes: activeDraft.confidenceNotes,
+      extractionSnapshot: activeDraft.extractionSnapshot,
+      updatedAt: new Date().toISOString(),
+    };
+
+    dispatch(updateDraft(draftFields));
+    await saveDraft(updatedDraft);
+    dispatch(
+      finalizeDraft({ selectedPhotoImageId: values.selectedPhotoImageId }),
+    );
+    try {
+      const exportResult = await saveContactVCard(
+        buildVerifiedContact(updatedDraft, values),
+      );
+      pushToast(
+        exportResult === "shared"
+          ? "vCard opened in the share sheet."
+          : "vCard downloaded to your device.",
+      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
       }
 
-      const outcome = {
-        contactResourceName: created.resourceName,
-        photoUploaded,
-        localOnlyImageIds: images
-          .filter((image) => image.id !== values.selectedPhotoImageId)
-          .map((image) => image.id),
-        syncedAt: new Date().toISOString(),
-      };
-      await saveSyncOutcome(outcome);
-      dispatch(syncSucceeded(outcome));
-      pushToast("Verified contact synced to Google Contacts.");
-    } catch (error) {
-      dispatch(
-        syncFailed(
-          error instanceof Error
-            ? error.message
-            : "Unable to create Google contact.",
-        ),
+      pushToast(
+        error instanceof Error ? error.message : "Unable to save vCard.",
       );
     }
   }
@@ -721,9 +720,9 @@ export function ReviewWorkspace() {
             />
           </Field>
 
-          {createContactState.isError ? (
+          {errorMessage ? (
             <Alert className="border-destructive/30 text-destructive">
-              {String(createContactState.error)}
+              {errorMessage}
             </Alert>
           ) : null}
 
@@ -759,11 +758,20 @@ export function ReviewWorkspace() {
 
           <div className="flex flex-wrap gap-3">
             <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void handleSaveVCard();
+              }}
+            >
+              Save vCard
+            </Button>
+            <Button
               size="lg"
               type="submit"
-              disabled={createContactState.isLoading}
+              disabled={isSyncing}
             >
-              {createContactState.isLoading
+              {isSyncing
                 ? "Syncing..."
                 : "Save to Google Contacts"}
             </Button>
@@ -1054,6 +1062,18 @@ function DebugPanel({
       </div>
     </details>
   );
+}
+
+function buildVerifiedContact(draft: ContactDraft, values: ReviewFormValues) {
+  return {
+    ...draft,
+    ...getDraftFields(values),
+    selectedPhotoImageId: values.selectedPhotoImageId,
+    verifiedAt: new Date().toISOString(),
+  } satisfies ContactDraft & {
+    selectedPhotoImageId?: string;
+    verifiedAt: string;
+  };
 }
 
 function DebugBlock({ title, body }: { title: string; body: string }) {

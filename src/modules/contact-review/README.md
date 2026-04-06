@@ -16,7 +16,7 @@
 - Persisted raw extraction snapshot for traceability
 - Review draft notes preserve extracted `X-` fields and ambiguous text so fidelity is not lost when non-standard or ambiguous card data appears
 - Inline `?debug=1` preview for raw extraction, vCard, and Google payload inspection
-- Sync trigger after verification
+- Explicit export actions for saving a vCard or syncing to Google after verification
 
 ## Interfaces
 
@@ -29,11 +29,14 @@
 - Consumes:
   - `CapturedCardImage[]`
   - extraction results from `src/modules/card-extraction`
-  - sync mutations from `src/modules/google-contacts`
+  - `useSyncGoogleContact` from `src/modules/google-contacts`
+  - `downloadContactVCard` from `src/modules/vcard-export`
 
 ## Constraints
 
 - Keep form validation local and deterministic.
 - Never write directly to Google Contacts from extraction output without passing through this module.
+- Keep Google create-plus-photo-upload orchestration inside `src/modules/google-contacts`; this module should only finalize the reviewed contact and trigger sync.
+- Keep vCard serialization and browser download logic inside `src/modules/vcard-export`; this module should only finalize the reviewed contact and trigger export.
 - Developer debug preview must reflect the current edited form values, not just the initial extraction response.
 - Review autosave must not reset in-progress edits while dynamic field arrays are being added or removed.
