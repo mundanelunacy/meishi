@@ -1,204 +1,264 @@
-import { appEnv, type AppEnv } from "../../app/env";
-import type { GoogleAuthMode, GoogleAuthState } from "../../shared/types/models";
+import {
+  onAuthStateChanged,
+  signInAnonymously,
+  signOut,
+  type User,
+} from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
+import { hasFirebaseConfiguration } from "../../app/env";
+import { getFirebaseAuth, getFirebaseFunctions } from "../../app/firebase";
+import type { GoogleAuthState } from "../../shared/types/models";
 
 const GOOGLE_SCOPE = "https://www.googleapis.com/auth/contacts";
-const MOCK_ACCOUNT_HINT = "developer@local.test";
+const POPUP_MESSAGE_TYPE = "meishi:google-auth-result";
+const POPUP_NAME = "meishi-google-auth";
+const POPUP_WIDTH = 520;
+const POPUP_HEIGHT = 720;
+const TOKEN_REFRESH_SKEW_MS = 5 * 60 * 1000;
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        oauth2: {
-          initTokenClient(config: {
-            client_id: string;
-            scope: string;
-            callback: (response: GoogleTokenResponse) => void;
-            error_callback?: (error: { type: string }) => void;
-          }): {
-            requestAccessToken(options?: {
-              prompt?: string;
-              hint?: string;
-            }): void;
-          };
-          revoke(token: string, done?: () => void): void;
-        };
-      };
-    };
-  }
+interface BeginGoogleContactsAuthResponse {
+  authUrl: string;
 }
 
-interface GoogleTokenResponse {
-  access_token: string;
-  expires_in: number;
-  scope: string;
-  error?: string;
+interface CompleteGoogleContactsAuthRequest {
+  code: string;
+  state: string;
 }
 
-export interface GoogleTokenRequestOptions {
-  prompt?: string;
-  hint?: string;
+interface GoogleAuthStatusResponse {
+  googleAuth: GoogleAuthState;
 }
 
-export interface GoogleAuthClient {
-  readonly mode: GoogleAuthMode;
-  getScope(): string;
-  getInitialState(metadata?: Partial<GoogleAuthState>): GoogleAuthState;
-  isConfigured(): boolean;
-  load(): Promise<void>;
-  requestAccessToken(options?: GoogleTokenRequestOptions): Promise<GoogleAuthState>;
-  revokeAccessToken(token: string | null): Promise<void>;
+interface GoogleAccessTokenResponse {
+  accessToken: string;
+  expiresIn: number;
 }
 
-let scriptLoadingPromise: Promise<void> | null = null;
-
-function createBaseGoogleAuthState(mode: GoogleAuthMode) {
-  return {
-    mode,
-    accessToken: null,
-    scope: null,
-    expiresAt: null,
-    accountHint: undefined,
-  } satisfies GoogleAuthState;
+interface PopupMessageSuccessPayload {
+  type: typeof POPUP_MESSAGE_TYPE;
+  status: "success";
+  googleAuth: GoogleAuthState;
 }
 
-function createRealGoogleAuthClient(env: AppEnv): GoogleAuthClient {
-  return {
-    mode: "real",
-    getScope() {
-      return GOOGLE_SCOPE;
-    },
-    getInitialState(metadata) {
-      return {
-        ...createBaseGoogleAuthState("real"),
-        scope: metadata?.scope ?? null,
-        accountHint: metadata?.accountHint,
-      };
-    },
-    isConfigured() {
-      return env.googleClientId.length > 0;
-    },
-    async load() {
-      if (window.google?.accounts.oauth2) {
-        return;
-      }
-
-      if (!scriptLoadingPromise) {
-        scriptLoadingPromise = new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://accounts.google.com/gsi/client";
-          script.async = true;
-          script.defer = true;
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Failed to load Google Identity Services."));
-          document.head.appendChild(script);
-        });
-      }
-
-      await scriptLoadingPromise;
-    },
-    async requestAccessToken(options) {
-      if (!env.googleClientId) {
-        throw new Error("Set VITE_GOOGLE_CLIENT_ID before requesting Google access.");
-      }
-
-      await this.load();
-
-      return new Promise<GoogleAuthState>((resolve, reject) => {
-        const client = window.google?.accounts.oauth2.initTokenClient({
-          client_id: env.googleClientId,
-          scope: GOOGLE_SCOPE,
-          callback: (response) => {
-            if (response.error) {
-              reject(new Error(response.error));
-              return;
-            }
-
-            resolve({
-              mode: "real",
-              accessToken: response.access_token,
-              scope: response.scope,
-              expiresAt: Date.now() + response.expires_in * 1000,
-              accountHint: options?.hint,
-            });
-          },
-          error_callback: (error) => reject(new Error(error.type)),
-        });
-
-        if (!client) {
-          reject(new Error("Google token client could not be initialized."));
-          return;
-        }
-
-        client.requestAccessToken({
-          prompt: options?.prompt ?? "consent",
-          hint: options?.hint,
-        });
-      });
-    },
-    async revokeAccessToken(token) {
-      if (!token) {
-        return;
-      }
-
-      await new Promise<void>((resolve) => {
-        window.google?.accounts.oauth2.revoke(token, resolve);
-      });
-    },
-  };
+interface PopupMessageErrorPayload {
+  type: typeof POPUP_MESSAGE_TYPE;
+  status: "error";
+  error: string;
 }
 
-function createMockGoogleAuthClient(): GoogleAuthClient {
-  return {
-    mode: "mock",
-    getScope() {
-      return GOOGLE_SCOPE;
-    },
-    getInitialState(metadata) {
-      return {
-        ...createBaseGoogleAuthState("mock"),
-        scope: metadata?.scope ?? GOOGLE_SCOPE,
-        accountHint: metadata?.accountHint ?? MOCK_ACCOUNT_HINT,
-      };
-    },
-    isConfigured() {
-      return true;
-    },
-    async load() {},
-    async requestAccessToken() {
-      return {
-        mode: "mock",
-        accessToken: `mock-google-token-${crypto.randomUUID()}`,
-        scope: GOOGLE_SCOPE,
-        expiresAt: Date.now() + 60 * 60 * 1000,
-        accountHint: MOCK_ACCOUNT_HINT,
-      };
-    },
-    async revokeAccessToken() {},
-  };
-}
+type GoogleAuthPopupMessage = PopupMessageSuccessPayload | PopupMessageErrorPayload;
 
-export function createGoogleAuthClient(env: AppEnv): GoogleAuthClient {
-  if (env.googleAuthMode === "mock") {
-    return createMockGoogleAuthClient();
-  }
-
-  return createRealGoogleAuthClient(env);
-}
-
-export const googleAuthClient = createGoogleAuthClient(appEnv);
+let authBootstrapPromise: Promise<User> | null = null;
+let googleAccessTokenCache: { value: string; expiresAt: number } | null = null;
 
 export function getGoogleScope() {
-  return googleAuthClient.getScope();
+  return GOOGLE_SCOPE;
 }
 
-export function loadGoogleIdentityScript() {
-  return googleAuthClient.load();
+export function createInitialGoogleAuthState(
+  metadata?: Partial<Pick<GoogleAuthState, "firebaseUid" | "scope" | "accountEmail" | "connectedAt">>
+): GoogleAuthState {
+  return {
+    status:
+      metadata?.scope || metadata?.accountEmail || metadata?.connectedAt ? "connecting" : "signed_out",
+    firebaseUid: metadata?.firebaseUid ?? null,
+    scope: metadata?.scope ?? null,
+    accountEmail: metadata?.accountEmail,
+    connectedAt: metadata?.connectedAt ?? null,
+  };
 }
 
-export function requestGoogleAccessToken(options?: GoogleTokenRequestOptions) {
-  return googleAuthClient.requestAccessToken(options);
+function createPopupFeatures() {
+  const left = typeof window === "undefined" ? 0 : window.screenX + (window.outerWidth - POPUP_WIDTH) / 2;
+  const top = typeof window === "undefined" ? 0 : window.screenY + (window.outerHeight - POPUP_HEIGHT) / 2;
+
+  return [
+    `width=${POPUP_WIDTH}`,
+    `height=${POPUP_HEIGHT}`,
+    `left=${Math.max(left, 0)}`,
+    `top=${Math.max(top, 0)}`,
+    "popup=yes",
+    "resizable=yes",
+    "scrollbars=yes",
+  ].join(",");
 }
 
-export function revokeGoogleAccessToken(token: string | null) {
-  return googleAuthClient.revokeAccessToken(token);
+async function waitForInitialAuthState() {
+  const auth = getFirebaseAuth();
+
+  if (auth.currentUser) {
+    return auth.currentUser;
+  }
+
+  return new Promise<User | null>((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
 }
+
+async function ensureFirebaseUser() {
+  if (!hasFirebaseConfiguration()) {
+    throw new Error(
+      "Firebase is not configured. Add the VITE_FIREBASE_* values before connecting Google Contacts."
+    );
+  }
+
+  if (!authBootstrapPromise) {
+    authBootstrapPromise = (async () => {
+      const existingUser = await waitForInitialAuthState();
+      if (existingUser) {
+        return existingUser;
+      }
+
+      const credential = await signInAnonymously(getFirebaseAuth());
+      return credential.user;
+    })().finally(() => {
+      authBootstrapPromise = null;
+    });
+  }
+
+  return authBootstrapPromise;
+}
+
+function getGoogleAuthStatusCallable() {
+  return httpsCallable<undefined, GoogleAuthStatusResponse>(getFirebaseFunctions(), "getGoogleAuthStatus");
+}
+
+function normalizeGoogleAuthState(state: GoogleAuthState, firebaseUid: string): GoogleAuthState {
+  return {
+    ...state,
+    firebaseUid: state.firebaseUid ?? firebaseUid,
+    scope: state.scope ?? null,
+    connectedAt: state.connectedAt ?? null,
+  };
+}
+
+export async function initializeGoogleAuth() {
+  const user = await ensureFirebaseUser();
+
+  try {
+    const result = await getGoogleAuthStatusCallable()();
+    return normalizeGoogleAuthState(result.data.googleAuth, user.uid);
+  } catch {
+    return createInitialGoogleAuthState({
+      firebaseUid: user.uid,
+      connectedAt: null,
+      scope: null,
+    });
+  }
+}
+
+function postPopupMessage(message: GoogleAuthPopupMessage) {
+  if (typeof window === "undefined" || !window.opener) {
+    return;
+  }
+
+  window.opener.postMessage(message, window.location.origin);
+}
+
+function waitForPopupResult(popup: Window, firebaseUid: string) {
+  return new Promise<GoogleAuthState>((resolve, reject) => {
+    const interval = window.setInterval(() => {
+      if (!popup.closed) {
+        return;
+      }
+
+      cleanup();
+      reject(new Error("Google authorization was cancelled before it completed."));
+    }, 250);
+
+    function cleanup() {
+      window.clearInterval(interval);
+      window.removeEventListener("message", handleMessage);
+    }
+
+    function handleMessage(event: MessageEvent<GoogleAuthPopupMessage>) {
+      if (event.origin !== window.location.origin || event.data?.type !== POPUP_MESSAGE_TYPE) {
+        return;
+      }
+
+      cleanup();
+      if (event.data.status === "error") {
+        reject(new Error(event.data.error));
+        return;
+      }
+
+      resolve(normalizeGoogleAuthState(event.data.googleAuth, firebaseUid));
+    }
+
+    window.addEventListener("message", handleMessage);
+  });
+}
+
+export async function connectGoogleContacts() {
+  const user = await ensureFirebaseUser();
+  const beginGoogleContactsAuth = httpsCallable<undefined, BeginGoogleContactsAuthResponse>(
+    getFirebaseFunctions(),
+    "beginGoogleContactsAuth"
+  );
+  const { data } = await beginGoogleContactsAuth();
+  const popup = window.open(data.authUrl, POPUP_NAME, createPopupFeatures());
+
+  if (!popup) {
+    throw new Error("Google authorization popup was blocked by the browser.");
+  }
+
+  popup.focus();
+  return waitForPopupResult(popup, user.uid);
+}
+
+export async function completeGoogleContactsAuthCallback(payload: CompleteGoogleContactsAuthRequest) {
+  const user = await ensureFirebaseUser();
+  const completeGoogleContactsAuth = httpsCallable<
+    CompleteGoogleContactsAuthRequest,
+    GoogleAuthStatusResponse
+  >(getFirebaseFunctions(), "completeGoogleContactsAuth");
+  const result = await completeGoogleContactsAuth(payload);
+  return normalizeGoogleAuthState(result.data.googleAuth, user.uid);
+}
+
+export async function getGoogleAuthStatus() {
+  const user = await ensureFirebaseUser();
+  const result = await getGoogleAuthStatusCallable()();
+  return normalizeGoogleAuthState(result.data.googleAuth, user.uid);
+}
+
+export function invalidateGoogleAccessTokenCache() {
+  googleAccessTokenCache = null;
+}
+
+export async function getValidGoogleAccessToken() {
+  if (googleAccessTokenCache && googleAccessTokenCache.expiresAt > Date.now() + TOKEN_REFRESH_SKEW_MS) {
+    return googleAccessTokenCache.value;
+  }
+
+  await ensureFirebaseUser();
+  const getGoogleAccessTokenCallable = httpsCallable<undefined, GoogleAccessTokenResponse>(
+    getFirebaseFunctions(),
+    "getGoogleAccessToken"
+  );
+  const result = await getGoogleAccessTokenCallable();
+  const expiresAt = Date.now() + result.data.expiresIn * 1000;
+
+  googleAccessTokenCache = {
+    value: result.data.accessToken,
+    expiresAt,
+  };
+
+  return result.data.accessToken;
+}
+
+export async function disconnectGoogleContacts() {
+  await ensureFirebaseUser();
+  const disconnectGoogleContactsCallable = httpsCallable<undefined, { success: boolean }>(
+    getFirebaseFunctions(),
+    "disconnectGoogleContacts"
+  );
+  await disconnectGoogleContactsCallable();
+  invalidateGoogleAccessTokenCache();
+  await signOut(getFirebaseAuth());
+}
+
+export { POPUP_MESSAGE_TYPE, postPopupMessage };

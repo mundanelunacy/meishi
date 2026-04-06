@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { KeyRound, ShieldAlert } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { requiresRealGoogleClientId, usesMockGoogleAuth } from "../../app/env";
+import { hasFirebaseConfiguration } from "../../app/env";
 import { Button } from "../../shared/ui/button";
 import {
   Card,
@@ -29,9 +29,8 @@ import {
   setPreferredOpenAiModel,
 } from "./onboardingSlice";
 import {
+  connectGoogleContacts,
   getGoogleScope,
-  googleAuthClient,
-  requestGoogleAccessToken,
 } from "../google-auth/googleIdentity";
 
 export function OnboardingPanel() {
@@ -44,32 +43,42 @@ export function OnboardingPanel() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const selectedProvider = settings.llmProvider;
   const providerApiKey =
-    selectedProvider === "anthropic" ? settings.anthropicApiKey : settings.openAiApiKey;
+    selectedProvider === "anthropic"
+      ? settings.anthropicApiKey
+      : settings.openAiApiKey;
   const providerModel =
     selectedProvider === "anthropic"
       ? settings.preferredAnthropicModel
       : settings.preferredOpenAiModel;
 
-  const canContinue = readiness.hasLlmConfiguration && readiness.hasGoogleAuthorization;
+  const canContinue =
+    readiness.hasLlmConfiguration && readiness.hasGoogleAuthorization;
 
   async function handleGoogleConnect() {
     setIsAuthorizing(true);
     setErrorMessage(null);
 
     try {
-      const nextAuthState = await requestGoogleAccessToken({
-        prompt: googleAuth.accessToken ? "" : "consent",
-        hint: googleAuth.accountHint,
-      });
-      dispatch(setGoogleAuthState(nextAuthState));
-      pushToast(
-        nextAuthState.mode === "mock"
-          ? "Mock Google session ready for local testing."
-          : "Google Contacts access granted."
+      dispatch(
+        setGoogleAuthState({
+          ...googleAuth,
+          status: "connecting",
+        }),
       );
+      const nextAuthState = await connectGoogleContacts();
+      dispatch(setGoogleAuthState(nextAuthState));
+      pushToast("Google Contacts access granted.");
     } catch (error) {
+      dispatch(
+        setGoogleAuthState({
+          ...googleAuth,
+          status: googleAuth.connectedAt ? "connected" : "signed_out",
+        }),
+      );
       const message =
-        error instanceof Error ? error.message : "Unable to authorize Google Contacts.";
+        error instanceof Error
+          ? error.message
+          : "Unable to authorize Google Contacts.";
       setErrorMessage(message);
     } finally {
       setIsAuthorizing(false);
@@ -88,7 +97,8 @@ export function OnboardingPanel() {
         <CardHeader>
           <CardTitle>First-run setup</CardTitle>
           <CardDescription>
-            Meishi runs entirely in the browser. It stores your LLM key locally, which is acceptable for trusted prototype use only.
+            Meishi runs entirely in the browser. It stores your LLM key locally,
+            which is acceptable for trusted prototype use only.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -98,18 +108,15 @@ export function OnboardingPanel() {
               <div className="space-y-1 text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">Security note</p>
                 <p>
-                  This scaffold uses a browser-only BYOK model. Do not treat client-side API key storage as production-safe.
+                  This scaffold uses a browser-only BYOK model. Do not treat
+                  client-side API key storage as production-safe.
                 </p>
               </div>
             </div>
-            {usesMockGoogleAuth() ? (
-              <Alert className="border-accent/40 bg-accent/10 text-foreground">
-                Development mode is using mock Google auth. You can test the app flow locally, but this is not a real Google Contacts session.
-              </Alert>
-            ) : null}
-            {requiresRealGoogleClientId() ? (
+            {!hasFirebaseConfiguration() ? (
               <Alert>
-                Set <code>VITE_GOOGLE_CLIENT_ID</code> in your Vite environment before Google sign-in will work.
+                Set the required <code>VITE_FIREBASE_*</code> values before
+                Google sign-in will work.
               </Alert>
             ) : null}
           </section>
@@ -120,7 +127,11 @@ export function OnboardingPanel() {
               id="provider"
               value={settings.llmProvider}
               onChange={(event) =>
-                dispatch(setLlmProvider(event.target.value as typeof settings.llmProvider))
+                dispatch(
+                  setLlmProvider(
+                    event.target.value as typeof settings.llmProvider,
+                  ),
+                )
               }
             >
               <option value="openai">OpenAI</option>
@@ -134,13 +145,17 @@ export function OnboardingPanel() {
           <section className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-3 sm:col-span-2">
               <Label htmlFor="api-key">
-                {selectedProvider === "anthropic" ? "Anthropic API key" : "OpenAI API key"}
+                {selectedProvider === "anthropic"
+                  ? "Anthropic API key"
+                  : "OpenAI API key"}
               </Label>
               <Input
                 id="api-key"
                 type="password"
                 autoComplete="off"
-                placeholder={selectedProvider === "anthropic" ? "sk-ant-..." : "sk-..."}
+                placeholder={
+                  selectedProvider === "anthropic" ? "sk-ant-..." : "sk-..."
+                }
                 value={providerApiKey}
                 onChange={(event) => {
                   const nextValue = event.target.value;
@@ -155,14 +170,16 @@ export function OnboardingPanel() {
             </div>
             <div className="space-y-3 sm:col-span-2">
               <Label htmlFor="model">
-                {selectedProvider === "anthropic" ? "Anthropic model" : "OpenAI model"}
+                {selectedProvider === "anthropic"
+                  ? "Anthropic model"
+                  : "OpenAI model"}
               </Label>
               <Input
                 id="model"
                 placeholder={
                   selectedProvider === "anthropic"
                     ? "claude-sonnet-4-20250514"
-                    : "gpt-4.1-mini"
+                    : "gpt-5.4-mini"
                 }
                 value={providerModel}
                 onChange={(event) => {
@@ -181,7 +198,9 @@ export function OnboardingPanel() {
           <section className="rounded-[28px] border border-border/70 bg-muted/40 p-4 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">Structured extraction</p>
             <p className="mt-1">
-              Meishi enforces structured output for extraction. The shared prompt is adjustable later in Settings, but the schema contract stays fixed.
+              Meishi enforces structured output for extraction. The shared
+              prompt is adjustable later in Settings, but the schema contract
+              stays fixed.
             </p>
           </section>
 
@@ -191,32 +210,49 @@ export function OnboardingPanel() {
               Google Contacts access
             </div>
             <p className="mb-4 text-sm text-muted-foreground">
-              The app requests the <code>{getGoogleScope()}</code> scope and re-acquires short-lived access tokens when needed.
+              Meishi creates new Google contacts and can upload one contact
+              photo after save. Google currently requires the{" "}
+              <code>{getGoogleScope()}</code> scope for that flow, so the
+              consent screen may mention broader contact access than the app
+              uses. Short-lived access tokens are re-acquired only when needed.
             </p>
             <div className="mb-4 flex flex-wrap gap-2 text-xs">
               <span className="rounded-full bg-background px-3 py-1 font-medium text-foreground">
-                Mode: {googleAuth.mode === "mock" ? "Developer mock" : "Google OAuth"}
+                Firebase session:{" "}
+                {googleAuth.firebaseUid ? "Ready" : "Starting"}
               </span>
               <span className="rounded-full bg-background px-3 py-1 text-muted-foreground">
-                Status: {readiness.hasGoogleAuthorization ? "Authorized" : "Not connected"}
+                Status:{" "}
+                {googleAuth.status === "connected"
+                  ? "Connected"
+                  : googleAuth.status === "connecting"
+                    ? "Connecting"
+                    : "Not connected"}
               </span>
             </div>
             <Button
               onClick={handleGoogleConnect}
-              disabled={isAuthorizing || !googleAuthClient.isConfigured()}
+              disabled={isAuthorizing || !hasFirebaseConfiguration()}
             >
-              {readiness.hasGoogleAuthorization ? "Refresh Google access" : "Connect Google account"}
+              {readiness.hasGoogleAuthorization
+                ? "Reconnect Google account"
+                : "Connect Google account"}
             </Button>
           </section>
 
-          {errorMessage ? <Alert className="border-destructive/40 text-destructive">{errorMessage}</Alert> : null}
+          {errorMessage ? (
+            <Alert className="border-destructive/40 text-destructive">
+              {errorMessage}
+            </Alert>
+          ) : null}
 
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={handleFinish} disabled={!canContinue}>
               Continue to capture
             </Button>
             <span className="text-sm text-muted-foreground">
-              Ready when Google access and the selected provider configuration are both present.
+              Ready when Google access and the selected provider configuration
+              are both present.
             </span>
           </div>
         </CardContent>
@@ -226,23 +262,32 @@ export function OnboardingPanel() {
         <CardHeader>
           <CardTitle>What happens next</CardTitle>
           <CardDescription>
-            The app keeps images and drafts locally until you verify them, then syncs verified contact data to Google Contacts.
+            The app keeps images and drafts locally until you verify them, then
+            syncs verified contact data to Google Contacts.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm text-muted-foreground">
           <div>
             <p className="font-medium text-foreground">1. Capture</p>
-            <p>Use the phone camera or photo picker to add one or more business-card images.</p>
+            <p>
+              Use the phone camera or photo picker to add one or more
+              business-card images.
+            </p>
           </div>
           <div>
             <p className="font-medium text-foreground">2. Extract</p>
             <p>
-              Meishi sends those images to the selected provider and validates the returned structured schema locally before the draft reaches review.
+              Meishi sends those images to the selected provider and validates
+              the returned structured schema locally before the draft reaches
+              review.
             </p>
           </div>
           <div>
             <p className="font-medium text-foreground">3. Review and sync</p>
-            <p>One selected image becomes the Google contact photo. Additional images stay local in the PWA history.</p>
+            <p>
+              One selected image becomes the Google contact photo. Additional
+              images stay local in the PWA history.
+            </p>
           </div>
         </CardContent>
       </Card>

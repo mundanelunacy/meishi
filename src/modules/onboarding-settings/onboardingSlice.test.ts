@@ -13,35 +13,51 @@ import {
 describe("onboardingSlice", () => {
   it("updates the provider-specific API keys", () => {
     const withOpenAi = onboardingReducer(undefined, setOpenAiApiKey("sk-test"));
-    const withAnthropic = onboardingReducer(withOpenAi, setAnthropicApiKey("sk-ant-test"));
+    const withAnthropic = onboardingReducer(
+      withOpenAi,
+      setAnthropicApiKey("sk-ant-test"),
+    );
 
     expect(withAnthropic.settings.openAiApiKey).toBe("sk-test");
     expect(withAnthropic.settings.anthropicApiKey).toBe("sk-ant-test");
   });
 
   it("updates the provider-specific models", () => {
-    const withOpenAiModel = onboardingReducer(undefined, setPreferredOpenAiModel("gpt-4.1"));
+    const withOpenAiModel = onboardingReducer(
+      undefined,
+      setPreferredOpenAiModel("gpt-5.4-mini"),
+    );
     const withAnthropicModel = onboardingReducer(
       withOpenAiModel,
-      setPreferredAnthropicModel("claude-sonnet-4-20250514")
+      setPreferredAnthropicModel("claude-sonnet-4-20250514"),
     );
 
-    expect(withAnthropicModel.settings.preferredOpenAiModel).toBe("gpt-4.1");
-    expect(withAnthropicModel.settings.preferredAnthropicModel).toBe("claude-sonnet-4-20250514");
+    expect(withAnthropicModel.settings.preferredOpenAiModel).toBe(
+      "gpt-5.4-mini",
+    );
+    expect(withAnthropicModel.settings.preferredAnthropicModel).toBe(
+      "claude-sonnet-4-20250514",
+    );
   });
 
   it("derives app readiness from auth and settings state", () => {
-    const withProvider = onboardingReducer(undefined, setLlmProvider("anthropic"));
-    const withApiKey = onboardingReducer(withProvider, setAnthropicApiKey("sk-ant-test"));
+    const withProvider = onboardingReducer(
+      undefined,
+      setLlmProvider("anthropic"),
+    );
+    const withApiKey = onboardingReducer(
+      withProvider,
+      setAnthropicApiKey("sk-ant-test"),
+    );
     const withGoogleAuth = onboardingReducer(
       withApiKey,
       setGoogleAuthState({
-        mode: "mock",
-        accessToken: "mock-token",
+        status: "connected",
+        firebaseUid: "firebase-uid-1",
         scope: "https://www.googleapis.com/auth/contacts",
-        expiresAt: Date.now() + 60_000,
-        accountHint: "developer@local.test",
-      })
+        accountEmail: "developer@example.com",
+        connectedAt: "2026-04-06T00:00:00.000Z",
+      }),
     );
 
     const readiness = selectAppReadiness({
@@ -50,7 +66,7 @@ describe("onboardingSlice", () => {
 
     expect(readiness.hasLlmConfiguration).toBe(true);
     expect(readiness.hasGoogleAuthorization).toBe(true);
-    expect(readiness.googleAuthMode).toBe("mock");
+    expect(readiness.googleAuthStatus).toBe("connected");
     expect(readiness.isCaptureReady).toBe(false);
   });
 });

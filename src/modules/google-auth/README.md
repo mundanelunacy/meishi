@@ -2,38 +2,48 @@
 
 ## Responsibilities
 
-- Load Google Identity Services in the browser.
-- Request Google Contacts access tokens through the GIS token model.
-- Revoke Google access when the user signs out.
-- Provide a single typed auth client surface that hides whether the app is using real GIS or development mock auth.
+- Establish an anonymous Firebase Auth session for callable Functions access.
+- Start and complete the Google Contacts OAuth authorization-code flow.
+- Request short-lived Google access tokens from Firebase Functions when the browser needs them.
+- Revoke the stored backend Google connection when the user signs out.
+- Provide one typed auth client surface for the rest of the app.
 
 ## Features
 
-- GIS script loader
-- Token request helper
+- Firebase app/auth/functions bootstrap
+- Anonymous Firebase session bootstrap
+- Popup-based Google OAuth connect flow with callback route handoff
+- Backend token fetch with in-memory browser caching
+- Disconnect helper that clears the backend Google connection and signs out Firebase locally
 - Scope definition for Google Contacts sync
-- Sign-out and revoke helper
-- Development-safe mock auth client for local testing
 
 ## Interfaces
 
 - Exposes:
-  - `googleAuthClient`
-  - `createGoogleAuthClient`
-  - `loadGoogleIdentityScript`
-  - `requestGoogleAccessToken`
-  - `revokeGoogleAccessToken`
+  - `initializeGoogleAuth`
+  - `connectGoogleContacts`
+  - `completeGoogleContactsAuthCallback`
+  - `getValidGoogleAccessToken`
+  - `disconnectGoogleContacts`
+  - `createInitialGoogleAuthState`
   - `getGoogleScope`
 - Consumed by onboarding and settings flows.
 
 ## External docs
 
-- [Using the token model](https://developers.google.com/identity/oauth2/web/guides/use-token-model)
-- [OAuth 2.0 for Web](https://developers.google.com/identity/oauth2/web/guides/overview)
+- [Firebase Auth for Web](https://firebase.google.com/docs/auth/web/start)
+- [Callable Functions](https://firebase.google.com/docs/functions/callable)
+- [OAuth 2.0 for Web Server Applications](https://developers.google.com/identity/protocols/oauth2/web-server)
 
 ## Constraints
 
-- Real auth requires `VITE_GOOGLE_CLIENT_ID`.
-- `VITE_GOOGLE_AUTH_MODE=mock|real` can override the default mode selection.
-- Access tokens are short-lived and should not be treated as durable local settings.
-- Mock auth is for local development only and should never be presented as a real Google session.
+- Firebase config requires `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_APP_ID`.
+- The browser does not persist Google access tokens or refresh tokens.
+- The browser only keeps a short-lived in-memory access-token cache and lightweight connection metadata in local storage.
+- The Google OAuth client secret and refresh-token storage stay in Firebase Functions and Firestore, never in the browser bundle.
+- Firebase Functions run a daily retention cleanup that deletes stored backend
+  Google credential records more than 90 days after `connectedAt`, even if the
+  underlying Google refresh token might still be valid.
+- When that retention cleanup deletes a stored credential, the browser falls
+  back to the existing disconnected state and the user must reconnect Google
+  Contacts.

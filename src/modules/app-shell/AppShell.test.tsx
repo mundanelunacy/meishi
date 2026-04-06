@@ -49,12 +49,14 @@ function renderShell() {
 }
 
 describe("AppShell", () => {
-  it("shows setup-first navigation and mock auth messaging before onboarding completes", () => {
+  it("shows setup-first navigation and Firebase auth messaging before onboarding completes", () => {
     renderShell();
 
     expect(screen.getByText(/finish setup to unlock the working capture flow/i)).toBeInTheDocument();
     expect(screen.getAllByText(/setup first/i)).not.toHaveLength(0);
-    expect(screen.getByText(/developer mock auth is active/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/google contacts now uses firebase-backed token refresh/i)
+    ).toBeInTheDocument();
     expect(screen.getByTestId("route-outlet")).toBeInTheDocument();
   });
 });

@@ -1,58 +1,42 @@
 import { describe, expect, it } from "vitest";
-import { createAppEnv, resolveGoogleAuthMode } from "./env";
+import { createAppEnv } from "./env";
 
 describe("env", () => {
-  it("uses an explicit Google auth mode when provided", () => {
-    expect(
-      resolveGoogleAuthMode({
-        googleClientId: "",
-        explicitMode: "real",
-        isDevelopment: true,
-      })
-    ).toBe("real");
-    expect(
-      resolveGoogleAuthMode({
-        googleClientId: "client-id",
-        explicitMode: "mock",
-        isDevelopment: false,
-      })
-    ).toBe("mock");
-  });
-
-  it("falls back to mock auth in development when no client id is present", () => {
-    expect(
-      resolveGoogleAuthMode({
-        googleClientId: "",
-        isDevelopment: true,
-      })
-    ).toBe("mock");
-  });
-
-  it("falls back to real auth outside that development case", () => {
-    expect(
-      resolveGoogleAuthMode({
-        googleClientId: "client-id",
-        isDevelopment: true,
-      })
-    ).toBe("real");
-    expect(
-      resolveGoogleAuthMode({
-        googleClientId: "",
-        isDevelopment: false,
-      })
-    ).toBe("real");
-  });
-
   it("builds the app env object from Vite-style input", () => {
     expect(
       createAppEnv({
         DEV: true,
-        VITE_GOOGLE_CLIENT_ID: "client-id",
+        VITE_FIREBASE_API_KEY: "api-key",
+        VITE_FIREBASE_AUTH_DOMAIN: "meishi.firebaseapp.com",
+        VITE_FIREBASE_PROJECT_ID: "meishi",
+        VITE_FIREBASE_APP_ID: "app-id",
+        VITE_FIREBASE_FUNCTIONS_REGION: "asia-northeast3",
+        VITE_FIREBASE_USE_EMULATORS: "true",
       })
     ).toEqual({
-      googleClientId: "client-id",
-      googleAuthMode: "real",
+      firebaseApiKey: "api-key",
+      firebaseAuthDomain: "meishi.firebaseapp.com",
+      firebaseProjectId: "meishi",
+      firebaseAppId: "app-id",
+      firebaseFunctionsRegion: "asia-northeast3",
+      firebaseUseEmulators: true,
       isDevelopment: true,
+    });
+  });
+
+  it("defaults the functions region and emulator flag", () => {
+    expect(
+      createAppEnv({
+        DEV: false,
+      })
+    ).toEqual({
+      firebaseApiKey: "",
+      firebaseAuthDomain: "",
+      firebaseProjectId: "",
+      firebaseAppId: "",
+      firebaseFunctionsRegion: "us-central1",
+      firebaseUseEmulators: false,
+      isDevelopment: false,
     });
   });
 });

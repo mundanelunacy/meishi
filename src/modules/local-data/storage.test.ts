@@ -27,28 +27,30 @@ describe("local-data/storage", () => {
       JSON.stringify({
         settings: {
           llmApiKey: "sk-test",
-          preferredOpenAiModel: "gpt-4.1",
+          preferredOpenAiModel: "gpt-5.4-mini",
           extractionPrompt: "custom prompt",
         },
         googleAuth: {
           scope: "contacts",
-          accountHint: "developer@local.test",
+          accountEmail: "developer@example.com",
+          connectedAt: "2026-04-06T00:00:00.000Z",
           accessToken: "should-not-load",
           expiresAt: 123,
         },
-      })
+      }),
     );
 
     expect(loadPersistedState()).toEqual({
       settings: {
         ...defaultSettings,
         openAiApiKey: "sk-test",
-        preferredOpenAiModel: "gpt-4.1",
+        preferredOpenAiModel: "gpt-5.4-mini",
         extractionPrompt: "custom prompt",
       },
       googleAuth: {
         scope: "contacts",
-        accountHint: "developer@local.test",
+        accountEmail: "developer@example.com",
+        connectedAt: "2026-04-06T00:00:00.000Z",
       },
     });
   });
@@ -66,9 +68,10 @@ describe("local-data/storage", () => {
         settings: defaultSettings,
         googleAuth: {
           scope: "contacts",
-          accountHint: "developer@local.test",
+          accountEmail: "developer@example.com",
+          connectedAt: "2026-04-06T00:00:00.000Z",
         },
-      })
+      }),
     ).not.toThrow();
     expect(() => clearPersistedState()).not.toThrow();
   });

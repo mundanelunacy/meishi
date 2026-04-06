@@ -14,26 +14,27 @@ import {
 import { SettingsPanel } from "./SettingsPanel";
 
 const navigateMock = vi.fn();
-const requestGoogleAccessTokenMock = vi.fn();
-const revokeGoogleAccessTokenMock = vi.fn(() => Promise.resolve());
+const connectGoogleContactsMock = vi.fn();
+const disconnectGoogleContactsMock = vi.fn(() => Promise.resolve());
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
 }));
 
+vi.mock("../../app/env", () => ({
+  hasFirebaseConfiguration: () => true,
+}));
+
 vi.mock("../google-auth/googleIdentity", () => ({
-  googleAuthClient: {
-    isConfigured: () => true,
-    getInitialState: () => ({
-      mode: "mock",
-      accessToken: null,
-      scope: "https://www.googleapis.com/auth/contacts",
-      expiresAt: null,
-      accountHint: "developer@local.test",
-    }),
-  },
-  requestGoogleAccessToken: (...args: unknown[]) => requestGoogleAccessTokenMock(...args),
-  revokeGoogleAccessToken: (...args: unknown[]) => revokeGoogleAccessTokenMock(...args),
+  connectGoogleContacts: (...args: unknown[]) => connectGoogleContactsMock(...args),
+  createInitialGoogleAuthState: () => ({
+    status: "signed_out",
+    firebaseUid: null,
+    scope: null,
+    accountEmail: undefined,
+    connectedAt: null,
+  }),
+  disconnectGoogleContacts: (...args: unknown[]) => disconnectGoogleContactsMock(...args),
 }));
 
 function renderPanel() {
@@ -48,11 +49,11 @@ function renderPanel() {
           setOpenAiApiKey("sk-test")
         ),
         setGoogleAuthState({
-          mode: "mock",
-          accessToken: "mock-token",
+          status: "connected",
+          firebaseUid: "firebase-uid-1",
           scope: "https://www.googleapis.com/auth/contacts",
-          expiresAt: Date.now() + 60_000,
-          accountHint: "developer@local.test",
+          accountEmail: "developer@example.com",
+          connectedAt: "2026-04-06T00:00:00.000Z",
         })
       ),
     },
@@ -74,17 +75,17 @@ describe("SettingsPanel", () => {
 
   beforeEach(() => {
     navigateMock.mockReset();
-    requestGoogleAccessTokenMock.mockReset();
-    revokeGoogleAccessTokenMock.mockClear();
+    connectGoogleContactsMock.mockReset();
+    disconnectGoogleContactsMock.mockClear();
   });
 
   it("reconnects Google auth through the shared auth client", async () => {
-    requestGoogleAccessTokenMock.mockResolvedValue({
-      mode: "mock",
-      accessToken: "next-token",
+    connectGoogleContactsMock.mockResolvedValue({
+      status: "connected",
+      firebaseUid: "firebase-uid-1",
       scope: "https://www.googleapis.com/auth/contacts",
-      expiresAt: Date.now() + 120_000,
-      accountHint: "developer@local.test",
+      accountEmail: "developer@example.com",
+      connectedAt: "2026-04-06T00:00:00.000Z",
     });
 
     const { store } = renderPanel();
@@ -93,27 +94,24 @@ describe("SettingsPanel", () => {
     await user.click(screen.getByRole("button", { name: /reconnect google/i }));
 
     await waitFor(() => {
-      expect(requestGoogleAccessTokenMock).toHaveBeenCalledWith({
-        prompt: "",
-        hint: "developer@local.test",
-      });
+      expect(connectGoogleContactsMock).toHaveBeenCalledTimes(1);
     });
 
-    expect(store.getState().onboarding.googleAuth.accessToken).toBe("next-token");
+    expect(store.getState().onboarding.googleAuth.status).toBe("connected");
   });
 
-  it("signs out and clears the transient Google token", async () => {
+  it("signs out and clears the Google connection metadata", async () => {
     const { store } = renderPanel();
     const user = userEvent.setup();
 
     await user.click(screen.getByRole("button", { name: /sign out google/i }));
 
     await waitFor(() => {
-      expect(revokeGoogleAccessTokenMock).toHaveBeenCalledWith("mock-token");
+      expect(disconnectGoogleContactsMock).toHaveBeenCalledTimes(1);
     });
 
-    expect(store.getState().onboarding.googleAuth.accessToken).toBeNull();
-    expect(screen.getByText(/developer mock auth is active/i)).toBeInTheDocument();
+    expect(store.getState().onboarding.googleAuth.status).toBe("signed_out");
+    expect(screen.getByText(/google contacts is not currently connected/i)).toBeInTheDocument();
   });
 
   it("persists advanced extraction settings in onboarding state", async () => {

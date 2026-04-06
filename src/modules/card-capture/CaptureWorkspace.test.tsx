@@ -68,17 +68,17 @@ function createStore(images: CapturedCardImage[] = []) {
           llmProvider: "openai" as const,
           openAiApiKey: "sk-test",
           anthropicApiKey: "",
-          preferredOpenAiModel: "gpt-4.1-mini",
+          preferredOpenAiModel: "gpt-5.4-mini",
           preferredAnthropicModel: "claude-sonnet-4-20250514",
           extractionPrompt: "Use the printed title verbatim.",
           onboardingCompletedAt: "2026-04-05T00:00:00.000Z",
         },
         googleAuth: {
-          mode: "mock" as const,
-          accessToken: "mock-token",
+          status: "connected" as const,
+          firebaseUid: "firebase-uid-1",
           scope: "https://www.googleapis.com/auth/contacts",
-          expiresAt: Date.now() + 60_000,
-          accountHint: "developer@local.test",
+          accountEmail: "developer@example.com",
+          connectedAt: "2026-04-06T00:00:00.000Z",
         },
       },
       reviewDraft: {
@@ -104,9 +104,11 @@ describe("CaptureWorkspace", () => {
     loadCapturedImagesMock.mockReset();
     loadCapturedImagesMock.mockImplementation(async () => []);
     saveCapturedImagesMock.mockClear();
-    saveCapturedImagesMock.mockImplementation(async (images: CapturedCardImage[]) => {
-      void images;
-    });
+    saveCapturedImagesMock.mockImplementation(
+      async (images: CapturedCardImage[]) => {
+        void images;
+      },
+    );
     saveDraftMock.mockClear();
     extractBusinessCardMock.mockReset();
 
@@ -299,11 +301,13 @@ describe("CaptureWorkspace", () => {
       resolveStaleLoad = resolve;
     });
 
-    saveCapturedImagesMock.mockImplementation(async (images: CapturedCardImage[]) => {
-      if (!images.length) {
-        await emptySavePromise;
-      }
-    });
+    saveCapturedImagesMock.mockImplementation(
+      async (images: CapturedCardImage[]) => {
+        if (!images.length) {
+          await emptySavePromise;
+        }
+      },
+    );
     loadCapturedImagesMock.mockImplementation(async () => staleLoadPromise);
 
     await userEvent
@@ -311,7 +315,9 @@ describe("CaptureWorkspace", () => {
       .click(screen.getByRole("button", { name: /delete back\.png/i }));
 
     expect(
-      await screen.findByText(/no images captured yet\. start with the camera or photo library above\./i),
+      await screen.findByText(
+        /no images captured yet\. start with the camera or photo library above\./i,
+      ),
     ).toBeInTheDocument();
 
     resolveStaleLoad([backImage]);
@@ -319,7 +325,9 @@ describe("CaptureWorkspace", () => {
 
     expect(screen.queryByText("back.png")).not.toBeInTheDocument();
     expect(
-      screen.getByText(/no images captured yet\. start with the camera or photo library above\./i),
+      screen.getByText(
+        /no images captured yet\. start with the camera or photo library above\./i,
+      ),
     ).toBeInTheDocument();
 
     resolveEmptySave();
@@ -359,9 +367,7 @@ describe("CaptureWorkspace", () => {
     container.querySelector('input[type="file"][capture="environment"]');
     const clickSpy = vi.spyOn(HTMLInputElement.prototype, "click");
 
-    await userEvent
-      .setup()
-      .click(getOpenCameraButton());
+    await userEvent.setup().click(getOpenCameraButton());
 
     expect(clickSpy).toHaveBeenCalledOnce();
     expect(getUserMedia).not.toHaveBeenCalled();
@@ -445,9 +451,7 @@ describe("CaptureWorkspace", () => {
       </Provider>,
     );
 
-    await userEvent
-      .setup()
-      .click(getOpenCameraButton());
+    await userEvent.setup().click(getOpenCameraButton());
 
     await waitFor(() => {
       expect(getUserMedia).toHaveBeenCalledOnce();
@@ -487,15 +491,15 @@ describe("CaptureWorkspace", () => {
       </Provider>,
     );
 
-    await userEvent
-      .setup()
-      .click(getOpenCameraButton());
+    await userEvent.setup().click(getOpenCameraButton());
 
     await waitFor(() => {
       expect(getUserMedia).toHaveBeenCalledOnce();
     });
 
-    expect(screen.getByRole("dialog", { name: /camera capture/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: /camera capture/i }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /capture photo/i }),
     ).toBeInTheDocument();
@@ -513,9 +517,7 @@ describe("CaptureWorkspace", () => {
     container.querySelector('input[type="file"][capture="environment"]');
     const clickSpy = vi.spyOn(HTMLInputElement.prototype, "click");
 
-    await userEvent
-      .setup()
-      .click(getOpenCameraButton());
+    await userEvent.setup().click(getOpenCameraButton());
 
     expect(clickSpy).toHaveBeenCalledOnce();
     clickSpy.mockRestore();

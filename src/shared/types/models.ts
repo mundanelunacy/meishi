@@ -13,7 +13,7 @@ export type {
 } from "./contact";
 
 export type SupportedLlmProvider = "openai" | "anthropic" | "gemini";
-export type GoogleAuthMode = "real" | "mock";
+export type GoogleAuthStatus = "signed_out" | "connecting" | "connected";
 
 export interface AppSettings {
   llmProvider: SupportedLlmProvider;
@@ -26,11 +26,11 @@ export interface AppSettings {
 }
 
 export interface GoogleAuthState {
-  mode: GoogleAuthMode;
-  accessToken: string | null;
+  status: GoogleAuthStatus;
+  firebaseUid: string | null;
   scope: string | null;
-  expiresAt: number | null;
-  accountHint?: string;
+  accountEmail?: string;
+  connectedAt: string | null;
 }
 
 export interface CapturedCardImage {

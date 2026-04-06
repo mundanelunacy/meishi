@@ -63,8 +63,8 @@ export function AppShell() {
                 <Badge>{readiness.isCaptureReady ? "Capture-ready" : "Setup in progress"}</Badge>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span>Auth type</span>
-                <Badge>{readiness.googleAuthMode === "mock" ? "Dev mock" : "Real OAuth"}</Badge>
+                <span>Auth status</span>
+                <Badge>{readiness.googleAuthStatus}</Badge>
               </div>
               <div className="flex flex-wrap gap-2">
                 {canInstall ? (
@@ -168,13 +168,9 @@ export function AppShell() {
             </Alert>
           ) : null}
 
-          {readiness.requiresGoogleClientId ? (
+          {readiness.googleAuthStatus !== "connected" ? (
             <Alert className="border-accent/40 bg-accent/10 text-foreground">
-              Real Google OAuth is selected, but <code>VITE_GOOGLE_CLIENT_ID</code> is not set. Add it or switch to development mock auth for local testing.
-            </Alert>
-          ) : readiness.googleAuthMode === "mock" ? (
-            <Alert className="border-accent/40 bg-accent/10 text-foreground">
-              Developer mock auth is active. The shell and downstream sync flow are testable locally, but this is not a production Google session.
+              Google Contacts now uses Firebase-backed token refresh. Finish setup to connect Google before running sync.
             </Alert>
           ) : null}
         </div>

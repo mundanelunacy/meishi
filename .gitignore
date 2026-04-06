@@ -5,6 +5,9 @@ playwright-report
 test-results
 .DS_Store
 .vite
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
 .env
 .env.local
 .env.development.local
