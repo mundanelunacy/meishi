@@ -41,3 +41,9 @@
 - The browser does not persist Google access tokens or refresh tokens.
 - The browser only keeps a short-lived in-memory access-token cache and lightweight connection metadata in local storage.
 - The Google OAuth client secret and refresh-token storage stay in Firebase Functions and Firestore, never in the browser bundle.
+- Firebase Functions run a daily retention cleanup that deletes stored backend
+  Google credential records more than 90 days after `connectedAt`, even if the
+  underlying Google refresh token might still be valid.
+- When that retention cleanup deletes a stored credential, the browser falls
+  back to the existing disconnected state and the user must reconnect Google
+  Contacts.

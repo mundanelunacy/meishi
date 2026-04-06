@@ -38,4 +38,5 @@
 
 - This module must continue to warn that client-side API key storage is prototype-only.
 - Google readiness is based on a renewable backend-backed connection, not the presence of a bearer token in Redux.
+- Onboarding copy should explain that Google consent text is broader than the app's current create-plus-photo-upload flow because the People API requires the full contacts scope.
 - Route readiness must be based on the currently selected provider’s configuration, not a generic API key flag.

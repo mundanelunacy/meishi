@@ -80,7 +80,7 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 
 This scaffold still uses a browser-side BYOK model for LLM providers. That is acceptable for a trusted prototype, but not for a production multi-user app. User-entered LLM API keys are stored client-side, and provider requests originate from the browser.
 
-Google Contacts auth no longer uses a browser-only token flow. Firebase Functions now act as the token broker for Google OAuth code exchange, refresh-token storage, and short-lived access-token refresh. LLM key handling remains client-side and should still be revisited before rollout.
+Google Contacts auth no longer uses a browser-only token flow. Firebase Functions now act as the token broker for Google OAuth code exchange, refresh-token storage, short-lived access-token refresh, and daily retention cleanup of stored backend credentials. LLM key handling remains client-side and should still be revisited before rollout.
 
 ## External API references
 
@@ -198,6 +198,12 @@ firebase deploy --only functions
   - `completeGoogleContactsAuth`
   - `getGoogleAccessToken`
   - `disconnectGoogleContacts`
+  - `cleanupGoogleContactsCredentials`
+- A scheduled retention job runs daily in `Asia/Seoul` and hard-deletes
+  `googleContactsCredentials` records whose `connectedAt` timestamp is more
+  than 90 days old
+- This cleanup is quota-driven retention, not true Google refresh-token expiry
+  detection; users with deleted records must reconnect Google Contacts
 - The functions workspace intentionally keeps its own legacy ESLint config in
   [functions/.eslintrc.js](/Users/mundanelunacy/Projects/meishi/functions/.eslintrc.js)
   and forces `ESLINT_USE_FLAT_CONFIG=false` in its lint script so it does not

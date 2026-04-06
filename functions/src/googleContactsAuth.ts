@@ -5,10 +5,10 @@ import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {defineSecret} from "firebase-functions/params";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 import type {CallableRequest} from "firebase-functions/v2/https";
+import {GOOGLE_CONTACTS_CREDENTIALS_COLLECTION} from "./googleContactsCredentialRetention.js";
 
 const GOOGLE_CONTACTS_SCOPE = "https://www.googleapis.com/auth/contacts";
 const GOOGLE_AUTH_STATE_TTL_MS = 10 * 60 * 1000;
-const GOOGLE_CREDENTIALS_COLLECTION = "googleContactsCredentials";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const GOOGLE_REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke";
 const GOOGLE_OAUTH_REDIRECT_URIS_BY_ORIGIN = new Map<string, string>([
@@ -86,7 +86,7 @@ function assertAuthenticated(uid: string | undefined): string {
 }
 
 function getCredentialDocument(uid: string) {
-  return firestore.collection(GOOGLE_CREDENTIALS_COLLECTION).doc(uid);
+  return firestore.collection(GOOGLE_CONTACTS_CREDENTIALS_COLLECTION).doc(uid);
 }
 
 function getRequestOrigin(request: CallableRequest): string | null {

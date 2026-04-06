@@ -8,6 +8,7 @@
  */
 
 import {setGlobalOptions} from "firebase-functions";
+import {cleanupGoogleContactsCredentials} from "./googleContactsCleanup.js";
 import {
   beginGoogleContactsAuth,
   completeGoogleContactsAuth,
@@ -32,6 +33,7 @@ setGlobalOptions({maxInstances: 10});
 
 export {
   beginGoogleContactsAuth,
+  cleanupGoogleContactsCredentials,
   completeGoogleContactsAuth,
   disconnectGoogleContacts,
   getGoogleAccessToken,

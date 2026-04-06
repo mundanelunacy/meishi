@@ -210,8 +210,11 @@ export function OnboardingPanel() {
               Google Contacts access
             </div>
             <p className="mb-4 text-sm text-muted-foreground">
-              The app requests the <code>{getGoogleScope()}</code> scope and
-              re-acquires short-lived access tokens when needed.
+              Meishi creates new Google contacts and can upload one contact
+              photo after save. Google currently requires the{" "}
+              <code>{getGoogleScope()}</code> scope for that flow, so the
+              consent screen may mention broader contact access than the app
+              uses. Short-lived access tokens are re-acquired only when needed.
             </p>
             <div className="mb-4 flex flex-wrap gap-2 text-xs">
               <span className="rounded-full bg-background px-3 py-1 font-medium text-foreground">

@@ -10,7 +10,8 @@ This workspace contains the Firebase Cloud Functions code for Meishi.
 - Provides the place for secrets-backed or privileged integrations that should
   not live in the browser bundle
 - Brokers Google OAuth code exchange, refresh-token storage, access-token minting,
-  and disconnect/revoke behavior for Google Contacts sync
+  disconnect/revoke behavior for Google Contacts sync, and scheduled retention
+  cleanup for stored Google credentials
 
 The main app is still a browser-first PWA. Add Cloud Functions only for work
 that should move off the client, such as secret-bearing API calls, webhook
@@ -18,6 +19,11 @@ handlers, or server-side orchestration.
 
 The current Google auth flow uses Functions as a token broker. The browser never
 stores the Google OAuth client secret or refresh token.
+
+Stored Google credential documents are also subject to a daily retention
+cleanup. The scheduled job deletes `googleContactsCredentials` records whose
+`connectedAt` timestamp is more than 90 days old. This is a storage policy for
+quota control, not a true check for Google refresh-token expiry.
 
 ## Workspace layout
 
@@ -124,6 +130,15 @@ npm --prefix functions run build
 ```bash
 firebase deploy --only functions
 ```
+
+The current exported Google auth handlers are:
+
+- `beginGoogleContactsAuth`
+- `completeGoogleContactsAuth`
+- `getGoogleAuthStatus`
+- `getGoogleAccessToken`
+- `disconnectGoogleContacts`
+- `cleanupGoogleContactsCredentials`
 
 ## Config guidance
 

@@ -99,4 +99,15 @@ describe("OnboardingPanel", () => {
     expect(screen.getByLabelText(/anthropic api key/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/anthropic model/i)).toBeInTheDocument();
   });
+
+  it("explains the Google consent scope more precisely", () => {
+    renderPanel();
+
+    expect(
+      screen.getByText(/meishi creates new google contacts and can upload one contact photo after save/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/consent screen may mention broader contact access than the app uses/i),
+    ).toBeInTheDocument();
+  });
 });
