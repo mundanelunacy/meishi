@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { KeyRound, ShieldAlert } from "lucide-react";
+import { Spinner } from "../../shared/ui/spinner";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { hasFirebaseConfiguration } from "../../app/env";
 import { Button } from "../../shared/ui/button";
@@ -92,7 +93,7 @@ export function OnboardingPanel() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+    <div className="grid gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader>
           <CardTitle>First-run setup</CardTitle>
@@ -195,7 +196,7 @@ export function OnboardingPanel() {
             </div>
           </section>
 
-          <section className="rounded-[28px] border border-border/70 bg-muted/40 p-4 text-sm text-muted-foreground">
+          <section className="rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">Structured extraction</p>
             <p className="mt-1">
               Meishi enforces structured output for extraction. The shared
@@ -204,7 +205,7 @@ export function OnboardingPanel() {
             </p>
           </section>
 
-          <section className="rounded-[28px] bg-muted/60 p-4">
+          <section className="rounded-xl bg-muted/60 p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium">
               <KeyRound className="h-4 w-4" />
               Google Contacts access
@@ -234,9 +235,12 @@ export function OnboardingPanel() {
               onClick={handleGoogleConnect}
               disabled={isAuthorizing || !hasFirebaseConfiguration()}
             >
-              {readiness.hasGoogleAuthorization
-                ? "Reconnect Google account"
-                : "Connect Google account"}
+              {isAuthorizing ? <Spinner /> : null}
+              {isAuthorizing
+                ? "Connecting..."
+                : readiness.hasGoogleAuthorization
+                  ? "Reconnect Google account"
+                  : "Connect Google account"}
             </Button>
           </section>
 
@@ -258,7 +262,7 @@ export function OnboardingPanel() {
         </CardContent>
       </Card>
 
-      <Card className="bg-card/75">
+      <Card className="bg-card/90">
         <CardHeader>
           <CardTitle>What happens next</CardTitle>
           <CardDescription>

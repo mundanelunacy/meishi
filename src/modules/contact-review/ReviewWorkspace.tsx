@@ -20,6 +20,7 @@ import type {
   SignificantDateField,
 } from "../../shared/types/models";
 import { Button } from "../../shared/ui/button";
+import { Spinner } from "../../shared/ui/spinner";
 import {
   Card,
   CardContent,
@@ -39,15 +40,8 @@ import {
   restoreDraft,
   updateDraft,
 } from "./reviewDraftSlice";
-import {
-  loadCapturedImages,
-  loadLatestDraft,
-  saveDraft,
-} from "../local-data";
-import {
-  buildContactPayload,
-  useSyncGoogleContact,
-} from "../google-contacts";
+import { loadCapturedImages, loadLatestDraft, saveDraft } from "../local-data";
+import { buildContactPayload, useSyncGoogleContact } from "../google-contacts";
 import { buildContactVCard, saveContactVCard } from "../vcard-export";
 import { pushToast } from "../../shared/ui/toastBus";
 import { buildPreservedNotes } from "../../shared/lib/contactFidelity";
@@ -463,8 +457,7 @@ export function ReviewWorkspace() {
       });
 
       pushToast(
-        result.warningMessage ??
-          "Verified contact synced to Google Contacts.",
+        result.warningMessage ?? "Verified contact synced to Google Contacts.",
       );
     } catch (error) {
       pushToast(
@@ -514,7 +507,7 @@ export function ReviewWorkspace() {
 
   return (
     <form
-      className="grid min-h-[70vh] gap-6 xl:grid-cols-[1.05fr_0.95fr]"
+      className="grid min-h-[70vh] gap-6 lg:grid-cols-2"
       onSubmit={form.handleSubmit(onSubmit)}
     >
       <Card className="min-w-0 overflow-hidden">
@@ -529,10 +522,10 @@ export function ReviewWorkspace() {
           {images.map((image) => (
             <label
               key={image.id}
-              className={`block min-w-0 max-w-full overflow-hidden rounded-[28px] border ${
+              className={`block min-w-0 max-w-full overflow-hidden rounded-xl border ${
                 form.watch("selectedPhotoImageId") === image.id
-                  ? "border-primary"
-                  : "border-border/70"
+                  ? "border-primary ring-2 ring-primary/25"
+                  : "border-border"
               }`}
             >
               <div className="flex h-[min(70vh,100vw)] min-w-0 max-w-full items-center justify-center overflow-hidden bg-muted/20">
@@ -597,10 +590,7 @@ export function ReviewWorkspace() {
             <Field label="Last name" htmlFor="review-last-name">
               <Input id="review-last-name" {...form.register("lastName")} />
             </Field>
-            <Field
-              label="Phonetic first"
-              htmlFor="review-phonetic-first-name"
-            >
+            <Field label="Phonetic first" htmlFor="review-phonetic-first-name">
               <Input
                 id="review-phonetic-first-name"
                 {...form.register("phoneticFirstName")}
@@ -638,10 +628,7 @@ export function ReviewWorkspace() {
               />
             </Field>
             <Field label="Department" htmlFor="review-department">
-              <Input
-                id="review-department"
-                {...form.register("department")}
-              />
+              <Input id="review-department" {...form.register("department")} />
             </Field>
           </div>
 
@@ -766,14 +753,9 @@ export function ReviewWorkspace() {
             >
               Save vCard
             </Button>
-            <Button
-              size="lg"
-              type="submit"
-              disabled={isSyncing}
-            >
-              {isSyncing
-                ? "Syncing..."
-                : "Save to Google Contacts"}
+            <Button size="lg" type="submit" disabled={isSyncing}>
+              {isSyncing ? <Spinner /> : null}
+              {isSyncing ? "Syncing..." : "Save to Google Contacts"}
             </Button>
             <Button
               type="button"
@@ -838,7 +820,7 @@ function RepeatableFieldSection({
   valueInputType?: "text" | "date";
 }) {
   return (
-    <section className="space-y-3 rounded-[24px] border border-border/70 bg-muted/25 p-4">
+    <section className="space-y-3 rounded-xl border border-border bg-muted/25 p-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="font-medium text-foreground">{title}</p>
@@ -867,7 +849,7 @@ function RepeatableFieldSection({
           {fieldArray.fields.map((field, index) => (
             <div
               key={field.id}
-              className="rounded-[20px] border border-border/70 bg-background/80 p-4"
+              className="rounded-lg border border-border bg-background p-4"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-foreground">
@@ -933,7 +915,7 @@ function CustomFieldSection({
   register: UseFormRegister<ReviewFormValues>;
 }) {
   return (
-    <section className="space-y-3 rounded-[24px] border border-border/70 bg-muted/25 p-4">
+    <section className="space-y-3 rounded-xl border border-border bg-muted/25 p-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="font-medium text-foreground">Custom fields</p>
@@ -957,7 +939,7 @@ function CustomFieldSection({
           {fieldArray.fields.map((field, index) => (
             <div
               key={field.id}
-              className="rounded-[20px] border border-border/70 bg-background/80 p-4"
+              className="rounded-lg border border-border bg-background p-4"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-foreground">

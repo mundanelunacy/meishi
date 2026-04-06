@@ -46,7 +46,8 @@ export default {
         body: ["'Plus Jakarta Sans'", "sans-serif"],
       },
       boxShadow: {
-        card: "0 30px 90px -40px rgba(17, 24, 39, 0.45)",
+        card: "0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03)",
+        elevated: "0 4px 24px -4px rgba(0, 0, 0, 0.08)",
       },
     },
   },

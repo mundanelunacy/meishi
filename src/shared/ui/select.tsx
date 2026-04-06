@@ -9,8 +9,8 @@ export function Select({ className, children, ...props }: SelectProps) {
     <div className="relative">
       <select
         className={cn(
-          "flex h-11 w-full appearance-none rounded-2xl border border-input bg-background/80 px-4 py-2 pr-10 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          className
+          "flex h-11 w-full appearance-none rounded-lg border border-input bg-background px-4 py-2 pr-10 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          className,
         )}
         {...props}
       >

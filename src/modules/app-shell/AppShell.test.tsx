@@ -18,8 +18,11 @@ vi.mock("@tanstack/react-router", () => ({
     </a>
   ),
   Outlet: () => <div data-testid="route-outlet" />,
-  useRouterState: ({ select }: { select: (state: { location: { pathname: string } }) => string }) =>
-    select({ location: { pathname: "/onboarding" } }),
+  useRouterState: ({
+    select,
+  }: {
+    select: (state: { location: { pathname: string } }) => string;
+  }) => select({ location: { pathname: "/landing" } }),
 }));
 
 vi.mock("../pwa-runtime", () => ({
@@ -44,19 +47,19 @@ function renderShell() {
   render(
     <Provider store={store}>
       <AppShell />
-    </Provider>
+    </Provider>,
   );
 }
 
 describe("AppShell", () => {
-  it("shows setup-first navigation and Firebase auth messaging before onboarding completes", () => {
+  it("renders the minimal shell with header, tab bar, and route outlet", () => {
     renderShell();
 
-    expect(screen.getByText(/finish setup to unlock the working capture flow/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/setup first/i)).not.toHaveLength(0);
-    expect(
-      screen.getByText(/google contacts now uses firebase-backed token refresh/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText("Meishi")).toBeInTheDocument();
+    expect(screen.getAllByText("Home").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Capture").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Review").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Settings").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId("route-outlet")).toBeInTheDocument();
   });
 });

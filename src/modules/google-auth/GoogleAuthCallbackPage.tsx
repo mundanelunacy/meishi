@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { completeGoogleContactsAuthCallback, POPUP_MESSAGE_TYPE, postPopupMessage } from "./googleIdentity";
+import {
+  completeGoogleContactsAuthCallback,
+  POPUP_MESSAGE_TYPE,
+  postPopupMessage,
+} from "./googleIdentity";
 
 type CallbackStatus = "working" | "success" | "error";
 
@@ -33,7 +37,8 @@ export function GoogleAuthCallbackPage() {
     }
 
     if (!code || !state) {
-      const nextMessage = "Google authorization returned without the required callback parameters.";
+      const nextMessage =
+        "Google authorization returned without the required callback parameters.";
       setStatus("error");
       setMessage(nextMessage);
       postPopupMessage({
@@ -77,10 +82,16 @@ export function GoogleAuthCallbackPage() {
 
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-lg items-center justify-center px-6 py-12">
-      <section className="w-full rounded-[28px] border border-border/80 bg-card/90 p-8 text-center shadow-sm">
-        <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Google Contacts</p>
+      <section className="w-full rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+        <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+          Google Contacts
+        </p>
         <h1 className="mt-3 text-2xl font-semibold text-foreground">
-          {status === "working" ? "Connecting..." : status === "success" ? "Connected" : "Connection failed"}
+          {status === "working"
+            ? "Connecting..."
+            : status === "success"
+              ? "Connected"
+              : "Connection failed"}
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">{message}</p>
       </section>

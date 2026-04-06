@@ -30,8 +30,8 @@ export default defineConfig(({ mode }) => {
           short_name: "Meishi",
           description:
             "Capture business cards, verify extracted data, and sync contacts to Google Contacts.",
-          theme_color: "#f6f1e7",
-          background_color: "#f6f1e7",
+          theme_color: "#FAFAF9",
+          background_color: "#FAFAF9",
           display: "standalone",
           start_url: "/",
           icons: [
