@@ -1,313 +1,98 @@
 # Meishi
 
-Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracting structured contact data with an LLM, verifying the result in-app, exporting a vCard, and syncing the verified contact to Google Contacts.
+Meishi turns business cards into structured contacts you can review, export, and optionally sync to Google Contacts.
 
-## Product flow
+[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/mundanelunacy)
 
-1. On first load, the user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, can choose an appearance mode that defaults to the system setting, and can tune one shared advanced extraction prompt.
-2. The user captures one or more business-card images from a mobile camera or image library.
-3. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
-4. The review screen shows source images in the top section and an editable contact form in the lower section. The form covers Google-Contacts-style name/company fields such as prefix, phonetic name parts, nickname, file-as, and department, and expands to repeatable collections such as multiple emails, phone numbers, addresses, websites, related people, significant dates, and custom fields. Draft edits autosave locally for recovery after refresh.
-5. From review, the user can save a `.vcf` vCard locally or choose to sync the verified contact to Google Contacts.
-6. If the user chooses Google sync while signed out, the browser first establishes an anonymous Firebase Auth session, then completes a popup-based Google OAuth code flow whose refresh token is stored server-side.
-7. An optional `?debug=1` review mode shows the raw extraction snapshot, a derived vCard preview, and the Google People API payload derived from the current reviewed form values.
-8. Saving to Google creates a contact and uploads one selected image as the Google contact photo.
-9. Additional captured images remain local in IndexedDB because Google Contacts does not support arbitrary multi-image business-card attachments.
+[Open the public app](https://meishi-492400.web.app)  
+[Read the technical notes](./DEV-NOTES.md)
 
-## Routes
+![Meishi review screen](./public/docs/screenshots/review-verify-contact.png)
 
-- `/`: default entry route that resolves into the app shell and redirects into the main user flow.
-- `/landing`: onboarding and setup entry point for provider selection, API key entry, and optional Google connection.
-- `/privacy`: static privacy policy page linked from the landing footer.
-- `/terms`: static terms of service page linked from the landing footer.
-- `/capture`: capture workspace for camera or file-library imports and extraction kickoff.
-- `/review`: review workspace for verifying extracted contact data, editing fields, exporting a vCard, and syncing to Google Contacts.
-- `/docs`: in-app documentation page with usage guidance, setup help, and walkthrough content.
-- `/settings`: post-onboarding settings screen for changing provider configuration, appearance mode, extraction settings, and Google connection state.
-- `/auth/google/callback`: Google OAuth callback route used to complete the popup-based Google connection flow.
+## Why it exists
 
-## Stack
+Typing contact details by hand is slow, inconsistent, and easy to abandon. Meishi keeps the workflow short: capture a card, run extraction, verify the result, then save a `.vcf` or push the cleaned contact to Google Contacts.
 
-- React 18 + Vite 5
-- TypeScript only
-- TanStack Router file-based routes
-- Redux Toolkit + RTK Query
-- Tailwind CSS with shadcn-style UI primitives
-- Dexie for IndexedDB persistence
-- `vite-plugin-pwa` for manifest and service worker wiring
-- Vitest + Testing Library + MSW for focused verification
+## What you get
 
-## Architecture
+- Mobile-friendly business-card capture and image import
+- Structured extraction with OpenAI or Anthropic using your own API key
+- Editable review UI with repeatable contact fields
+- Local draft recovery in the browser
+- `.vcf` export
+- Optional Google Contacts sync with one contact photo upload
 
-### `src/modules/app-shell`
+## For end-users
 
-- Top-level frame, navigation, route shell, static docs/legal pages, app readiness display, and PWA update affordances.
+### Use the public app
 
-### `src/modules/onboarding-settings`
+Open [https://meishi-492400.web.app](https://meishi-492400.web.app).
 
-- First-run flow, provider selection, API key entry, readiness selectors, and settings management.
+You will be guided through:
 
-### `src/modules/google-auth`
+1. Picking an LLM provider and adding your own API key.
+2. Capturing or importing one or more business-card images.
+3. Reviewing the extracted contact before saving anything.
+4. Exporting a vCard or optionally syncing to Google Contacts.
 
-- Firebase-backed Google auth client boundary for anonymous Firebase identity, popup OAuth connect, and on-demand access-token retrieval.
+### Install it like an app
 
-### `src/modules/card-capture`
+- Android + Chrome: open the public app, then use the browser install prompt or the Chrome menu and choose `Install app` or `Add to Home screen`.
+- iPhone or iPad + Safari: open the public app, tap `Share`, then choose `Add to Home Screen`.
+- Desktop Chrome or Edge: open the public app and use the install icon in the address bar.
 
-- Camera and file-library capture flows plus image normalization hooks.
+### What happens under the hood
 
-### `src/modules/card-extraction`
+Meishi is a browser-first PWA. Your images, draft contact, and app settings stay in browser storage so you can recover work after a refresh. Extraction only happens when you send the captured images to your selected LLM provider. Google sync is optional, and when you use it the app goes through Firebase-backed token brokering so the browser does not hold your Google refresh token.
 
-- LLM provider abstraction, OpenAI and Anthropic structured-output extraction, response parsing, and schema validation.
+If you want the in-app walkthrough instead of GitHub docs, use the `/docs` page inside the app.
 
-### `src/modules/contact-review`
+## For developers
 
-- Editable review form, source-image pairing, dynamic repeatable field editing, developer debug preview, and verified-contact finalization.
-
-### `src/modules/google-contacts`
-
-- Google People API contact creation, contact photo upload, and sync result tracking.
-
-### `src/modules/vcard-export`
-
-- Browser-side vCard serialization and `.vcf` download handling.
-
-### `src/modules/local-data`
-
-- Browser persistence boundaries for `localStorage` and IndexedDB, including draft recovery and append-only sync history.
-
-### `src/modules/pwa-runtime`
-
-- PWA lifecycle hooks, install prompting, prompt-based updates, and explicit offline-runtime messaging.
-
-## Data boundaries
-
-- `localStorage`
-  - LLM provider choice
-  - provider-specific API keys
-  - preferred OpenAI and Anthropic models
-  - appearance mode preference (`system`, `light`, or `dark`)
-  - shared advanced extraction prompt
-  - limited Google auth metadata such as scope, connected account email, and connection timestamp, but not Google bearer tokens
-- IndexedDB
-  - captured images
-  - active capture session
-  - latest draft with autosaved review edits and persisted extraction snapshot
-  - append-only sync history
-- In-memory Redux state
-  - current Google connection status and Firebase UID
-  - active draft edit state
-  - sync session status
-
-## Security posture
-
-This scaffold still uses a browser-side BYOK model for LLM providers. That is acceptable for a trusted prototype, but not for a production multi-user app. User-entered LLM API keys are stored client-side, and provider requests originate from the browser.
-
-Google Contacts auth no longer uses a browser-only token flow. Firebase Functions now act as the token broker for Google OAuth code exchange, refresh-token storage, short-lived access-token refresh, and daily retention cleanup of stored backend credentials. LLM key handling remains client-side and should still be revisited before rollout.
-
-## External API references
-
-- Google OAuth and Firebase:
-  - [OAuth 2.0 for Web Server Applications](https://developers.google.com/identity/protocols/oauth2/web-server)
-  - [Firebase Auth for Web](https://firebase.google.com/docs/auth/web/start)
-  - [Callable Functions](https://firebase.google.com/docs/functions/callable)
-- Google People API:
-  - [people.createContact](https://developers.google.com/people/api/rest/v1/people/createContact)
-  - [people.updateContactPhoto](https://developers.google.com/people/api/rest/v1/people/updateContactPhoto)
-- OpenAI:
-  - [Images and vision](https://platform.openai.com/docs/guides/images-vision)
-  - [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs)
-  - [Best Practices for API Key Safety](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety)
-
-## Development
-
-```bash
-npm install
-npm run dev
-```
-
-## Firebase deployment
-
-This repo can be deployed with Firebase Hosting for the Vite-built SPA and
-Cloud Functions for server-side endpoints that should not run in the browser.
-
-- Hosting serves the built app from `dist`
-- Functions are built from `functions/src` into `functions/lib`
-- `firebase deploy` runs both the functions predeploy checks and the hosting
-  deploy defined in [firebase.json](./firebase.json)
-
-### Project files
-
-- [firebase.json](./firebase.json):
-  deploy targets, hosting rewrite, hosting predeploy build, and functions
-  predeploy commands
-- [.firebaserc](./.firebaserc):
-  default Firebase project alias
-- [firestore.rules](./firestore.rules):
-  prototype Firestore Security Rules that deny all browser access because
-  Firestore is server-only in the current architecture
-- [functions/package.json](./functions/package.json):
-  functions-specific build, lint, emulator, and deploy scripts
-- [functions/README.md](./functions/README.md):
-  detailed functions workspace notes
-
-### One-time setup
-
-1. Install dependencies in both workspaces:
+### Quick start
 
 ```bash
 npm install
 npm --prefix functions install
+npm run dev
 ```
 
-2. Install the Firebase CLI if needed:
+### Deployment basics
 
-```bash
-npm install -g firebase-tools
-```
-
-3. Authenticate and confirm the active project:
-
-```bash
-firebase login
-firebase use meishi-492400
-```
-
-### Local workflow
-
-Build and verify the browser app:
-
-```bash
-npm run build
-```
-
-Build and verify the functions workspace:
-
-```bash
-npm --prefix functions run lint
-npm --prefix functions run build
-```
-
-Run the functions emulator from the functions workspace:
-
-```bash
-npm --prefix functions run serve
-```
-
-Deploy both Hosting and Functions:
+Meishi deploys as a Vite-built SPA on Firebase Hosting with Firebase Functions handling the Google OAuth token broker.
 
 ```bash
 firebase deploy
 ```
 
-Deploy only one target when iterating:
+Use these deeper references when you need more than the quick path:
 
-```bash
-firebase deploy --only hosting
-firebase deploy --only functions
-```
+- [DEV-NOTES.md](./DEV-NOTES.md) for architecture, routes, storage boundaries, security posture, and deployment behavior
+- [LOCAL-DEV.md](./LOCAL-DEV.md) for emulator setup and local auth/sync testing
+- [functions/README.md](./functions/README.md) for the Functions workspace and token-broker details
+- [AGENTS.md](./AGENTS.md) for repository-specific implementation and verification rules
 
-### Hosting behavior
+## Technical snapshot
 
-- Hosting runs `npm run build` before deploy, then publishes the Vite
-  production build from `dist`
-- The production build also emits `dist/sitemap.xml` and `dist/robots.txt`
-  for the public app routes
-- All routes rewrite to `/index.html`, which is required for the TanStack
-  Router SPA
-- The generated PWA service worker excludes file-extension URLs such as
-  `/sitemap.xml`, `/robots.txt`, and verification HTML files from SPA
-  navigation fallback so those documents continue to resolve as static assets
-- Static files copied from `public/` remain available at the deploy root, so
-  Google Search Console verification files such as
-  `google685cd3cf50f37c24.html` are served directly
-- `VITE_*` values are compiled into the browser build at build time, so update
-  env files before running `npm run build`
+- React 18 + Vite 5 + TypeScript
+- TanStack Router, Redux Toolkit, RTK Query
+- Tailwind CSS and shadcn-style UI patterns
+- IndexedDB via Dexie for images, drafts, and sync history
+- `localStorage` for provider settings and non-sensitive preferences
+- Firebase Auth + Functions for Google OAuth brokering
+- `vite-plugin-pwa` for installable PWA behavior
 
-Set `SITE_ORIGIN` in the build environment to override the default canonical
-origin used for `sitemap.xml` and `robots.txt`. If unset, the build falls back
-to `https://meishi-492400.web.app`.
+## Repo map
 
-The sitemap intentionally includes only destination pages:
-`/landing`, `/capture`, `/review`, `/settings`, `/docs`, `/privacy`, and
-`/terms`. It excludes the redirect-only `/` route and the transient
-`/auth/google/callback` OAuth handoff route.
+- `src/modules/card-capture`: camera and import flows
+- `src/modules/card-extraction`: provider adapters, structured output, schema validation
+- `src/modules/contact-review`: editable contact review and debug views
+- `src/modules/google-auth` and `src/modules/google-contacts`: Google connection and sync
+- `src/modules/local-data`: browser persistence boundary
+- `functions/`: Firebase Functions workspace for server-side auth handling
 
-### Functions behavior
+## Read more
 
-- Functions use their own Node/TypeScript workspace under `functions/`
-- Predeploy runs the functions workspace `lint` and `build` scripts before any
-  deploy proceeds
-- Firestore is a server-only credential store in the current app shape:
-  browser clients do not use the Firestore Web SDK, and
-  [firestore.rules](./firestore.rules)
-  intentionally deny all client reads and writes
-- Functions now own the Google Contacts token broker:
-  - `beginGoogleContactsAuth`
-  - `completeGoogleContactsAuth`
-  - `getGoogleAccessToken`
-  - `disconnectGoogleContacts`
-  - `cleanupGoogleContactsCredentials`
-- A scheduled retention job runs daily in `Asia/Seoul` and hard-deletes
-  `googleContactsCredentials` records whose `connectedAt` timestamp is more
-  than 90 days old
-- This cleanup is quota-driven retention, not true Google refresh-token expiry
-  detection; users with deleted records must reconnect Google Contacts
-- The functions workspace intentionally keeps its own legacy ESLint config in
-  [functions/.eslintrc.js](./functions/.eslintrc.js)
-  and forces `ESLINT_USE_FLAT_CONFIG=false` in its lint script so it does not
-  inherit the root flat config from
-  [eslint.config.js](./eslint.config.js)
-- Put server-only secrets and privileged API calls in functions, not in the
-  browser bundle
-- If a future feature needs browser-side Firestore access, revisit the
-  deny-all rules first rather than weakening them ad hoc
-
-### Troubleshooting
-
-- If `firebase deploy` fails during `functions predeploy`, run
-  `npm --prefix functions run lint` and `npm --prefix functions run build`
-  directly first
-- If ESLint reports that `--ext` is invalid while deploying functions, the
-  functions lint command is being interpreted with flat config instead of the
-  local legacy config. The functions lint script should keep
-  `ESLINT_USE_FLAT_CONFIG=false`
-- If Hosting deploy succeeds but routing is broken on refresh, confirm the SPA
-  rewrite in [firebase.json](./firebase.json)
-- If browser code cannot see an env var after deploy, confirm it starts with
-  `VITE_` and that the app was rebuilt before deploying Hosting
-
-## Environment files
-
-Vite loads env files from the repo root automatically. Meishi now assumes this layout:
-
-```bash
-.env
-.env.development
-.env.production
-```
-
-- `.env`: shared defaults used in every mode
-- `.env.development`: local development overrides for `npm run dev`
-- `.env.production`: production build values for `npm run build`
-- Only variables prefixed with `VITE_` are exposed to browser code
-- Start from [.env.example](./.env.example)
-
-## Local testing notes
-
-- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_APP_ID` are required for Firebase-backed Google auth.
-- `VITE_FIREBASE_FUNCTIONS_REGION` optionally overrides the default `us-central1` Functions region.
-- `VITE_FIREBASE_USE_EMULATORS=true` connects the browser to the local Firebase Auth and Functions emulators.
-- `VITE_*` variables are compile-time inputs to the browser build. If a required Firebase value exists only in `.env.production`, the production build will see it, but `npm run dev` will not.
-- After changing `.env.production`, rebuild before re-testing: `npm run build && npm run preview`.
-- `npm run dev` is not the authoritative way to test PWA behavior in this repo because `vite-plugin-pwa` development service worker support is not enabled in [vite.config.ts](./vite.config.ts).
-- When testing through the Vite dev server with `npm run dev`, mobile native-camera capture on `/capture` can still trigger page refreshes after returning from the camera flow. Treat that as an open issue to address in future capture/runtime work, and prefer `npm run build && npm run preview` when validating mobile capture behavior.
-- Use `npm run build && npm run preview` when testing service worker registration, install prompts, offline shell behavior, or update prompts.
-- If temporary dev-server PWA testing is needed, enable `devOptions: { enabled: true }` in the `VitePWA(...)` config, but treat previewing the production build as the final verification path.
-- If an older PWA build is still showing stale behavior, clear site data or unregister the service worker before re-testing.
-- For Android capture refresh debugging, `/capture?debug=1`
-  shows the capture debug panel, and `/capture?debug=1&captureDebugMaxEdge=1600`
-  additionally enables temporary image downscaling in development.
-- For review diagnostics, `/review?debug=1` shows the raw extraction snapshot,
-  derived vCard, and derived Google payload sections.
-
-See [AGENTS.md](./AGENTS.md) for the project-specific development loop future agents should follow.
+- [DEV-NOTES.md](./DEV-NOTES.md)
+- [LOCAL-DEV.md](./LOCAL-DEV.md)
+- [functions/README.md](./functions/README.md)

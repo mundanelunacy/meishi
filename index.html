@@ -8,10 +8,122 @@
     />
     <meta
       name="description"
-      content="Meishi is an LLM-powered PWA for scanning business cards and syncing verified contacts to Google Contacts."
+      content="Meishi helps you turn business cards into contacts you can review, edit, export as a vCard, and sync to Google Contacts."
+    />
+    <link rel="canonical" href="https://meishi-492400.web.app/landing" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Meishi" />
+    <meta property="og:title" content="Meishi | AI business card scanner" />
+    <meta
+      property="og:description"
+      content="Meishi helps you turn business cards into contacts you can review, edit, export as a vCard, and sync to Google Contacts."
+    />
+    <meta property="og:url" content="https://meishi-492400.web.app/landing" />
+    <meta
+      property="og:image"
+      content="https://meishi-492400.web.app/landing/networking_scene.jpg"
+    />
+    <meta
+      property="og:image:alt"
+      content="Professionals networking in a warm indoor setting"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Meishi | AI business card scanner" />
+    <meta
+      name="twitter:description"
+      content="Meishi helps you turn business cards into contacts you can review, edit, export as a vCard, and sync to Google Contacts."
+    />
+    <meta
+      name="twitter:image"
+      content="https://meishi-492400.web.app/landing/networking_scene.jpg"
     />
     <link rel="icon" type="image/svg+xml" href="/meishi-mark.svg" />
-    <title>Meishi</title>
+    <title>Meishi | AI business card scanner</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@id": "https://meishi-492400.web.app/#website",
+            "@type": "WebSite",
+            "url": "https://meishi-492400.web.app",
+            "name": "Meishi",
+            "description": "Meishi helps you turn business cards into contacts you can review, edit, export as a vCard, and sync to Google Contacts.",
+            "inLanguage": "en"
+          },
+          {
+            "@id": "https://meishi-492400.web.app/#creator",
+            "@type": "Person",
+            "name": "Satoshi Kawase",
+            "url": "https://github.com/mundanelunacy",
+            "sameAs": [
+              "https://github.com/mundanelunacy",
+              "https://github.com/mundanelunacy/meishi"
+            ]
+          },
+          {
+            "@id": "https://meishi-492400.web.app/landing#software",
+            "@type": "SoftwareApplication",
+            "name": "Meishi",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web browser",
+            "url": "https://meishi-492400.web.app/landing",
+            "description": "Meishi helps you turn business cards into contacts you can review, edit, export as a vCard, and sync to Google Contacts.",
+            "isAccessibleForFree": true,
+            "browserRequirements": "Requires JavaScript and a modern browser with camera or image upload support.",
+            "featureList": [
+              "Scan business cards from your camera or photo library.",
+              "Extract structured contact details with OpenAI or Anthropic.",
+              "Review and edit the extracted contact data in your browser.",
+              "Export a vCard or sync the verified contact to Google Contacts.",
+              "Keep captured images and draft edits on-device while you work."
+            ],
+            "screenshot": [
+              "https://meishi-492400.web.app/landing/networking_scene.jpg",
+              "https://meishi-492400.web.app/docs/screenshots/review-verify-contact.png"
+            ],
+            "sameAs": ["https://github.com/mundanelunacy/meishi"],
+            "author": { "@id": "https://meishi-492400.web.app/#creator" },
+            "creator": { "@id": "https://meishi-492400.web.app/#creator" },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "availability": "https://schema.org/InStock",
+              "url": "https://meishi-492400.web.app/landing"
+            },
+            "softwareHelp": {
+              "@type": "CreativeWork",
+              "url": "https://meishi-492400.web.app/docs",
+              "name": "Meishi documentation"
+            }
+          },
+          {
+            "@id": "https://meishi-492400.web.app/landing#webpage",
+            "@type": "WebPage",
+            "url": "https://meishi-492400.web.app/landing",
+            "name": "Meishi | AI business card scanner",
+            "description": "Open-source AI business card scanner for private, browser-based capture, review, vCard export, and optional Google Contacts sync.",
+            "isPartOf": { "@id": "https://meishi-492400.web.app/#website" },
+            "about": {
+              "@id": "https://meishi-492400.web.app/landing#software"
+            },
+            "primaryImageOfPage": {
+              "@type": "ImageObject",
+              "url": "https://meishi-492400.web.app/landing/networking_scene.jpg"
+            },
+            "keywords": [
+              "business card scanner",
+              "AI contact extraction",
+              "Google Contacts sync",
+              "vCard export",
+              "OpenAI business card OCR",
+              "Anthropic business card scanner"
+            ]
+          }
+        ]
+      }
+    </script>
     <script>
       (() => {
         const storageKey = "meishi.settings";

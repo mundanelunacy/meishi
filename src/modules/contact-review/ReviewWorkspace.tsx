@@ -59,9 +59,15 @@ import {
   selectCapturedImages,
   selectDraft,
   restoreDraft,
+  setCapturedImages,
   updateDraft,
 } from "./reviewDraftSlice";
-import { loadCapturedImages, loadLatestDraft, saveDraft } from "../local-data";
+import {
+  loadCapturedImages,
+  loadLatestDraft,
+  saveCapturedImages,
+  saveDraft,
+} from "../local-data";
 import { buildContactPayload, useSyncGoogleContact } from "../google-contacts";
 import { buildContactVCard, saveContactVCard } from "../vcard-export";
 import { pushToast } from "../../shared/ui/toastBus";
@@ -676,6 +682,13 @@ export function ReviewWorkspace() {
     await saveDraft(resetDraft);
   }
 
+  async function handleClearPhotoroll() {
+    dispatch(setCapturedImages([]));
+    form.setValue("selectedPhotoImageId", undefined);
+    await saveCapturedImages([]);
+    pushToast("Photoroll cleared.");
+  }
+
   return (
     <form
       className="grid min-h-[70vh] gap-6 lg:grid-cols-2"
@@ -683,7 +696,23 @@ export function ReviewWorkspace() {
     >
       <Card className="min-w-0 overflow-hidden">
         <CardHeader>
-          <CardTitle>Photoroll</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Photoroll</CardTitle>
+            {images.length ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 rounded-full p-0 text-muted-foreground"
+                aria-label="Clear photoroll"
+                onClick={() => {
+                  void handleClearPhotoroll();
+                }}
+              >
+                <Eraser className="h-4 w-4" />
+              </Button>
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent>
           <Photoroll

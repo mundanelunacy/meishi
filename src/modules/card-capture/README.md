@@ -18,6 +18,7 @@
 - Multi-image upload
 - Image metadata extraction
 - Active-session persistence to IndexedDB
+- Header-level photoroll clear action for removing all active-session images at once
 - Per-image removal from the active capture session
 - Extraction handoff into a persisted review draft
 - Development-only capture diagnostics that survive reloads, including page

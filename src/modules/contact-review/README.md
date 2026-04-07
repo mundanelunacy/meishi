@@ -9,6 +9,7 @@
 ## Features
 
 - Split review workspace with capture-style photoroll lightbox, upload-image selection, and editable fields
+- Header-level photoroll clear action that removes all current source images without resetting reviewed contact fields
 - Google-Contacts-aligned scalar editing for name/company details such as prefix, phonetic name parts, nickname, file-as, and department
 - Dynamic Google-Contacts-style repeatable sections for emails, phone numbers, addresses, websites, related people, significant dates, and custom fields
 - Google-Contacts-style collapsed "show more" behavior for optional review fields, with automatic expansion when extraction already filled hidden fields

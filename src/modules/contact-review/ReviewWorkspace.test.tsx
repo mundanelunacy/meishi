@@ -16,6 +16,8 @@ import { onboardingReducer } from "../onboarding-settings/onboardingSlice";
 import { reviewDraftReducer } from "./reviewDraftSlice";
 import { ReviewWorkspace } from "./ReviewWorkspace";
 
+const saveCapturedImagesMock = vi.fn(() => Promise.resolve());
+
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
 }));
@@ -26,6 +28,7 @@ vi.mock("../local-data", async (importOriginal) => {
     ...actual,
     loadCapturedImages: vi.fn(() => Promise.resolve([])),
     loadLatestDraft: vi.fn(() => Promise.resolve(null)),
+    saveCapturedImages: (...args: unknown[]) => saveCapturedImagesMock(...args),
     saveDraft: vi.fn(() => Promise.resolve()),
     saveSyncOutcome: vi.fn(() => Promise.resolve()),
   };
@@ -58,9 +61,8 @@ vi.mock("../vcard-export", async (importOriginal) => {
 });
 
 vi.mock("../google-auth/googleIdentity", async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import("../google-auth/googleIdentity")
-  >();
+  const actual =
+    await importOriginal<typeof import("../google-auth/googleIdentity")>();
   return {
     ...actual,
     connectGoogleContacts: (...args: unknown[]) =>
@@ -228,6 +230,8 @@ describe("ReviewWorkspace", () => {
       isSyncing: false,
       errorMessage: null,
     });
+    saveCapturedImagesMock.mockReset();
+    saveCapturedImagesMock.mockResolvedValue(undefined);
     pushToastMock.mockReset();
     saveContactVCardMock.mockReset();
     saveContactVCardMock.mockResolvedValue("downloaded");
@@ -360,7 +364,9 @@ describe("ReviewWorkspace", () => {
     expect(screen.getByLabelText(/file as/i)).toHaveValue("Lovelace, Ada");
     expect(screen.getByLabelText(/department/i)).toHaveValue("Research");
     expect(screen.getByLabelText("Related people")).toBeInTheDocument();
-    expect(document.getElementById("review-name-prefix")).toHaveValue("Countess");
+    expect(document.getElementById("review-name-prefix")).toHaveValue(
+      "Countess",
+    );
     expect(document.getElementById("review-phonetic-middle-name")).toHaveValue(
       "By-ron",
     );
@@ -382,7 +388,9 @@ describe("ReviewWorkspace", () => {
       },
     });
 
-    expect(screen.getByRole("button", { name: /^show more$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^show more$/i }),
+    ).toBeInTheDocument();
     expect(screen.queryByLabelText(/name prefix/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/phonetic middle/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Related people")).not.toBeInTheDocument();
@@ -424,9 +432,7 @@ describe("ReviewWorkspace", () => {
     });
     const user = userEvent.setup();
 
-    await user.click(
-      screen.getByRole("button", { name: /upload back\.png/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /upload back\.png/i }));
     await user.click(
       screen.getByRole("button", { name: /save to google contacts/i }),
     );
@@ -442,9 +448,7 @@ describe("ReviewWorkspace", () => {
 
     syncContactMock.mockClear();
 
-    await user.click(
-      screen.getByRole("button", { name: /upload back\.png/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /upload back\.png/i }));
     await user.click(
       screen.getByRole("button", { name: /save to google contacts/i }),
     );
@@ -457,6 +461,69 @@ describe("ReviewWorkspace", () => {
         images: expect.any(Array),
       }),
     );
+  });
+
+  it("clears the photoroll without resetting reviewed contact data", async () => {
+    renderWorkspace({
+      reviewDraft: {
+        ...preloadedState.reviewDraft,
+        images: [
+          ...preloadedState.reviewDraft.images,
+          {
+            id: "img-2",
+            dataUrl: "data:image/png;base64,YmFjaw==",
+            fileName: "back.png",
+            mimeType: "image/png",
+            capturedAt: "2026-04-05T00:05:00.000Z",
+            width: 1200,
+            height: 800,
+          },
+        ],
+        draft: {
+          ...preloadedState.reviewDraft.draft,
+          sourceImageIds: ["img-1", "img-2"],
+        },
+      },
+    });
+
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /upload back\.png/i }));
+    await user.click(screen.getByRole("button", { name: /clear photoroll/i }));
+
+    await waitFor(() => {
+      expect(saveCapturedImagesMock).toHaveBeenCalledWith([]);
+    });
+
+    expect(screen.getByText(/no images captured yet\./i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/display name/i)).toHaveValue("Ada Lovelace");
+    expect(screen.getByText("Low-confidence title")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /save to google contacts/i }),
+    );
+
+    await waitFor(() =>
+      expect(syncContactMock).toHaveBeenCalledWith({
+        contact: expect.objectContaining({
+          selectedPhotoImageId: undefined,
+        }),
+        images: [],
+      }),
+    );
+  });
+
+  it("hides the clear photoroll action when there are no review images", () => {
+    renderWorkspace({
+      reviewDraft: {
+        ...preloadedState.reviewDraft,
+        images: [],
+      },
+    });
+
+    expect(
+      screen.queryByRole("button", { name: /clear photoroll/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("submits through the google-contacts module sync entrypoint", async () => {
@@ -637,7 +704,9 @@ describe("ReviewWorkspace", () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByRole("button", { name: /clear reviewed contact data/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /clear reviewed contact data/i }),
+      ).not.toBeInTheDocument();
     });
 
     expect(screen.queryByText("Low-confidence title")).not.toBeInTheDocument();

@@ -225,6 +225,63 @@ describe("CaptureWorkspace", () => {
       },
       {
         id: "img-2",
+
+        it("hides the clear photoroll action when there are no images", () => {
+          const store = createStore();
+
+          render(
+            <Provider store={store}>
+              <CaptureWorkspace />
+            </Provider>,
+          );
+
+          expect(
+            screen.queryByRole("button", { name: /clear photoroll/i }),
+          ).not.toBeInTheDocument();
+        });
+
+        it("clears all images from the active capture session", async () => {
+          const store = createStore([
+            {
+              id: "img-1",
+              dataUrl: "data:image/png;base64,ZmFrZQ==",
+              fileName: "front.png",
+              mimeType: "image/png",
+              capturedAt: "2026-04-05T00:00:00.000Z",
+              width: 1200,
+              height: 800,
+            },
+            {
+              id: "img-2",
+              dataUrl: "data:image/png;base64,YmFjaw==",
+              fileName: "back.png",
+              mimeType: "image/png",
+              capturedAt: "2026-04-05T00:01:00.000Z",
+              width: 1200,
+              height: 800,
+            },
+          ]);
+
+          render(
+            <Provider store={store}>
+              <CaptureWorkspace />
+            </Provider>,
+          );
+
+          await userEvent
+            .setup()
+            .click(screen.getByRole("button", { name: /clear photoroll/i }));
+
+          await waitFor(() => {
+            expect(saveCapturedImagesMock).toHaveBeenCalledWith([]);
+          });
+
+          expect(screen.getByText(/no images captured yet\./i)).toBeInTheDocument();
+          expect(store.getState().reviewDraft.images).toEqual([]);
+          expect(
+            screen.queryByRole("button", { name: /clear photoroll/i }),
+          ).not.toBeInTheDocument();
+        });
         dataUrl: "data:image/png;base64,ZmFrZTI=",
         fileName: "back.png",
         mimeType: "image/png",

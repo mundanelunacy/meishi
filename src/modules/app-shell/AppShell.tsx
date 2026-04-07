@@ -13,14 +13,24 @@ import {
   BookOpen,
   Menu,
   ScanSearch,
+  Share2,
   Settings,
   X,
 } from "lucide-react";
 import { useAppSelector } from "../../app/hooks";
+import { pushToast } from "../../shared/ui/toastBus";
 import { selectAppReadiness } from "../onboarding-settings/onboardingSlice";
 import { Button } from "../../shared/ui/button";
 import { usePwaLifecycle } from "../pwa-runtime";
 import { getPrimarySwipeDestination } from "./navigation";
+import { ShareSiteDialog } from "./ShareSiteDialog";
+import {
+  buildSiteShareLinks,
+  copySiteShareUrl,
+  getAppShareUrl,
+  isShareCancellationError,
+  shareSiteUrl,
+} from "./siteShare";
 
 const primaryNavItems = [
   { type: "internal", to: "/capture", label: "Capture", icon: Camera },
@@ -36,6 +46,7 @@ const overflowNavItems = [
     icon: ContactRound,
   },
   { type: "internal", to: "/docs", label: "Docs", icon: BookOpen },
+  { type: "action", action: "share-site", label: "Share", icon: Share2 },
   {
     type: "external",
     href: "https://buymeacoffee.com/mundanelunacy",
@@ -67,9 +78,12 @@ export function AppShell() {
     promptInstall,
   } = usePwaLifecycle();
   const [openMenu, setOpenMenu] = useState<"desktop" | "mobile" | null>(null);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const desktopMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const shareUrl = getAppShareUrl();
+  const shareLinks = buildSiteShareLinks(shareUrl);
 
   const canSwipeBetweenPrimaryRoutes =
     readiness.hasCompletedOnboarding &&
@@ -80,6 +94,40 @@ export function AppShell() {
   useEffect(() => {
     setOpenMenu(null);
   }, [pathname]);
+
+  async function handleShareSite() {
+    setOpenMenu(null);
+
+    try {
+      const shared = await shareSiteUrl(shareUrl);
+
+      if (!shared) {
+        setIsShareDialogOpen(true);
+      }
+    } catch (error) {
+      if (isShareCancellationError(error)) {
+        return;
+      }
+
+      pushToast("Unable to open the native share sheet.");
+      setIsShareDialogOpen(true);
+    }
+  }
+
+  async function handleCopyShareUrl() {
+    try {
+      const copied = await copySiteShareUrl(shareUrl);
+
+      if (copied) {
+        pushToast("Link copied to clipboard.");
+        return;
+      }
+    } catch {
+      // Fall through to the shared failure toast below.
+    }
+
+    pushToast("Unable to copy the link.");
+  }
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
@@ -176,6 +224,25 @@ export function AppShell() {
           >
             {overflowNavItems.map((item) => {
               const Icon = item.icon;
+
+              if (item.type === "action") {
+                return (
+                  <button
+                    key={item.action}
+                    type="button"
+                    role="menuitem"
+                    className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    onClick={() => {
+                      if (item.action === "share-site") {
+                        void handleShareSite();
+                      }
+                    }}
+                  >
+                    <Icon className="h-4 w-4" strokeWidth={1.75} />
+                    {item.label}
+                  </button>
+                );
+              }
 
               if (item.type === "internal") {
                 const active = pathname === item.to;
@@ -332,6 +399,15 @@ export function AppShell() {
       <main className="flex-1 pb-24 pt-4 md:pb-6">
         <Outlet />
       </main>
+
+      {isShareDialogOpen ? (
+        <ShareSiteDialog
+          onClose={() => setIsShareDialogOpen(false)}
+          onCopy={() => void handleCopyShareUrl()}
+          shareLinks={shareLinks}
+          url={shareUrl}
+        />
+      ) : null}
 
       {/* ── Bottom nav (mobile only) ── */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden">

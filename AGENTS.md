@@ -14,7 +14,7 @@
 ## Working model
 
 - Work module-by-module under `src/modules`.
-- Read the root `README.md` and the target module `README.md` before editing.
+- Read the target module `README.md` before editing. Consult `DEV-NOTES.md` when the task needs broader technical context such as architecture, routing, persistence, auth, deployment, or debugging behavior beyond the local module boundary.
 - Keep module boundaries explicit and typed.
 - Keep provider-specific logic out of shared UI components.
 - Preserve the distinction between:
@@ -25,7 +25,7 @@
 
 ## Development loop
 
-1. Read the relevant module README and confirm the interface it owns.
+1. Read the relevant module README and confirm the interface it owns. If the task crosses module boundaries or depends on operational details, read `DEV-NOTES.md` for the deeper technical context.
 2. Make the smallest coherent change that leaves the module runnable.
 3. Prefer typed helpers and local validation over ad hoc component logic.
 4. Keep browser-only constraints in mind when choosing dependencies or APIs.
@@ -98,7 +98,7 @@
   - public module interfaces,
   - external API behavior,
   - security assumptions.
-- Keep the root `README.md` aligned with the actual stack and module map.
+- Keep the root `README.md` aligned with the product overview, public usage, and quick-start path. Keep `DEV-NOTES.md` aligned with the actual stack, module map, architecture, and operational notes.
 
 ## Project guardrails
 

@@ -26,8 +26,10 @@
 
 - Internal view state is local only: `zoom`, pan `offset`, and `captionsVisible` are not controlled by the parent.
 - Whenever `src` changes, the component resets zoom back to `1`, clears pan offset, shows captions again, and cancels any in-progress drag state.
-- Zoom is clamped between `1` and `4` in `0.5` increments.
+- Zoom is always clamped between `1` and `4`. The header buttons move in `0.5` steps, while wheel and pinch gestures allow finer-grained zooming inside the same bounds.
 - Panning only works while zoom is above `1`.
+- Desktop wheel input zooms toward the pointer position while the viewer is hovered.
+- Mobile pinch gestures zoom around the gesture midpoint and clear any in-progress drag state before the pinch takes over.
 - Previous/next buttons render when `total > 1`. In current usage this is paired with `onPrevious` and `onNext` from `Photoroll`.
 - Clicking the image toggles captions only when a `caption` prop is provided.
 

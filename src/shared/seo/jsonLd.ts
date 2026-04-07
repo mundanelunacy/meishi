@@ -1,7 +1,7 @@
 const SITE_ORIGIN = "https://meishi-492400.web.app";
 const SITE_NAME = "Meishi";
 const SITE_DESCRIPTION =
-  "Meishi is an open-source, browser-based business card scanner that uses AI to extract contact details, lets you review them locally, exports vCards, and optionally syncs to Google Contacts.";
+  "Meishi helps you turn business cards into contacts you can review, edit, export as a vCard, and sync to Google Contacts.";
 const GITHUB_REPO_URL = "https://github.com/mundanelunacy/meishi";
 const CREATOR_URL = "https://github.com/mundanelunacy";
 
@@ -161,7 +161,9 @@ export function getDocsPageSchema(): JsonLdNode[] {
           name: "Open Meishi and complete first-run setup",
           text: "Open Settings, choose OpenAI or Anthropic, paste your API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage.",
           url: absoluteUrl("/settings"),
-          image: absoluteUrl("/docs/screenshots/setup-settings-llm-provider.png"),
+          image: absoluteUrl(
+            "/docs/screenshots/setup-settings-llm-provider.png",
+          ),
         },
         {
           "@type": "HowToStep",

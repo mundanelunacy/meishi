@@ -1,5 +1,51 @@
 # Changelog
 
+## 2026-04-07
+
+### App site sharing from the shell overflow menu
+
+- Added a new `Share` action to the app-shell overflow menu so users can share the Meishi site directly from the burger/context menu.
+- Wired the share action to use the browser or operating system native share sheet when the Web Share API is available.
+- Added an in-app fallback share dialog for environments without native share support, with direct Facebook, X, LinkedIn, and email share targets plus copy-to-clipboard.
+- Positioned `Share` in the overflow menu below `Settings`, `Google Contacts`, and `Docs`.
+- Expanded `src/modules/app-shell/AppShell.test.tsx` to cover menu ordering, native-share behavior, fallback dialog rendering, and copy-link interaction.
+
+### Documentation page, shared image lightbox, and review UX hardening
+
+- Added a dedicated `/docs` route and `DocsPage` experience in `src/modules/app-shell` so the app now ships with an in-product usage guide, setup notes, screenshots, and support links.
+- Extracted a reusable `ImageLightbox` component under `src/shared/ui` with bounded zoom, panning, caption toggling, and previous/next navigation, then refactored `photoroll` to use that shared viewer instead of owning its own modal implementation.
+- Extended `src/shared/ui/image-lightbox.tsx` with cursor-anchored desktop wheel zoom and mobile pinch gestures, while keeping the existing reset-on-image-change behavior and adding focused interaction tests for the new zoom paths.
+- Updated the app shell navigation so docs are available from the overflow menu, kept the capture/review swipe helper in a dedicated `navigation.ts` module, and adjusted the mobile shell layout to match the expanded route set.
+- Refreshed the landing experience with a bundled hero image under `public/landing`, expanded module and shared-UI READMEs, and added coverage for the new lightbox behavior and navigation ordering.
+- Hardened `src/modules/contact-review/ReviewWorkspace.tsx` so vCard export and Google sync stay disabled when the review form has no meaningful contact data, with new tests covering the disabled and re-enabled save actions.
+
+### Appearance preference and theme persistence
+
+- Added a persisted appearance preference with `system`, `light`, and `dark` modes so users can control the app theme from onboarding and settings instead of relying only on browser defaults.
+- Introduced `src/app/theme.ts` plus early `index.html` theme bootstrapping and `AppRoot` theme application so the chosen mode resolves against the browser color-scheme preference and applies cleanly on initial load.
+- Extended onboarding state, shared types, and local settings persistence to store `themeMode` alongside the existing provider and extraction preferences.
+- Updated `SettingsPanel` to expose the appearance control, clarified the local-reset copy to include appearance settings, and expanded tests for theme resolution, persistence sanitization, onboarding reducers, and settings rendering.
+
+### Legal pages and landing footer links
+
+- Added dedicated `/privacy` and `/terms` routes backed by new `PrivacyPolicyPage` and `TermsOfServicePage` components in `src/modules/app-shell`.
+- Introduced a shared `LegalPageLayout` and `LegalSection` structure so privacy and terms content render with one consistent legal-page presentation.
+- Expanded the landing-page footer to link directly to the new privacy and terms pages alongside the project repository link.
+- Updated the root README and `src/modules/app-shell/README.md` to document the new legal routes and the app shell's broader responsibility for static docs and legal content.
+
+### SEO metadata, sitemap generation, and search-console support
+
+- Added structured JSON-LD generation in `src/shared/seo/jsonLd.ts` plus a `JsonLdScript` helper so the landing and docs pages now emit richer search metadata for the app, route content, how-to flow, and FAQ content.
+- Expanded docs and landing content to align with the new metadata model, including screenshots and structured step descriptions used by the docs-page schema.
+- Updated `vite.config.ts` to generate `sitemap.xml` and `robots.txt` during production builds based on the site's public routes, and documented that hosting behavior in the root README.
+- Added the Google Search Console verification file under `public/` so the deployed site can be verified without introducing a separate server path.
+- Added JSON-LD test coverage for the landing and docs schema output, then followed up with a small refactor to streamline the test helper used to locate graph nodes by `@type`.
+
+### PWA fallback hardening for static file URLs
+
+- Updated the Vite PWA Workbox config to deny SPA navigation fallback for file-extension URLs so requests such as `/sitemap.xml`, `/robots.txt`, and HTML verification files keep resolving as static assets instead of being swallowed by the app shell.
+- Documented the new service-worker fallback behavior in the root README alongside the existing hosting and static-asset notes.
+
 ## 2026-04-06
 
 ### Firebase-backed Google auth and token brokering

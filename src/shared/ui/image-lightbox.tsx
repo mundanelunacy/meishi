@@ -4,13 +4,23 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  type TouchEvent as ReactTouchEvent,
+  type WheelEvent as ReactWheelEvent,
 } from "react";
-import { ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Plus,
+  RotateCcw,
+  X,
+} from "lucide-react";
 import { Button } from "./button";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.5;
+const WHEEL_ZOOM_STEP = 0.25;
 
 interface ImageLightboxProps {
   alt: string;
@@ -29,6 +39,34 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+interface ViewportPoint {
+  x: number;
+  y: number;
+}
+
+interface PinchState {
+  startDistance: number;
+  startMidpoint: ViewportPoint;
+  startOffset: ViewportPoint;
+  startZoom: number;
+}
+
+function getOffsetForZoom(
+  anchor: ViewportPoint,
+  currentOffset: ViewportPoint,
+  currentZoom: number,
+  nextZoom: number,
+): ViewportPoint {
+  if (nextZoom === MIN_ZOOM) {
+    return { x: 0, y: 0 };
+  }
+
+  return {
+    x: anchor.x - ((anchor.x - currentOffset.x) / currentZoom) * nextZoom,
+    y: anchor.y - ((anchor.y - currentOffset.y) / currentZoom) * nextZoom,
+  };
+}
+
 export function ImageLightbox({
   alt,
   caption,
@@ -44,51 +82,91 @@ export function ImageLightbox({
   const [zoom, setZoom] = useState(MIN_ZOOM);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [captionsVisible, setCaptionsVisible] = useState(true);
-  const dragStartRef = useRef<{ x: number; y: number; originX: number; originY: number } | null>(
-    null,
-  );
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const dragStartRef = useRef<{
+    x: number;
+    y: number;
+    originX: number;
+    originY: number;
+  } | null>(null);
+  const pinchStateRef = useRef<PinchState | null>(null);
+  const zoomRef = useRef(MIN_ZOOM);
+  const offsetRef = useRef<ViewportPoint>({ x: 0, y: 0 });
   const hasMultipleImages = typeof total === "number" && total > 1;
 
   useEffect(() => {
+    zoomRef.current = MIN_ZOOM;
+    offsetRef.current = { x: 0, y: 0 };
     setZoom(MIN_ZOOM);
     setOffset({ x: 0, y: 0 });
     setCaptionsVisible(true);
     dragStartRef.current = null;
+    pinchStateRef.current = null;
   }, [src]);
 
-  function zoomTo(nextZoom: number) {
-    const clampedZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
-    setZoom(clampedZoom);
+  function getViewportPoint(clientX: number, clientY: number): ViewportPoint {
+    const viewport = viewportRef.current;
 
-    if (clampedZoom === MIN_ZOOM) {
-      setOffset({ x: 0, y: 0 });
+    if (!viewport) {
+      return { x: 0, y: 0 };
     }
+
+    const rect = viewport.getBoundingClientRect();
+
+    return {
+      x: clientX - rect.left - rect.width / 2,
+      y: clientY - rect.top - rect.height / 2,
+    };
+  }
+
+  function commitView(nextZoom: number, nextOffset: ViewportPoint) {
+    const normalizedOffset =
+      nextZoom === MIN_ZOOM ? { x: 0, y: 0 } : nextOffset;
+
+    zoomRef.current = nextZoom;
+    offsetRef.current = normalizedOffset;
+    setZoom(nextZoom);
+    setOffset(normalizedOffset);
+  }
+
+  function zoomTo(nextZoom: number, anchor: ViewportPoint = { x: 0, y: 0 }) {
+    const currentZoom = zoomRef.current;
+    const currentOffset = offsetRef.current;
+    const clampedZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+
+    commitView(
+      clampedZoom,
+      getOffsetForZoom(anchor, currentOffset, currentZoom, clampedZoom),
+    );
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (zoom <= MIN_ZOOM) {
+    if (zoomRef.current <= MIN_ZOOM || pinchStateRef.current) {
       return;
     }
 
     dragStartRef.current = {
       x: event.clientX,
       y: event.clientY,
-      originX: offset.x,
-      originY: offset.y,
+      originX: offsetRef.current.x,
+      originY: offsetRef.current.y,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     const dragStart = dragStartRef.current;
-    if (!dragStart || zoom <= MIN_ZOOM) {
+    if (!dragStart || zoomRef.current <= MIN_ZOOM || pinchStateRef.current) {
       return;
     }
 
-    setOffset({
+    const nextOffset = {
       x: dragStart.originX + (event.clientX - dragStart.x),
       y: dragStart.originY + (event.clientY - dragStart.y),
-    });
+    };
+
+    offsetRef.current = nextOffset;
+    setOffset(nextOffset);
   }
 
   function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
@@ -97,6 +175,92 @@ export function ImageLightbox({
     }
 
     dragStartRef.current = null;
+  }
+
+  function handleTouchStart(event: ReactTouchEvent<HTMLDivElement>) {
+    if (event.touches.length < 2) {
+      return;
+    }
+
+    dragStartRef.current = null;
+
+    const firstTouch = event.touches[0];
+    const secondTouch = event.touches[1];
+    const startMidpoint = getViewportPoint(
+      (firstTouch.clientX + secondTouch.clientX) / 2,
+      (firstTouch.clientY + secondTouch.clientY) / 2,
+    );
+    const startDistance = Math.hypot(
+      secondTouch.clientX - firstTouch.clientX,
+      secondTouch.clientY - firstTouch.clientY,
+    );
+
+    pinchStateRef.current = {
+      startDistance: Math.max(startDistance, 1),
+      startMidpoint,
+      startOffset: offsetRef.current,
+      startZoom: zoomRef.current,
+    };
+  }
+
+  function handleTouchMove(event: ReactTouchEvent<HTMLDivElement>) {
+    const pinchState = pinchStateRef.current;
+
+    if (!pinchState || event.touches.length < 2) {
+      return;
+    }
+
+    const firstTouch = event.touches[0];
+    const secondTouch = event.touches[1];
+    const midpoint = getViewportPoint(
+      (firstTouch.clientX + secondTouch.clientX) / 2,
+      (firstTouch.clientY + secondTouch.clientY) / 2,
+    );
+    const distance = Math.hypot(
+      secondTouch.clientX - firstTouch.clientX,
+      secondTouch.clientY - firstTouch.clientY,
+    );
+    const nextZoom = clamp(
+      pinchState.startZoom * (distance / pinchState.startDistance),
+      MIN_ZOOM,
+      MAX_ZOOM,
+    );
+    const zoomedOffset = getOffsetForZoom(
+      pinchState.startMidpoint,
+      pinchState.startOffset,
+      pinchState.startZoom,
+      nextZoom,
+    );
+
+    event.preventDefault();
+    commitView(nextZoom, {
+      x: zoomedOffset.x + (midpoint.x - pinchState.startMidpoint.x),
+      y: zoomedOffset.y + (midpoint.y - pinchState.startMidpoint.y),
+    });
+  }
+
+  function handleTouchEnd(event: ReactTouchEvent<HTMLDivElement>) {
+    if (event.touches.length < 2) {
+      pinchStateRef.current = null;
+    }
+  }
+
+  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
+    const zoomDelta = clamp(
+      -event.deltaY * 0.0025,
+      -WHEEL_ZOOM_STEP,
+      WHEEL_ZOOM_STEP,
+    );
+
+    if (zoomDelta === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    zoomTo(
+      zoomRef.current + zoomDelta,
+      getViewportPoint(event.clientX, event.clientY),
+    );
   }
 
   function toggleCaptions() {
@@ -117,12 +281,17 @@ export function ImageLightbox({
       <div className="relative flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-black text-white shadow-elevated">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4 border-b border-white/10 px-5 py-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
           <div className="min-w-0">
-            <h2 id="image-lightbox-title" className="truncate text-lg font-semibold">
+            <h2
+              id="image-lightbox-title"
+              className="truncate text-lg font-semibold"
+            >
               {title}
             </h2>
             <p className="text-sm text-white/70">
               {subtitle}
-              {hasMultipleImages && typeof index === "number" ? ` • ${index + 1} of ${total}` : ""}
+              {hasMultipleImages && typeof index === "number"
+                ? ` • ${index + 1} of ${total}`
+                : ""}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 md:justify-self-end">
@@ -184,11 +353,17 @@ export function ImageLightbox({
             </Button>
           ) : null}
           <div
+            ref={viewportRef}
             className="relative flex h-full w-full touch-none items-center justify-center overflow-hidden"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+            onWheel={handleWheel}
             style={{ cursor: zoom > MIN_ZOOM ? "grab" : "default" }}
           >
             <img
@@ -200,7 +375,9 @@ export function ImageLightbox({
               style={{
                 transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
                 transformOrigin: "center center",
-                transition: dragStartRef.current ? "none" : "transform 160ms ease-out",
+                transition: dragStartRef.current
+                  ? "none"
+                  : "transform 160ms ease-out",
               }}
             />
             {caption && captionsVisible ? (

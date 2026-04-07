@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Camera, ImagePlus, Sparkles, Trash2 } from "lucide-react";
+import { Camera, Eraser, ImagePlus, Sparkles, Trash2 } from "lucide-react";
 import { Spinner } from "../../shared/ui/spinner";
 import { appEnv } from "../../app/env";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
@@ -267,6 +267,16 @@ export function CaptureWorkspace() {
     pushToast("Image removed from the active capture session.");
   }
 
+  async function handleClearImages() {
+    dispatch(setCapturedImages([]));
+    logDebugEvent("handleClearImages:start", {
+      previousImageCount: images.length,
+    });
+    await saveCapturedImages([]);
+    logDebugEvent("handleClearImages:end");
+    pushToast("Photoroll cleared.");
+  }
+
   function stopCamera() {
     cameraStream?.getTracks().forEach((track) => track.stop());
     setCameraStream(null);
@@ -419,7 +429,23 @@ export function CaptureWorkspace() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Photoroll</CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>Photoroll</CardTitle>
+              {images.length ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 rounded-full p-0 text-muted-foreground"
+                  aria-label="Clear photoroll"
+                  onClick={() => {
+                    void handleClearImages();
+                  }}
+                >
+                  <Eraser className="h-4 w-4" />
+                </Button>
+              ) : null}
+            </div>
           </CardHeader>
           <CardContent>
             <Photoroll
