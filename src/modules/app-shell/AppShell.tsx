@@ -1,26 +1,61 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { Camera, ContactRound, ScanSearch, Settings } from "lucide-react";
-import { useAppSelector } from "../../app/hooks";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 import {
-  selectAppReadiness,
-  selectSettings,
-} from "../onboarding-settings/onboardingSlice";
-import { Badge } from "../../shared/ui/badge";
+  Link,
+  Outlet,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
+import {
+  Camera,
+  Coffee,
+  ContactRound,
+  Github,
+  BookOpen,
+  Menu,
+  ScanSearch,
+  Settings,
+  X,
+} from "lucide-react";
+import { useAppSelector } from "../../app/hooks";
+import { selectAppReadiness } from "../onboarding-settings/onboardingSlice";
 import { Button } from "../../shared/ui/button";
-import { Card } from "../../shared/ui/card";
 import { usePwaLifecycle } from "../pwa-runtime";
-import { Alert } from "../../shared/ui/alert";
+import { getPrimarySwipeDestination } from "./navigation";
 
-const navItems = [
-  { to: "/onboarding", label: "Setup", icon: ContactRound, unlocksAt: "Always available" },
-  { to: "/capture", label: "Capture", icon: Camera },
-  { to: "/review", label: "Review", icon: ScanSearch },
-  { to: "/settings", label: "Settings", icon: Settings },
-];
+const primaryNavItems = [
+  { type: "internal", to: "/capture", label: "Capture", icon: Camera },
+  { type: "internal", to: "/review", label: "Review", icon: ScanSearch },
+] as const;
+
+const overflowNavItems = [
+  { type: "internal", to: "/settings", label: "Settings", icon: Settings },
+  {
+    type: "external",
+    href: "https://contacts.google.com/",
+    label: "Google Contacts",
+    icon: ContactRound,
+  },
+  { type: "internal", to: "/docs", label: "Docs", icon: BookOpen },
+  {
+    type: "external",
+    href: "https://buymeacoffee.com/mundanelunacy",
+    label: "Buy Me a Coffee",
+    menuLabel: "Buy Me a Coffee",
+    icon: Coffee,
+  },
+  {
+    type: "external",
+    href: "https://github.com/mundanelunacy/meishi",
+    label: "GitHub",
+    icon: Github,
+  },
+] as const;
 
 export function AppShell() {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const settings = useAppSelector(selectSettings);
+  const navigate = useNavigate();
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
   const readiness = useAppSelector(selectAppReadiness);
   const {
     applyUpdate,
@@ -31,154 +66,288 @@ export function AppShell() {
     offlineReady,
     promptInstall,
   } = usePwaLifecycle();
+  const [openMenu, setOpenMenu] = useState<"desktop" | "mobile" | null>(null);
+  const desktopMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  return (
-    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-4 py-4 sm:px-6 lg:px-8">
-      <Card className="overflow-hidden border-none bg-transparent shadow-none">
-        <div className="flex flex-col gap-8 rounded-[36px] bg-primary px-6 py-8 text-primary-foreground sm:px-8">
-          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-start">
-            <div className="max-w-2xl space-y-3">
-              <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.24em]">
-                Meishi PWA
-              </div>
-              <h1 className="font-display text-4xl leading-tight sm:text-5xl">
-                Capture cards quickly, verify them carefully, sync them cleanly.
-              </h1>
-              <p className="max-w-xl text-sm text-primary-foreground/75 sm:text-base">
-                Browser-only business-card scanning with Google Contacts sync and LLM-assisted extraction.
-              </p>
-            </div>
+  const canSwipeBetweenPrimaryRoutes =
+    readiness.hasCompletedOnboarding &&
+    primaryNavItems.some((item) => item.to === pathname) &&
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 767px)").matches;
 
-            <div className="grid gap-3 rounded-[28px] bg-white/10 p-5 text-sm text-primary-foreground/85">
-              <div className="flex items-center justify-between gap-4">
-                <span>LLM</span>
-                <Badge>{readiness.hasLlmConfiguration ? settings.llmProvider : "Needs key"}</Badge>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span>Google</span>
-                <Badge>{readiness.hasGoogleAuthorization ? "Authorized" : "Pending"}</Badge>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span>Mode</span>
-                <Badge>{readiness.isCaptureReady ? "Capture-ready" : "Setup in progress"}</Badge>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span>Auth status</span>
-                <Badge>{readiness.googleAuthStatus}</Badge>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {canInstall ? (
-                  <Button type="button" variant="secondary" onClick={() => void promptInstall()}>
-                    Install app
-                  </Button>
-                ) : null}
-                {needRefresh ? (
-                  <Button type="button" variant="secondary" onClick={() => void applyUpdate()}>
-                    Update app
-                  </Button>
-                ) : null}
-                {isInstalled ? <Badge>Installed</Badge> : null}
-              </div>
-            </div>
-          </div>
+  useEffect(() => {
+    setOpenMenu(null);
+  }, [pathname]);
 
-          <div className="flex flex-wrap gap-3">
-            {navItems.map((item) => {
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node | null;
+      const activeMenuRef =
+        openMenu === "desktop"
+          ? desktopMenuRef
+          : openMenu === "mobile"
+            ? mobileMenuRef
+            : null;
+
+      if (!activeMenuRef?.current || !target) {
+        return;
+      }
+
+      if (!activeMenuRef.current.contains(target)) {
+        setOpenMenu(null);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpenMenu(null);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [openMenu]);
+
+  const renderPrimaryNavLink = (item: (typeof primaryNavItems)[number]) => {
+    const Icon = item.icon;
+    const active = pathname === item.to;
+    const isUnlocked = readiness.hasCompletedOnboarding;
+    const className = `inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+      active
+        ? "bg-muted text-primary"
+        : isUnlocked
+          ? "text-muted-foreground hover:bg-muted hover:text-foreground"
+          : "pointer-events-none text-muted-foreground/40"
+    }`;
+
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        className={className}
+        onClick={(event) => {
+          if (!isUnlocked) {
+            event.preventDefault();
+          }
+        }}
+        aria-current={active ? "page" : undefined}
+      >
+        <Icon className="h-4 w-4" strokeWidth={active ? 2.25 : 1.75} />
+        {item.label}
+      </Link>
+    );
+  };
+
+  const renderOverflowMenu = (placement: "desktop" | "mobile") => {
+    const isOpen = openMenu === placement;
+
+    return (
+      <div
+        ref={placement === "desktop" ? desktopMenuRef : mobileMenuRef}
+        className="relative"
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="ml-auto h-10 px-3 text-muted-foreground hover:text-foreground"
+          onClick={() =>
+            setOpenMenu((current) => (current === placement ? null : placement))
+          }
+          aria-expanded={isOpen}
+          aria-haspopup="menu"
+          aria-label="Open navigation menu"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+
+        {isOpen ? (
+          <div
+            role="menu"
+            aria-label="More navigation"
+            className="absolute right-0 top-full z-50 mt-2 flex min-w-52 flex-col rounded-2xl border border-border bg-card p-2 shadow-lg"
+          >
+            {overflowNavItems.map((item) => {
               const Icon = item.icon;
-              const active = pathname === item.to;
-              const isUnlocked =
-                item.to === "/onboarding" ? true : readiness.hasCompletedOnboarding;
+
+              if (item.type === "internal") {
+                const active = pathname === item.to;
+
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    role="menuitem"
+                    className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors ${
+                      active
+                        ? "bg-muted font-medium text-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                    onClick={() => setOpenMenu(null)}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <Icon
+                      className="h-4 w-4"
+                      strokeWidth={active ? 2.25 : 1.75}
+                    />
+                    {item.label}
+                  </Link>
+                );
+              }
 
               return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors ${
-                    active
-                      ? "bg-secondary text-secondary-foreground"
-                      : isUnlocked
-                        ? "bg-white/10 hover:bg-white/20"
-                        : "cursor-not-allowed bg-white/5 text-primary-foreground/45"
-                  }`}
-                  onClick={(event) => {
-                    if (!isUnlocked) {
-                      event.preventDefault();
-                    }
-                  }}
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  role="menuitem"
+                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  onClick={() => setOpenMenu(null)}
                 >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                  {!isUnlocked ? (
-                    <span className="text-[10px] uppercase tracking-[0.2em] text-primary-foreground/60">
-                      Setup first
-                    </span>
-                  ) : null}
-                </Link>
+                  <Icon className="h-4 w-4" strokeWidth={1.75} />
+                  {"menuLabel" in item ? item.menuLabel : item.label}
+                </a>
               );
             })}
           </div>
-        </div>
-      </Card>
-
-      <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <Alert className="border-border/80 bg-card/80 text-foreground">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-2">
-              <p className="font-medium">Session readiness</p>
-              <p className="text-sm text-muted-foreground">
-                {readiness.isCaptureReady
-                  ? "The app is configured for capture and extraction."
-                  : "Finish setup to unlock the working capture flow."}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <Badge className={readiness.hasCompletedOnboarding ? "" : "bg-muted text-foreground"}>
-                Onboarding {readiness.hasCompletedOnboarding ? "done" : "pending"}
-              </Badge>
-              <Badge className={readiness.hasLlmConfiguration ? "" : "bg-muted text-foreground"}>
-                LLM {readiness.hasLlmConfiguration ? "ready" : "pending"}
-              </Badge>
-              <Badge className={readiness.hasGoogleAuthorization ? "" : "bg-muted text-foreground"}>
-                Google {readiness.hasGoogleAuthorization ? "ready" : "pending"}
-              </Badge>
-            </div>
-          </div>
-        </Alert>
-
-        <div className="grid gap-4">
-          {needRefresh ? (
-            <Alert className="border-border/80 bg-card/80 text-foreground">
-              A new Meishi version is ready. Apply the update when you are done with the current session.
-            </Alert>
-          ) : null}
-
-          {offlineReady ? (
-            <Alert className="border-border/80 bg-card/80 text-foreground">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <p className="font-medium">Offline shell ready</p>
-                  <p className="text-sm text-muted-foreground">
-                    Meishi can reopen its shell and saved local data offline, but extraction and Google sync still require a network connection.
-                  </p>
-                </div>
-                <Button type="button" variant="outline" onClick={dismissOfflineReady}>
-                  Dismiss
-                </Button>
-              </div>
-            </Alert>
-          ) : null}
-
-          {readiness.googleAuthStatus !== "connected" ? (
-            <Alert className="border-accent/40 bg-accent/10 text-foreground">
-              Google Contacts now uses Firebase-backed token refresh. Finish setup to connect Google before running sync.
-            </Alert>
-          ) : null}
-        </div>
+        ) : null}
       </div>
+    );
+  };
 
-      <main className="pb-10">
+  function handlePrimaryNavTouchStart(event: TouchEvent<HTMLElement>) {
+    const touch = event.changedTouches[0];
+    if (!touch || !canSwipeBetweenPrimaryRoutes) {
+      swipeStartRef.current = null;
+      return;
+    }
+
+    swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handlePrimaryNavTouchEnd(event: TouchEvent<HTMLElement>) {
+    const touch = event.changedTouches[0];
+    const swipeStart = swipeStartRef.current;
+    swipeStartRef.current = null;
+
+    if (!touch || !swipeStart || !canSwipeBetweenPrimaryRoutes) {
+      return;
+    }
+
+    const nextRoute = getPrimarySwipeDestination({
+      currentPath: pathname,
+      deltaX: touch.clientX - swipeStart.x,
+      deltaY: touch.clientY - swipeStart.y,
+    });
+
+    if (!nextRoute) {
+      return;
+    }
+
+    navigate({ to: nextRoute });
+  }
+
+  return (
+    <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 lg:px-8">
+      {/* ── Top header / desktop navbar ── */}
+      <header className="grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <div className="flex min-w-0 items-center">
+          <Link to="/landing" className="flex items-center gap-2.5">
+            <img src="/meishi-mark.svg" alt="" className="h-7 w-7" />
+            <span className="font-display text-lg font-semibold tracking-tight text-foreground">
+              Meishi
+            </span>
+          </Link>
+        </div>
+
+        <nav
+          className="hidden items-center justify-center md:flex"
+          aria-label="Primary navigation"
+        >
+          <div
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 p-1"
+            onTouchStart={handlePrimaryNavTouchStart}
+            onTouchEnd={handlePrimaryNavTouchEnd}
+            aria-label="Primary navigation toggle"
+          >
+            {primaryNavItems.map((item) => renderPrimaryNavLink(item))}
+          </div>
+        </nav>
+
+        <div className="flex items-center justify-end self-stretch">
+          <div className="md:hidden">{renderOverflowMenu("mobile")}</div>
+          <div className="hidden md:flex">{renderOverflowMenu("desktop")}</div>
+        </div>
+      </header>
+
+      {/* ── Inline banners ── */}
+      {needRefresh ? (
+        <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 text-sm">
+          <span className="flex-1">A new version is available.</span>
+          <Button type="button" size="sm" onClick={() => void applyUpdate()}>
+            Update
+          </Button>
+        </div>
+      ) : null}
+
+      {offlineReady ? (
+        <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 text-sm">
+          <span className="flex-1 text-muted-foreground">
+            Offline shell cached. Extraction and sync still need a connection.
+          </span>
+          <button
+            type="button"
+            className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={dismissOfflineReady}
+            aria-label="Dismiss"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
+
+      {canInstall && !isInstalled ? (
+        <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 text-sm">
+          <span className="flex-1">Install Meishi for faster access.</span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void promptInstall()}
+          >
+            Install
+          </Button>
+        </div>
+      ) : null}
+
+      {/* ── Main content ── */}
+      <main className="flex-1 pb-24 pt-4 md:pb-6">
         <Outlet />
       </main>
+
+      {/* ── Bottom nav (mobile only) ── */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-center px-4 sm:px-6">
+          <div className="flex min-w-0 justify-center">
+            <div
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 p-1"
+              onTouchStart={handlePrimaryNavTouchStart}
+              onTouchEnd={handlePrimaryNavTouchEnd}
+              aria-label="Primary navigation toggle"
+            >
+              {primaryNavItems.map((item) => renderPrimaryNavLink(item))}
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

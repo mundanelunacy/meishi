@@ -69,4 +69,23 @@ describe("onboardingSlice", () => {
     expect(readiness.googleAuthStatus).toBe("connected");
     expect(readiness.isCaptureReady).toBe(false);
   });
+
+  it("treats capture as ready without Google once onboarding is completed", () => {
+    const withProvider = onboardingReducer(undefined, setLlmProvider("openai"));
+    const withApiKey = onboardingReducer(
+      withProvider,
+      setOpenAiApiKey("sk-test"),
+    );
+    const completed = onboardingReducer(withApiKey, {
+      type: "onboarding/completeOnboarding",
+    });
+
+    const readiness = selectAppReadiness({
+      onboarding: completed,
+    } as never);
+
+    expect(readiness.hasLlmConfiguration).toBe(true);
+    expect(readiness.hasGoogleAuthorization).toBe(false);
+    expect(readiness.isCaptureReady).toBe(true);
+  });
 });

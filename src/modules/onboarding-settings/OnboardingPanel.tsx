@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { KeyRound, ShieldAlert } from "lucide-react";
+import { Spinner } from "../../shared/ui/spinner";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { hasFirebaseConfiguration } from "../../app/env";
 import { Button } from "../../shared/ui/button";
@@ -32,6 +33,7 @@ import {
   connectGoogleContacts,
   getGoogleScope,
 } from "../google-auth/googleIdentity";
+import { getSupportedModelOptions } from "./modelOptions";
 
 export function OnboardingPanel() {
   const dispatch = useAppDispatch();
@@ -50,9 +52,12 @@ export function OnboardingPanel() {
     selectedProvider === "anthropic"
       ? settings.preferredAnthropicModel
       : settings.preferredOpenAiModel;
+  const providerModelOptions = getSupportedModelOptions(
+    selectedProvider,
+    providerModel,
+  );
 
-  const canContinue =
-    readiness.hasLlmConfiguration && readiness.hasGoogleAuthorization;
+  const canContinue = readiness.hasLlmConfiguration;
 
   async function handleGoogleConnect() {
     setIsAuthorizing(true);
@@ -92,7 +97,7 @@ export function OnboardingPanel() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+    <div className="grid gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader>
           <CardTitle>First-run setup</CardTitle>
@@ -174,13 +179,8 @@ export function OnboardingPanel() {
                   ? "Anthropic model"
                   : "OpenAI model"}
               </Label>
-              <Input
+              <Select
                 id="model"
-                placeholder={
-                  selectedProvider === "anthropic"
-                    ? "claude-sonnet-4-20250514"
-                    : "gpt-5.4-mini"
-                }
                 value={providerModel}
                 onChange={(event) => {
                   const nextValue = event.target.value;
@@ -191,11 +191,17 @@ export function OnboardingPanel() {
 
                   dispatch(setPreferredOpenAiModel(nextValue));
                 }}
-              />
+              >
+                {providerModelOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </div>
           </section>
 
-          <section className="rounded-[28px] border border-border/70 bg-muted/40 p-4 text-sm text-muted-foreground">
+          <section className="rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">Structured extraction</p>
             <p className="mt-1">
               Meishi enforces structured output for extraction. The shared
@@ -204,7 +210,7 @@ export function OnboardingPanel() {
             </p>
           </section>
 
-          <section className="rounded-[28px] bg-muted/60 p-4">
+          <section className="rounded-xl bg-muted/60 p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium">
               <KeyRound className="h-4 w-4" />
               Google Contacts access
@@ -234,9 +240,12 @@ export function OnboardingPanel() {
               onClick={handleGoogleConnect}
               disabled={isAuthorizing || !hasFirebaseConfiguration()}
             >
-              {readiness.hasGoogleAuthorization
-                ? "Reconnect Google account"
-                : "Connect Google account"}
+              {isAuthorizing ? <Spinner /> : null}
+              {isAuthorizing
+                ? "Connecting..."
+                : readiness.hasGoogleAuthorization
+                  ? "Reconnect Google account"
+                  : "Connect Google account"}
             </Button>
           </section>
 
@@ -251,14 +260,14 @@ export function OnboardingPanel() {
               Continue to capture
             </Button>
             <span className="text-sm text-muted-foreground">
-              Ready when Google access and the selected provider configuration
-              are both present.
+              Ready when the selected provider is configured. Google access is
+              only needed when you save to Google Contacts.
             </span>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-card/75">
+      <Card className="bg-card/90">
         <CardHeader>
           <CardTitle>What happens next</CardTitle>
           <CardDescription>

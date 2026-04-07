@@ -4,16 +4,25 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 
 ## Product flow
 
-1. On first load, the user connects Google Contacts through Firebase-backed OAuth.
-   - The browser first establishes an anonymous Firebase Auth session, then completes a popup-based Google OAuth code flow whose refresh token is stored server-side.
-2. The user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, and can tune one shared advanced extraction prompt.
-3. The user captures one or more business-card images from a mobile camera or image library.
-4. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
-5. The review screen shows source images in the top section and an editable contact form in the lower section. The form covers Google-Contacts-style name/company fields such as prefix, phonetic name parts, nickname, file-as, and department, and expands to repeatable collections such as multiple emails, phone numbers, addresses, websites, related people, significant dates, and custom fields. Draft edits autosave locally for recovery after refresh.
-6. The review screen shows source images in the top section and an editable contact form in the lower section. From there, the user can save a `.vcf` vCard locally or sync the verified contact to Google Contacts.
+1. On first load, the user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, and can tune one shared advanced extraction prompt.
+2. The user captures one or more business-card images from a mobile camera or image library.
+3. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
+4. The review screen shows source images in the top section and an editable contact form in the lower section. The form covers Google-Contacts-style name/company fields such as prefix, phonetic name parts, nickname, file-as, and department, and expands to repeatable collections such as multiple emails, phone numbers, addresses, websites, related people, significant dates, and custom fields. Draft edits autosave locally for recovery after refresh.
+5. From review, the user can save a `.vcf` vCard locally or choose to sync the verified contact to Google Contacts.
+6. If the user chooses Google sync while signed out, the browser first establishes an anonymous Firebase Auth session, then completes a popup-based Google OAuth code flow whose refresh token is stored server-side.
 7. An optional `?debug=1` review mode shows the raw extraction snapshot, a derived vCard preview, and the Google People API payload derived from the current reviewed form values.
 8. Saving to Google creates a contact and uploads one selected image as the Google contact photo.
 9. Additional captured images remain local in IndexedDB because Google Contacts does not support arbitrary multi-image business-card attachments.
+
+## Routes
+
+- `/`: default entry route that resolves into the app shell and redirects into the main user flow.
+- `/landing`: onboarding and setup entry point for provider selection, API key entry, and optional Google connection.
+- `/capture`: capture workspace for camera or file-library imports and extraction kickoff.
+- `/review`: review workspace for verifying extracted contact data, editing fields, exporting a vCard, and syncing to Google Contacts.
+- `/docs`: in-app documentation page with usage guidance, setup help, and walkthrough content.
+- `/settings`: post-onboarding settings screen for changing provider configuration, extraction settings, and Google connection state.
+- `/auth/google/callback`: Google OAuth callback route used to complete the popup-based Google connection flow.
 
 ## Stack
 
@@ -29,7 +38,7 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 ## Architecture
 
 ### `src/modules/app-shell`
-- Top-level frame, navigation, route shell, app readiness display, and PWA update affordances.
+- Top-level frame, navigation, route shell, app documentation page, app readiness display, and PWA update affordances.
 
 ### `src/modules/onboarding-settings`
 - First-run flow, provider selection, API key entry, readiness selectors, and settings management.

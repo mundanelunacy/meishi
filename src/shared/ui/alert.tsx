@@ -8,8 +8,8 @@ export function Alert({
   return (
     <div
       className={cn(
-        "rounded-3xl border border-border/80 bg-background/70 p-4 text-sm text-muted-foreground",
-        className
+        "rounded-xl border border-border bg-muted/50 p-4 text-sm text-muted-foreground",
+        className,
       )}
       {...props}
     />

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Camera, ImagePlus, Sparkles, Trash2 } from "lucide-react";
+import { Spinner } from "../../shared/ui/spinner";
 import { appEnv } from "../../app/env";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { Button } from "../../shared/ui/button";
@@ -36,6 +37,7 @@ import {
   setCapturedImages,
 } from "../contact-review/reviewDraftSlice";
 import { useExtractBusinessCardMutation } from "../card-extraction/extractionApi";
+import { Photoroll } from "../../shared/ui/photoroll";
 import { pushToast } from "../../shared/ui/toastBus";
 
 function readExtractionError(error: unknown) {
@@ -66,7 +68,9 @@ export function CaptureWorkspace() {
   const hydratedCaptureSessionRef = useRef(false);
   const latestImagesRef = useRef(images);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [captureExperience] = useState(() => detectPreferredCaptureExperience());
+  const [captureExperience] = useState(() =>
+    detectPreferredCaptureExperience(),
+  );
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [isCapturingPhoto, setIsCapturingPhoto] = useState(false);
@@ -76,7 +80,9 @@ export function CaptureWorkspace() {
   const captureDebugMaxEdge = readCaptureDebugMaxEdge();
   const isDebugPanelEnabled = isCaptureDebugPanelEnabled();
   const pageSessionId =
-    typeof window === "undefined" ? "server" : window.__meishiPageSessionId ?? "unset";
+    typeof window === "undefined"
+      ? "server"
+      : (window.__meishiPageSessionId ?? "unset");
 
   function refreshDebugEntries() {
     if (!appEnv.isDevelopment) {
@@ -211,14 +217,25 @@ export function CaptureWorkspace() {
 
     try {
       logDebugEvent("handleFiles:start", { fileCount: files.length });
-      logDebugEvent("createCapturedCardImages:start", { fileCount: files.length });
-      const nextImages = [...images, ...(await createCapturedCardImages(files))];
+      logDebugEvent("createCapturedCardImages:start", {
+        fileCount: files.length,
+      });
+      const nextImages = [
+        ...images,
+        ...(await createCapturedCardImages(files)),
+      ];
       refreshDebugEntries();
-      logDebugEvent("createCapturedCardImages:end", { nextImageCount: nextImages.length });
+      logDebugEvent("createCapturedCardImages:end", {
+        nextImageCount: nextImages.length,
+      });
       dispatch(setCapturedImages(nextImages));
-      logDebugEvent("saveCapturedImages:start", { nextImageCount: nextImages.length });
+      logDebugEvent("saveCapturedImages:start", {
+        nextImageCount: nextImages.length,
+      });
       await saveCapturedImages(nextImages);
-      logDebugEvent("saveCapturedImages:end", { nextImageCount: nextImages.length });
+      logDebugEvent("saveCapturedImages:end", {
+        nextImageCount: nextImages.length,
+      });
       pushToast(
         `${files.length} image${files.length === 1 ? "" : "s"} added to the active capture session.`,
       );
@@ -226,7 +243,8 @@ export function CaptureWorkspace() {
       setCameraError(null);
     } catch (error) {
       logDebugEvent("handleFiles:error", {
-        message: error instanceof Error ? error.message : "Unable to process images.",
+        message:
+          error instanceof Error ? error.message : "Unable to process images.",
       });
       setCameraError(
         error instanceof Error ? error.message : "Unable to process images.",
@@ -237,9 +255,15 @@ export function CaptureWorkspace() {
   async function handleRemoveImage(imageId: string) {
     const nextImages = images.filter((image) => image.id !== imageId);
     dispatch(setCapturedImages(nextImages));
-    logDebugEvent("handleRemoveImage:start", { imageId, nextImageCount: nextImages.length });
+    logDebugEvent("handleRemoveImage:start", {
+      imageId,
+      nextImageCount: nextImages.length,
+    });
     await saveCapturedImages(nextImages);
-    logDebugEvent("handleRemoveImage:end", { imageId, nextImageCount: nextImages.length });
+    logDebugEvent("handleRemoveImage:end", {
+      imageId,
+      nextImageCount: nextImages.length,
+    });
     pushToast("Image removed from the active capture session.");
   }
 
@@ -288,7 +312,8 @@ export function CaptureWorkspace() {
       logDebugEvent("handleOpenCamera:live-preview-opened");
     } catch (error) {
       logDebugEvent("handleOpenCamera:error", {
-        message: error instanceof Error ? error.message : "Unable to open the camera.",
+        message:
+          error instanceof Error ? error.message : "Unable to open the camera.",
       });
       setCameraError(
         error instanceof Error ? error.message : "Unable to open the camera.",
@@ -354,7 +379,8 @@ export function CaptureWorkspace() {
       logDebugEvent("handleCapturePhoto:end", { fileName });
     } catch (error) {
       logDebugEvent("handleCapturePhoto:error", {
-        message: error instanceof Error ? error.message : "Unable to capture a photo.",
+        message:
+          error instanceof Error ? error.message : "Unable to capture a photo.",
       });
       setCameraError(
         error instanceof Error ? error.message : "Unable to capture a photo.",
@@ -390,43 +416,67 @@ export function CaptureWorkspace() {
 
   return (
     <>
-      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Photoroll</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Photoroll
+              images={images}
+              renderOverlayAction={(image) => (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="bg-background/90"
+                  onClick={() => void handleRemoveImage(image.id)}
+                  aria-label={`Delete ${image.fileName}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              )}
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Capture business cards</CardTitle>
-            <CardDescription>
-              Mobile devices prefer the native camera experience. Desktop devices
-              use the in-browser live preview, and some browsers may still show a
-              chooser because camera capture is only a hint.
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-4 rounded-[28px] border border-dashed border-border bg-background/60 px-6 py-6">
-              <div className="flex flex-col items-center justify-center gap-3 py-4 text-center">
-                <Camera className="h-8 w-8 text-primary" />
-                <div className="space-y-1">
-                  <p className="font-medium">
-                    {captureExperience === "native-camera-input"
-                      ? "Open native camera"
-                      : "Open live camera"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {captureExperience === "native-camera-input"
-                      ? "Mobile devices prefer the native camera flow with a rear-camera hint."
-                      : "Desktop devices open the webcam in a larger capture dialog, and the front camera is used when no rear camera exists."}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  size="lg"
-                  className="w-full sm:w-auto"
-                  onClick={handleOpenCamera}
-                  disabled={isStartingCamera}
-                >
-                  <Camera className="h-4 w-4" />
-                  {isStartingCamera ? "Opening camera..." : "Open camera"}
-                </Button>
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex aspect-square h-auto flex-col justify-center gap-3 rounded-2xl px-4 py-6 text-center"
+                onClick={handleOpenCamera}
+                disabled={isStartingCamera}
+              >
+                {isStartingCamera ? (
+                  <Spinner />
+                ) : (
+                  <Camera className="h-8 w-8 text-primary" />
+                )}
+                <span className="text-sm font-medium">
+                  {isStartingCamera ? "Opening camera..." : "Open Camera"}
+                </span>
+              </Button>
+
+              <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-background px-4 py-6 text-center transition-colors hover:bg-muted/40">
+                <ImagePlus className="h-8 w-8 text-primary" />
+                <span className="text-sm font-medium">
+                  Add images from library
+                </span>
+                <input
+                  className="hidden"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(event) => void handleFileInputChange(event)}
+                />
+              </label>
 
               <input
                 ref={cameraInputRef}
@@ -439,26 +489,17 @@ export function CaptureWorkspace() {
               />
             </div>
 
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-medium">
-              <ImagePlus className="h-4 w-4" />
-              Add images from library
-              <input
-                className="hidden"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(event) => void handleFileInputChange(event)}
-              />
-            </label>
-
             <Button
               type="button"
               className="w-full"
-              size="lg"
               onClick={handleExtract}
               disabled={extraction.isLoading || images.length === 0}
             >
-              <Sparkles className="h-4 w-4" />
+              {extraction.isLoading ? (
+                <Spinner />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
               {extraction.isLoading ? "Extracting..." : "Extract contact draft"}
             </Button>
 
@@ -469,61 +510,6 @@ export function CaptureWorkspace() {
             ) : null}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Active capture session</CardTitle>
-            <CardDescription>
-              Captured images are kept in IndexedDB so you can recover the current
-              session after navigation or refresh.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {images.length ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {images.map((image) => (
-                  <div
-                    key={image.id}
-                    className="overflow-hidden rounded-[24px] border border-border/70 bg-background/70"
-                  >
-                    <div className="relative">
-                      <img
-                        src={image.dataUrl}
-                        alt={image.fileName}
-                        className="aspect-[4/3] w-full object-cover"
-                      />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="absolute right-3 top-3 bg-background/90"
-                        onClick={() => void handleRemoveImage(image.id)}
-                        aria-label={`Delete ${image.fileName}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
-                    </div>
-                    <div className="space-y-1 p-4 text-xs text-muted-foreground">
-                      <p className="font-medium text-foreground">
-                        {image.fileName}
-                      </p>
-                      <p>
-                        {image.width}×{image.height} •{" "}
-                        {new Date(image.capturedAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <Alert>
-                No images captured yet. Start with the camera or photo library
-                above.
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {isDebugPanelEnabled ? (
@@ -531,17 +517,19 @@ export function CaptureWorkspace() {
           <CardHeader>
             <CardTitle>Capture debug</CardTitle>
             <CardDescription>
-              Tracks page lifetime and capture events across reloads. Use
-              `?{getCaptureDebugPanelQueryKey()}=1` to show this panel, and
-              use
-              `?{getCaptureDebugMaxEdgeStorageKey()}=1600` or localStorage to
+              Tracks page lifetime and capture events across reloads. Use `?
+              {getCaptureDebugPanelQueryKey()}=1` to show this panel, and use `?
+              {getCaptureDebugMaxEdgeStorageKey()}=1600` or localStorage to
               enable temporary downscaling.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="rounded-full border border-border px-3 py-1">
-                Page session: <span className="font-mono text-foreground">{pageSessionId}</span>
+                Page session:{" "}
+                <span className="font-mono text-foreground">
+                  {pageSessionId}
+                </span>
               </span>
               <span className="rounded-full border border-border px-3 py-1">
                 Downscale max edge:{" "}
@@ -561,7 +549,7 @@ export function CaptureWorkspace() {
             >
               Clear debug log
             </Button>
-            <div className="rounded-[24px] border border-border/70 bg-background/70 p-4">
+            <div className="rounded-xl border border-border bg-background p-4">
               {debugEntries.length ? (
                 <ol className="space-y-2 font-mono text-xs text-muted-foreground">
                   {debugEntries.slice(-15).map((entry, index) => (
@@ -591,8 +579,8 @@ export function CaptureWorkspace() {
           aria-modal="true"
           aria-labelledby="desktop-camera-dialog-title"
         >
-          <div className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-border/60 bg-background shadow-2xl">
-            <div className="flex items-start justify-between gap-4 border-b border-border/60 px-6 py-5">
+          <div className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-elevated">
+            <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
               <div className="space-y-1">
                 <h2
                   id="desktop-camera-dialog-title"
@@ -601,8 +589,8 @@ export function CaptureWorkspace() {
                   Camera capture
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Use the larger webcam preview to frame the business card before
-                  capturing.
+                  Use the larger webcam preview to frame the business card
+                  before capturing.
                 </p>
               </div>
               <Button type="button" variant="outline" onClick={stopCamera}>
@@ -610,7 +598,7 @@ export function CaptureWorkspace() {
               </Button>
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 sm:p-6">
-              <div className="min-h-0 flex-1 overflow-hidden rounded-[28px] border border-border/70 bg-black">
+              <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-black">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -627,7 +615,11 @@ export function CaptureWorkspace() {
                   onClick={handleCapturePhoto}
                   disabled={!isVideoReady || isCapturingPhoto}
                 >
-                  <Camera className="h-4 w-4" />
+                  {isCapturingPhoto ? (
+                    <Spinner />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
                   {isCapturingPhoto ? "Capturing..." : "Capture photo"}
                 </Button>
                 <Button

@@ -314,23 +314,76 @@ describe("CaptureWorkspace", () => {
       .setup()
       .click(screen.getByRole("button", { name: /delete back\.png/i }));
 
-    expect(
-      await screen.findByText(
-        /no images captured yet\. start with the camera or photo library above\./i,
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/no images captured yet\./i)).toBeInTheDocument();
 
     resolveStaleLoad([backImage]);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(screen.queryByText("back.png")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /no images captured yet\. start with the camera or photo library above\./i,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/no images captured yet\./i)).toBeInTheDocument();
 
     resolveEmptySave();
+  });
+
+  it("opens images in a navigable lightbox from the photoroll", async () => {
+    const store = createStore([
+      {
+        id: "img-1",
+        dataUrl: "data:image/png;base64,ZmFrZQ==",
+        fileName: "front.png",
+        mimeType: "image/png",
+        capturedAt: "2026-04-05T00:00:00.000Z",
+        width: 1200,
+        height: 800,
+      },
+      {
+        id: "img-2",
+        dataUrl: "data:image/png;base64,ZmFrZTI=",
+        fileName: "back.png",
+        mimeType: "image/png",
+        capturedAt: "2026-04-05T00:01:00.000Z",
+        width: 1200,
+        height: 800,
+      },
+    ]);
+
+    render(
+      <Provider store={store}>
+        <CaptureWorkspace />
+      </Provider>,
+    );
+
+    expect(screen.getByText("Photoroll")).toBeInTheDocument();
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /open front\.png/i }));
+
+    expect(
+      screen.getByRole("dialog", { name: /front\.png/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/1 of 2/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /zoom in/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /zoom out/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /reset view/i })).toBeDisabled();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: /zoom in/i }));
+
+    expect(screen.getByRole("button", { name: /zoom out/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /reset view/i })).toBeEnabled();
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /next image/i }));
+
+    expect(screen.getByRole("dialog", { name: /back\.png/i })).toBeInTheDocument();
+    expect(screen.getByText(/2 of 2/i)).toBeInTheDocument();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: /close/i }));
+
+    expect(
+      screen.queryByRole("dialog", { name: /back\.png/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("opens the native camera input on touch devices even when getUserMedia is available", async () => {

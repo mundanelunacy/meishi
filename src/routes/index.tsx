@@ -5,7 +5,7 @@ export const Route = createFileRoute("/")({
   beforeLoad: ({ context }) => {
     const ready = selectHasCompletedOnboarding(context.store.getState());
     throw redirect({
-      to: ready ? "/capture" : "/onboarding",
+      to: ready ? "/capture" : "/landing",
     });
   },
 });

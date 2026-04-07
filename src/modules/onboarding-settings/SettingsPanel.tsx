@@ -1,19 +1,26 @@
-import { useNavigate } from "@tanstack/react-router";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { hasFirebaseConfiguration } from "../../app/env";
 import { Button } from "../../shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../shared/ui/card";
+import { Select } from "../../shared/ui/select";
+import { Spinner } from "../../shared/ui/spinner";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../shared/ui/card";
 import { Input } from "../../shared/ui/input";
 import { Label } from "../../shared/ui/label";
 import { Alert } from "../../shared/ui/alert";
+import { Textarea } from "../../shared/ui/textarea";
 import {
   clearAllSettings,
-  selectAppReadiness,
   selectGoogleAuth,
   selectSettings,
   setAnthropicApiKey,
   setExtractionPrompt,
   setGoogleAuthState,
+  setLlmProvider,
   setOpenAiApiKey,
   setPreferredAnthropicModel,
   setPreferredOpenAiModel,
@@ -24,171 +31,252 @@ import {
   disconnectGoogleContacts,
 } from "../google-auth/googleIdentity";
 import { pushToast } from "../../shared/ui/toastBus";
+import { getSupportedModelOptions } from "./modelOptions";
 
 export function SettingsPanel() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const settings = useAppSelector(selectSettings);
   const googleAuth = useAppSelector(selectGoogleAuth);
-  const readiness = useAppSelector(selectAppReadiness);
+  const selectedProvider = settings.llmProvider;
+  const providerApiKey =
+    selectedProvider === "anthropic"
+      ? settings.anthropicApiKey
+      : settings.openAiApiKey;
+  const providerModel =
+    selectedProvider === "anthropic"
+      ? settings.preferredAnthropicModel
+      : settings.preferredOpenAiModel;
+  const providerModelOptions = getSupportedModelOptions(
+    selectedProvider,
+    providerModel,
+  );
 
-  async function handleReconnectGoogle() {
+  async function handleGoogleStatusChange(nextValue: "connected" | "signed_out") {
+    if (nextValue === "connected") {
+      if (!hasFirebaseConfiguration() || googleAuth.status === "connecting") {
+        return;
+      }
+
+      try {
+        dispatch(
+          setGoogleAuthState({
+            ...googleAuth,
+            status: "connecting",
+          }),
+        );
+        const nextAuthState = await connectGoogleContacts();
+        dispatch(setGoogleAuthState(nextAuthState));
+        pushToast("Google authorization refreshed.");
+      } catch (error) {
+        dispatch(
+          setGoogleAuthState({
+            ...googleAuth,
+            status: googleAuth.connectedAt ? "connected" : "signed_out",
+          }),
+        );
+        pushToast(
+          error instanceof Error ? error.message : "Unable to reconnect Google.",
+        );
+      }
+
+      return;
+    }
+
     try {
-      dispatch(
-        setGoogleAuthState({
-          ...googleAuth,
-          status: "connecting",
-        })
-      );
-      const nextAuthState = await connectGoogleContacts();
-      dispatch(setGoogleAuthState(nextAuthState));
-      pushToast("Google authorization refreshed.");
+      await disconnectGoogleContacts();
+      dispatch(signOutGoogle());
     } catch (error) {
-      dispatch(
-        setGoogleAuthState({
-          ...googleAuth,
-          status: googleAuth.connectedAt ? "connected" : "signed_out",
-        })
+      pushToast(
+        error instanceof Error ? error.message : "Unable to sign out Google.",
       );
-      pushToast(error instanceof Error ? error.message : "Unable to reconnect Google.");
     }
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Provider settings</CardTitle>
-          <CardDescription>
-            OpenAI and Anthropic both use structured extraction. The shared prompt is editable, but provider-specific schema enforcement stays fixed in code.
-          </CardDescription>
+          <CardTitle>LLM Provider</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Alert className="border-border/90 bg-muted/40 text-foreground">
-            <div className="space-y-1">
-              <p className="font-medium">App readiness</p>
-              <p className="text-sm text-muted-foreground">
-                Provider configured: {readiness.hasLlmConfiguration ? "Yes" : "No"}.
-                Google authorized: {readiness.hasGoogleAuthorization ? "Yes" : "No"}.
-                Capture ready: {readiness.isCaptureReady ? "Yes" : "No"}.
+        <CardContent className="space-y-6">
+          <div className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">Security note</p>
+              <p>
+                Meishi stores your API key in the browser only, which is
+                acceptable for personal use on a trusted device.
               </p>
             </div>
-          </Alert>
-
-          <div className="space-y-2">
-            <Label htmlFor="settings-openai-api-key">OpenAI API key</Label>
-            <Input
-              id="settings-openai-api-key"
-              type="password"
-              value={settings.openAiApiKey}
-              onChange={(event) => dispatch(setOpenAiApiKey(event.target.value))}
-            />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="settings-openai-model">Preferred OpenAI model</Label>
-            <Input
-              id="settings-openai-model"
-              value={settings.preferredOpenAiModel}
-              onChange={(event) => dispatch(setPreferredOpenAiModel(event.target.value))}
-            />
+          <div className="space-y-3">
+            <Label htmlFor="settings-provider">LLM provider</Label>
+            <Select
+              id="settings-provider"
+              value={settings.llmProvider}
+              onChange={(event) =>
+                dispatch(
+                  setLlmProvider(
+                    event.target.value as typeof settings.llmProvider,
+                  ),
+                )
+              }
+            >
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic</option>
+              <option value="gemini" disabled>
+                Gemini (planned)
+              </option>
+            </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="settings-anthropic-api-key">Anthropic API key</Label>
-            <Input
-              id="settings-anthropic-api-key"
-              type="password"
-              value={settings.anthropicApiKey}
-              onChange={(event) => dispatch(setAnthropicApiKey(event.target.value))}
-            />
-          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-3">
+              <Label htmlFor="settings-api-key">
+                {selectedProvider === "anthropic"
+                  ? "Anthropic API key"
+                  : "OpenAI API key"}
+              </Label>
+              <Input
+                id="settings-api-key"
+                type="password"
+                autoComplete="off"
+                placeholder={
+                  selectedProvider === "anthropic" ? "sk-ant-..." : "sk-..."
+                }
+                value={providerApiKey}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  if (selectedProvider === "anthropic") {
+                    dispatch(setAnthropicApiKey(nextValue));
+                    return;
+                  }
 
-          <div className="space-y-2">
-            <Label htmlFor="settings-anthropic-model">Preferred Anthropic model</Label>
-            <Input
-              id="settings-anthropic-model"
-              value={settings.preferredAnthropicModel}
-              onChange={(event) => dispatch(setPreferredAnthropicModel(event.target.value))}
-            />
-          </div>
+                  dispatch(setOpenAiApiKey(nextValue));
+                }}
+              />
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="settings-model">
+                {selectedProvider === "anthropic"
+                  ? "Anthropic model"
+                  : "OpenAI model"}
+              </Label>
+              <Select
+                id="settings-model"
+                value={providerModel}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  if (selectedProvider === "anthropic") {
+                    dispatch(setPreferredAnthropicModel(nextValue));
+                    return;
+                  }
 
-          <div className="space-y-2">
-            <Label htmlFor="settings-extraction-prompt">Advanced extraction prompt</Label>
-            <textarea
-              id="settings-extraction-prompt"
-              className="flex min-h-[160px] w-full rounded-2xl border border-input bg-background/80 px-4 py-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              value={settings.extractionPrompt}
-              onChange={(event) => dispatch(setExtractionPrompt(event.target.value))}
-            />
-            <p className="text-xs text-muted-foreground">
-              This guidance is shared by OpenAI and Anthropic and is appended to the fixed structured-output and fidelity rules. Prompt edits cannot disable schema enforcement.
-            </p>
+                  dispatch(setPreferredOpenAiModel(nextValue));
+                }}
+              >
+                {providerModelOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Google authorization and local data</CardTitle>
-          <CardDescription>
-            Google access tokens are minted by Firebase Functions on demand and refreshed with the stored backend token. Stored LLM configuration remains local to this browser profile.
-          </CardDescription>
+          <CardTitle>Google status</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert>
-            {googleAuth.status === "connected"
-              ? "Google Contacts is currently connected through Firebase-backed token refresh."
-              : googleAuth.status === "connecting"
-                ? "Google Contacts authorization is currently in progress."
-                : "Google Contacts is not currently connected."}
-          </Alert>
-
           {!hasFirebaseConfiguration() ? (
-            <Alert>Set the required <code>VITE_FIREBASE_*</code> values before reconnecting Google.</Alert>
+            <Alert>
+              Set the required <code>VITE_FIREBASE_*</code> values before
+              changing Google connection status.
+            </Alert>
           ) : null}
 
-          <div className="rounded-[24px] bg-muted/50 p-4 text-sm">
-            <p className="font-medium text-foreground">Current Google session</p>
-            <p className="mt-1 text-muted-foreground">
-              Status: {googleAuth.status}
-              {googleAuth.accountEmail ? ` • Account: ${googleAuth.accountEmail}` : ""}
-              {googleAuth.firebaseUid ? ` • Firebase UID: ${googleAuth.firebaseUid}` : ""}
+          <fieldset>
+            <div className="flex flex-wrap gap-3">
+              {([
+                ["connected", "Connected"],
+                ["signed_out", "Disconnected"],
+              ] as const).map(([value, label]) => {
+                const checked =
+                  value === "connected"
+                    ? googleAuth.status === "connected"
+                    : googleAuth.status === "signed_out";
+                const disabled =
+                  googleAuth.status === "connecting" ||
+                  (!hasFirebaseConfiguration() && value === "connected");
+
+                return (
+                  <label
+                    key={value}
+                    className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm ${
+                      checked
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border bg-background text-muted-foreground"
+                    } ${disabled ? "opacity-60" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="google-status"
+                      className="h-4 w-4"
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={() => {
+                        void handleGoogleStatusChange(value);
+                      }}
+                    />
+                    {label}
+                    {googleAuth.status === "connecting" && value === "connected" ? (
+                      <Spinner />
+                    ) : null}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Advanced Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="settings-extraction-prompt">
+              Advanced extraction prompt
+            </Label>
+            <Textarea
+              id="settings-extraction-prompt"
+              value={settings.extractionPrompt}
+              onChange={(event) =>
+                dispatch(setExtractionPrompt(event.target.value))
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              This guidance is shared by OpenAI and Anthropic and is appended to
+              the fixed structured-output and fidelity rules. Prompt edits
+              cannot disable schema enforcement.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              type="button"
-              onClick={() => {
-                void handleReconnectGoogle();
-              }}
-              disabled={!hasFirebaseConfiguration()}
-            >
-              Reconnect Google
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                void disconnectGoogleContacts()
-                  .then(() => {
-                    dispatch(signOutGoogle());
-                  })
-                  .catch((error) => {
-                    pushToast(error instanceof Error ? error.message : "Unable to sign out Google.");
-                  });
-              }}
-            >
-              Sign out Google
-            </Button>
-            <Button type="button" variant="outline" onClick={() => dispatch(clearAllSettings())}>
-              Clear local settings
-            </Button>
-            <Button type="button" onClick={() => navigate({ to: "/onboarding" })}>
-              Re-run onboarding
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => dispatch(clearAllSettings())}
+          >
+            Clear local settings
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Clears saved API keys, preferred models, extraction prompt, Google
+            connection metadata, and onboarding progress from this browser.
+          </p>
         </CardContent>
       </Card>
     </div>
