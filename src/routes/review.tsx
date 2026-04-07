@@ -1,5 +1,4 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { ReviewWorkspace } from "../modules/contact-review/ReviewWorkspace";
 import { selectHasCompletedOnboarding } from "../modules/onboarding-settings/onboardingSlice";
 
 export const Route = createFileRoute("/review")({
@@ -8,5 +7,4 @@ export const Route = createFileRoute("/review")({
       throw redirect({ to: "/landing" });
     }
   },
-  component: ReviewWorkspace,
 });

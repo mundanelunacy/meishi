@@ -7,7 +7,7 @@ Meishi turns business cards into structured contacts you can review, export, and
 [Open the public app](https://meishi-492400.web.app)  
 [Read the technical notes](./DEV-NOTES.md)
 
-![Meishi review screen](./public/docs/screenshots/review-verify-contact.png)
+![Meishi review screen](./public/docs/screenshots/capture-photoroll.png)
 
 ## Why it exists
 

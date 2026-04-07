@@ -8,6 +8,7 @@ import { httpsCallable } from "firebase/functions";
 import { hasFirebaseConfiguration } from "../../app/env";
 import { getFirebaseAuth, getFirebaseFunctions } from "../../app/firebase";
 import type { GoogleAuthState } from "../../shared/types/models";
+import { createInitialGoogleAuthState } from "./googleAuthState";
 
 const GOOGLE_SCOPE = "https://www.googleapis.com/auth/contacts";
 const POPUP_MESSAGE_TYPE = "meishi:google-auth-result";
@@ -46,7 +47,9 @@ interface PopupMessageErrorPayload {
   error: string;
 }
 
-type GoogleAuthPopupMessage = PopupMessageSuccessPayload | PopupMessageErrorPayload;
+type GoogleAuthPopupMessage =
+  | PopupMessageSuccessPayload
+  | PopupMessageErrorPayload;
 
 let authBootstrapPromise: Promise<User> | null = null;
 let googleAccessTokenCache: { value: string; expiresAt: number } | null = null;
@@ -55,22 +58,15 @@ export function getGoogleScope() {
   return GOOGLE_SCOPE;
 }
 
-export function createInitialGoogleAuthState(
-  metadata?: Partial<Pick<GoogleAuthState, "firebaseUid" | "scope" | "accountEmail" | "connectedAt">>
-): GoogleAuthState {
-  return {
-    status:
-      metadata?.scope || metadata?.accountEmail || metadata?.connectedAt ? "connecting" : "signed_out",
-    firebaseUid: metadata?.firebaseUid ?? null,
-    scope: metadata?.scope ?? null,
-    accountEmail: metadata?.accountEmail,
-    connectedAt: metadata?.connectedAt ?? null,
-  };
-}
-
 function createPopupFeatures() {
-  const left = typeof window === "undefined" ? 0 : window.screenX + (window.outerWidth - POPUP_WIDTH) / 2;
-  const top = typeof window === "undefined" ? 0 : window.screenY + (window.outerHeight - POPUP_HEIGHT) / 2;
+  const left =
+    typeof window === "undefined"
+      ? 0
+      : window.screenX + (window.outerWidth - POPUP_WIDTH) / 2;
+  const top =
+    typeof window === "undefined"
+      ? 0
+      : window.screenY + (window.outerHeight - POPUP_HEIGHT) / 2;
 
   return [
     `width=${POPUP_WIDTH}`,
@@ -101,7 +97,7 @@ async function waitForInitialAuthState() {
 async function ensureFirebaseUser() {
   if (!hasFirebaseConfiguration()) {
     throw new Error(
-      "Firebase is not configured. Add the VITE_FIREBASE_* values before connecting Google Contacts."
+      "Firebase is not configured. Add the VITE_FIREBASE_* values before connecting Google Contacts.",
     );
   }
 
@@ -123,10 +119,16 @@ async function ensureFirebaseUser() {
 }
 
 function getGoogleAuthStatusCallable() {
-  return httpsCallable<undefined, GoogleAuthStatusResponse>(getFirebaseFunctions(), "getGoogleAuthStatus");
+  return httpsCallable<undefined, GoogleAuthStatusResponse>(
+    getFirebaseFunctions(),
+    "getGoogleAuthStatus",
+  );
 }
 
-function normalizeGoogleAuthState(state: GoogleAuthState, firebaseUid: string): GoogleAuthState {
+function normalizeGoogleAuthState(
+  state: GoogleAuthState,
+  firebaseUid: string,
+): GoogleAuthState {
   return {
     ...state,
     firebaseUid: state.firebaseUid ?? firebaseUid,
@@ -166,7 +168,9 @@ function waitForPopupResult(popup: Window, firebaseUid: string) {
       }
 
       cleanup();
-      reject(new Error("Google authorization was cancelled before it completed."));
+      reject(
+        new Error("Google authorization was cancelled before it completed."),
+      );
     }, 250);
 
     function cleanup() {
@@ -175,7 +179,10 @@ function waitForPopupResult(popup: Window, firebaseUid: string) {
     }
 
     function handleMessage(event: MessageEvent<GoogleAuthPopupMessage>) {
-      if (event.origin !== window.location.origin || event.data?.type !== POPUP_MESSAGE_TYPE) {
+      if (
+        event.origin !== window.location.origin ||
+        event.data?.type !== POPUP_MESSAGE_TYPE
+      ) {
         return;
       }
 
@@ -194,10 +201,10 @@ function waitForPopupResult(popup: Window, firebaseUid: string) {
 
 export async function connectGoogleContacts() {
   const user = await ensureFirebaseUser();
-  const beginGoogleContactsAuth = httpsCallable<undefined, BeginGoogleContactsAuthResponse>(
-    getFirebaseFunctions(),
-    "beginGoogleContactsAuth"
-  );
+  const beginGoogleContactsAuth = httpsCallable<
+    undefined,
+    BeginGoogleContactsAuthResponse
+  >(getFirebaseFunctions(), "beginGoogleContactsAuth");
   const { data } = await beginGoogleContactsAuth();
   const popup = window.open(data.authUrl, POPUP_NAME, createPopupFeatures());
 
@@ -209,7 +216,9 @@ export async function connectGoogleContacts() {
   return waitForPopupResult(popup, user.uid);
 }
 
-export async function completeGoogleContactsAuthCallback(payload: CompleteGoogleContactsAuthRequest) {
+export async function completeGoogleContactsAuthCallback(
+  payload: CompleteGoogleContactsAuthRequest,
+) {
   const user = await ensureFirebaseUser();
   const completeGoogleContactsAuth = httpsCallable<
     CompleteGoogleContactsAuthRequest,
@@ -230,15 +239,18 @@ export function invalidateGoogleAccessTokenCache() {
 }
 
 export async function getValidGoogleAccessToken() {
-  if (googleAccessTokenCache && googleAccessTokenCache.expiresAt > Date.now() + TOKEN_REFRESH_SKEW_MS) {
+  if (
+    googleAccessTokenCache &&
+    googleAccessTokenCache.expiresAt > Date.now() + TOKEN_REFRESH_SKEW_MS
+  ) {
     return googleAccessTokenCache.value;
   }
 
   await ensureFirebaseUser();
-  const getGoogleAccessTokenCallable = httpsCallable<undefined, GoogleAccessTokenResponse>(
-    getFirebaseFunctions(),
-    "getGoogleAccessToken"
-  );
+  const getGoogleAccessTokenCallable = httpsCallable<
+    undefined,
+    GoogleAccessTokenResponse
+  >(getFirebaseFunctions(), "getGoogleAccessToken");
   const result = await getGoogleAccessTokenCallable();
   const expiresAt = Date.now() + result.data.expiresIn * 1000;
 
@@ -252,10 +264,10 @@ export async function getValidGoogleAccessToken() {
 
 export async function disconnectGoogleContacts() {
   await ensureFirebaseUser();
-  const disconnectGoogleContactsCallable = httpsCallable<undefined, { success: boolean }>(
-    getFirebaseFunctions(),
-    "disconnectGoogleContacts"
-  );
+  const disconnectGoogleContactsCallable = httpsCallable<
+    undefined,
+    { success: boolean }
+  >(getFirebaseFunctions(), "disconnectGoogleContacts");
   await disconnectGoogleContactsCallable();
   invalidateGoogleAccessTokenCache();
   await signOut(getFirebaseAuth());

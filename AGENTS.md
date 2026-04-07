@@ -2,36 +2,41 @@
 
 ## Environment
 
-- Repo type: browser-only PWA
+- Repo type: browser-first PWA with a Firebase backend
 - Language: TypeScript only
 - UI stack: React, Vite, Tailwind, shadcn-style components
 - Routing: TanStack Router file-based routes
 - State: Redux Toolkit + RTK Query
 - Persistence: `localStorage` for settings, IndexedDB via Dexie for images/drafts/history
-- External integrations: Google Identity Services, Google People API, OpenAI Responses API
-- No backend: do not add one unless explicitly asked
+- Backend: Firebase Cloud Functions + server-only Firestore for privileged auth and credential storage
+- External integrations: Firebase Auth, Firebase Functions, Firestore Admin via Functions, Google Identity Services, Google People API, OpenAI Responses API
 
 ## Working model
 
 - Work module-by-module under `src/modules`.
-- Read the target module `README.md` before editing. Consult `DEV-NOTES.md` when the task needs broader technical context such as architecture, routing, persistence, auth, deployment, or debugging behavior beyond the local module boundary.
+- Read the target module `README.md` before editing. Consult `DEV-NOTES.md` when the task needs broader technical context such as architecture, routing, persistence, auth, deployment, or debugging behavior beyond the local module boundary. Consult `functions/README.md` before editing privileged backend flows, Google auth broker logic, or deploy-sensitive Functions behavior.
 - Keep module boundaries explicit and typed.
 - Keep provider-specific logic out of shared UI components.
+- Keep privileged logic explicit: browser UI and local draft flows stay in `src/modules`, while secret-bearing or admin-only work belongs in `functions/`.
 - Preserve the distinction between:
   - persisted user preferences,
   - short-lived Google access tokens,
+  - server-stored Google refresh tokens and account metadata,
   - local draft/image data,
-  - remote Google Contacts state.
+  - remote Google Contacts state,
+  - Firestore documents that are managed only through Functions.
 
 ## Development loop
 
 1. Read the relevant module README and confirm the interface it owns. If the task crosses module boundaries or depends on operational details, read `DEV-NOTES.md` for the deeper technical context.
 2. Make the smallest coherent change that leaves the module runnable.
 3. Prefer typed helpers and local validation over ad hoc component logic.
-4. Keep browser-only constraints in mind when choosing dependencies or APIs.
+4. Keep browser-first constraints in mind when choosing dependencies or APIs, but remember this repo already has a Firebase Functions backend for privileged flows.
 5. If the change affects another module, update the interface contract explicitly rather than relying on hidden coupling.
 6. Treat `src/modules/local-data` as the persistence boundary. Import from its module entrypoint instead of reaching into `storage.ts` or `database.ts` directly.
-7. Do not persist durable Google auth tokens. Only light metadata such as scope and account hint belongs in browser storage.
+7. Do not persist durable Google auth tokens in browser storage. Only light metadata such as scope, account hint, and connection timestamp belongs on the client; refresh tokens stay server-side in Firestore through Functions.
+8. Treat Firestore as a privileged backend boundary in the current app shape. Browser clients do not use the Firestore Web SDK, and `firestore.rules` intentionally deny direct client access.
+9. When changing backend auth or deploy behavior, verify the impact on both the browser workspace and the `functions/` workspace instead of assuming one side owns the whole flow.
 
 ## Test-debug loop
 
@@ -55,18 +60,23 @@
    - contact photo upload.
 8. When debugging UI issues, reproduce them at the route/module boundary first, then narrow down to shared UI primitives only if necessary.
 9. Before finishing, rerun the narrowest meaningful checks plus `npm run lint` if UI or shared code changed.
-10. For PWA work, use `npm run build && npm run preview` for real install/offline/update verification unless `devOptions.enabled` has been explicitly turned on in `vite.config.ts`.
-11. Remember that `VITE_*` env vars are compiled into the browser build. Production-only values in `.env.production` will not appear in `npm run dev`.
+10. If the change touches Firebase Functions, Firestore-backed credential handling, or Google auth broker behavior, also run `npm --prefix functions run lint` and `npm --prefix functions run build`.
+11. Use the Functions emulator or Firebase deploy flow when debugging callable functions, auth broker behavior, or predeploy failures. `firebase deploy` runs both functions predeploy checks and hosting deploy steps defined in `firebase.json`.
+12. Firestore issues in this repo usually mean backend/Admin SDK behavior or rules drift, not browser-side Firestore bugs, because client access is intentionally denied.
+13. For PWA work, use `npm run build && npm run preview` for real install/offline/update verification unless `devOptions.enabled` has been explicitly turned on in `vite.config.ts`.
+14. Remember that `VITE_*` env vars are compiled into the browser build. Production-only values in `.env.production` will not appear in `npm run dev`.
 
 ## Implementation notes
 
 - Review draft edits currently autosave with a short debounce in `src/modules/contact-review/ReviewWorkspace.tsx`. Be careful not to introduce form-reset behavior that wipes in-progress edits.
 - IndexedDB sync history is append-only. The public `SyncOutcome` interface stays stable while local storage adds its own generated record key internally.
 - PWA offline messaging must stay explicit: the app shell and local data can recover offline, but extraction and Google sync still require network access.
+- Google Contacts refresh tokens are brokered and stored server-side through Functions. Keep the browser-side auth state limited to anonymous Firebase identity, connection status, and lightweight metadata.
 
 ## Future agent notes
 
 - Treat `src/modules/local-data` as the persistence boundary. Avoid reaching across modules for draft, image, or settings storage details.
+- Treat `functions/` as the privileged integration boundary. Secret-bearing API calls, OAuth code exchange, token refresh, revocation, retention cleanup, and Admin SDK Firestore access belong there unless the architecture is intentionally changed.
 - Keep extraction richer than the first review UI. Preserve `extractionSnapshot` and derive editable fields from it instead of collapsing data early.
 - Model contact data as repeatable collections first. Google-Contacts-style arrays are the stable base; single-value fields are only summaries.
 - Preserve non-standard or ambiguous card text in both custom/X-field form and notes so fidelity survives review and sync.
@@ -87,22 +97,27 @@
 
 ## Documentation loop
 
-- Every module keeps a `README.md` describing:
+- Every browser module keeps a `README.md` describing:
   - responsibilities,
   - feature set,
   - exposed interfaces,
   - integration boundaries.
+- The `functions/README.md` file is the backend workspace reference for privileged flows, deploy commands, and token-broker behavior.
 - Update documentation in the same change when any of these change:
   - route flow,
   - persisted data shape,
   - public module interfaces,
   - external API behavior,
-  - security assumptions.
+  - security assumptions,
+  - backend trust boundaries.
 - Keep the root `README.md` aligned with the product overview, public usage, and quick-start path. Keep `DEV-NOTES.md` aligned with the actual stack, module map, architecture, and operational notes.
 
 ## Project guardrails
 
 - Do not introduce server-oriented SDKs into browser runtime code without proving browser compatibility.
+- Do not move privileged Google auth or credential-retention behavior out of `functions/` without explicitly redesigning the security model.
+- Do not store Google refresh tokens, OAuth client secrets, or equivalent durable credentials in browser storage.
+- Do not weaken `firestore.rules` ad hoc. The current Firestore posture is server-only, and any browser access should be a deliberate architecture change with reviewed rules.
 - Do not assume Google Contacts can store multiple arbitrary card images.
 - One image may be uploaded as the Google contact photo; extra images remain local in v1.
 - Treat client-side LLM key storage as prototype-only.

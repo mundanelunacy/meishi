@@ -26,10 +26,13 @@ import {
   connectGoogleContacts,
   disconnectGoogleContacts,
 } from "../google-auth/googleIdentity";
+import { useGoogleAuthStateSync } from "../google-auth/useGoogleAuthStateSync";
 import { pushToast } from "../../shared/ui/toastBus";
 import { getSupportedModelOptions } from "./modelOptions";
 
 export function SettingsPanel() {
+  useGoogleAuthStateSync();
+
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectSettings);
   const googleAuth = useAppSelector(selectGoogleAuth);

@@ -10,12 +10,13 @@
 
 ## Features
 
-- Firebase app/auth/functions bootstrap
+- On-demand Firebase app/auth/functions bootstrap when Google auth surfaces or sync flows need it
 - Anonymous Firebase session bootstrap
 - Popup-based Google OAuth connect flow with callback route handoff
 - Backend token fetch with in-memory browser caching
 - Disconnect helper that clears the backend Google connection and signs out Firebase locally
 - Scope definition for Google Contacts sync
+- Route-local Google auth status refresh for settings and review flows instead of an app-wide startup effect
 
 ## Interfaces
 

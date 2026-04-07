@@ -4,13 +4,9 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { store } from "./store";
 import { routeTree } from "../routeTree.gen";
 import { Toaster } from "../shared/ui/toaster";
-import { useAppDispatch, useAppSelector } from "./hooks";
+import { useAppSelector } from "./hooks";
 import { applyThemeMode, SYSTEM_THEME_QUERY } from "./theme";
-import { initializeGoogleAuth } from "../modules/google-auth/googleIdentity";
-import {
-  selectThemeMode,
-  setGoogleAuthState,
-} from "../modules/onboarding-settings/onboardingSlice";
+import { selectThemeMode } from "../modules/onboarding-settings/onboardingSlice";
 
 declare global {
   interface Window {
@@ -27,7 +23,7 @@ const router = createRouter({
   context: {
     store,
   },
-  defaultPreload: "intent",
+  defaultPreload: false,
   defaultPendingMinMs: 150,
 });
 
@@ -41,7 +37,6 @@ export function AppRoot() {
   return (
     <Provider store={store}>
       <ThemeBootstrap />
-      <GoogleAuthBootstrap />
       <RouterProvider router={router} />
       <Toaster />
     </Provider>
@@ -68,32 +63,6 @@ function ThemeBootstrap() {
       mediaQuery.removeEventListener("change", syncTheme);
     };
   }, [themeMode]);
-
-  return null;
-}
-
-function GoogleAuthBootstrap() {
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    let active = true;
-
-    void initializeGoogleAuth()
-      .then((googleAuth) => {
-        if (!active) {
-          return;
-        }
-
-        dispatch(setGoogleAuthState(googleAuth));
-      })
-      .catch(() => {
-        // Surface connect errors when the user explicitly tries to authorize.
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [dispatch]);
 
   return null;
 }

@@ -73,6 +73,7 @@ import { buildContactVCard, saveContactVCard } from "../vcard-export";
 import { pushToast } from "../../shared/ui/toastBus";
 import { buildPreservedNotes } from "../../shared/lib/contactFidelity";
 import { connectGoogleContacts } from "../google-auth/googleIdentity";
+import { useGoogleAuthStateSync } from "../google-auth/useGoogleAuthStateSync";
 import {
   selectGoogleAuth,
   setGoogleAuthState,
@@ -413,6 +414,8 @@ function getDraftFields(values: ReviewFormValues) {
 }
 
 export function ReviewWorkspace() {
+  useGoogleAuthStateSync();
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const draft = useAppSelector(selectDraft);
