@@ -87,6 +87,7 @@ export default defineConfig(({ mode }) => {
           cleanupOutdatedCaches: true,
           clientsClaim: false,
           globPatterns: ["**/*.{css,html,ico,js,png,svg,webmanifest}"],
+          navigateFallbackDenylist: [/\/[^/?]+\.[^/]+$/],
           runtimeCaching: [],
         },
         manifest: {
