@@ -1,6 +1,15 @@
-import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import {
+  createSelector,
+  createSlice,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
 import type { RootState } from "../../app/store";
-import type { AppSettings, GoogleAuthState, SupportedLlmProvider } from "../../shared/types/models";
+import type {
+  AppSettings,
+  GoogleAuthState,
+  SupportedLlmProvider,
+  ThemeMode,
+} from "../../shared/types/models";
 import {
   clearPersistedState,
   defaultSettings,
@@ -9,7 +18,10 @@ import {
 } from "../local-data";
 import { createInitialGoogleAuthState } from "../google-auth/googleIdentity";
 
-const persisted = typeof window === "undefined" ? { settings: defaultSettings } : loadPersistedState();
+const persisted =
+  typeof window === "undefined"
+    ? { settings: defaultSettings }
+    : loadPersistedState();
 
 interface OnboardingState {
   settings: AppSettings;
@@ -71,6 +83,10 @@ const onboardingSlice = createSlice({
       state.settings.extractionPrompt = action.payload;
       persistState(state);
     },
+    setThemeMode(state, action: PayloadAction<ThemeMode>) {
+      state.settings.themeMode = action.payload;
+      persistState(state);
+    },
     setGoogleAuthState(state, action: PayloadAction<GoogleAuthState>) {
       state.googleAuth = action.payload;
       persistState(state);
@@ -98,6 +114,7 @@ export const {
   setPreferredOpenAiModel,
   setPreferredAnthropicModel,
   setExtractionPrompt,
+  setThemeMode,
   setGoogleAuthState,
   completeOnboarding,
   signOutGoogle,
@@ -107,7 +124,10 @@ export const {
 export const onboardingReducer = onboardingSlice.reducer;
 
 export const selectSettings = (state: RootState) => state.onboarding.settings;
-export const selectGoogleAuth = (state: RootState) => state.onboarding.googleAuth;
+export const selectGoogleAuth = (state: RootState) =>
+  state.onboarding.googleAuth;
+export const selectThemeMode = (state: RootState) =>
+  state.onboarding.settings.themeMode;
 export const selectHasCompletedOnboarding = (state: RootState) =>
   Boolean(state.onboarding.settings.onboardingCompletedAt);
 export const selectHasLlmConfiguration = (state: RootState) =>
@@ -123,11 +143,16 @@ export const selectAppReadiness = createSelector(
     selectHasCompletedOnboarding,
     selectGoogleAuth,
   ],
-  (hasLlmConfiguration, hasGoogleAuthorization, hasCompletedOnboarding, googleAuth) => ({
+  (
+    hasLlmConfiguration,
+    hasGoogleAuthorization,
+    hasCompletedOnboarding,
+    googleAuth,
+  ) => ({
     hasLlmConfiguration,
     hasGoogleAuthorization,
     hasCompletedOnboarding,
     isCaptureReady: hasLlmConfiguration && hasCompletedOnboarding,
     googleAuthStatus: googleAuth.status,
-  })
+  }),
 );

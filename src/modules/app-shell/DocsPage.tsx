@@ -1,14 +1,25 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ExternalLink, Search } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../shared/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../shared/ui/card";
 import { ImageLightbox } from "../../shared/ui/image-lightbox";
+import { JsonLdScript } from "../../shared/seo/JsonLdScript";
+import { getDocsPageSchema } from "../../shared/seo/jsonLd";
 
 const sections = [
   { id: "what-is-meishi", label: "What is Meishi?" },
   { id: "api-keys", label: "How do I obtain an API key?" },
   { id: "how-to-use", label: "How do I use Meishi?" },
-  { id: "view-contacts", label: "How do I view contacts once they are scanned?" },
+  {
+    id: "view-contacts",
+    label: "How do I view contacts once they are scanned?",
+  },
   { id: "support", label: "How do I support Meishi?" },
 ] as const;
 
@@ -24,13 +35,14 @@ const tutorialSteps = [
         <Link to="/settings" className={internalDocLinkClassName}>
           Settings
         </Link>
-        , choose OpenAI or Anthropic, paste your own API key, confirm the selected
-        model, and save your setup. Google Contacts access is optional at this stage and
-        can wait until you want to sync.
+        , choose OpenAI or Anthropic, paste your own API key, confirm the
+        selected model, and save your setup. Google Contacts access is optional
+        at this stage and can wait until you want to sync.
       </>
     ),
     imageSrc: "/docs/screenshots/setup-settings-llm-provider.png",
-    imageAlt: "Cropped Meishi settings screen focused on the LLM Provider section with the provider picker, API key field, and model selection.",
+    imageAlt:
+      "Cropped Meishi settings screen focused on the LLM Provider section with the provider picker, API key field, and model selection.",
   },
   {
     title: "Capture one or more business-card images",
@@ -40,20 +52,21 @@ const tutorialSteps = [
         <Link to="/capture" className={internalDocLinkClassName}>
           Capture page
         </Link>
-        , use the camera or image library, and make sure both sides of the card are
-        included if the back contains useful details. Meishi keeps the card images on
-        your device while you work.
+        , use the camera or image library, and make sure both sides of the card
+        are included if the back contains useful details. Meishi keeps the card
+        images on your device while you work.
       </>
     ),
     imageSrc: "/docs/screenshots/capture-photoroll.png",
-    imageAlt: "Meishi capture screen cropped to the Photoroll section with uploaded business-card images.",
+    imageAlt:
+      "Meishi capture screen cropped to the Photoroll section with uploaded business-card images.",
   },
   {
     title: "Run extraction",
-    body:
-      "Start the scan after your images are loaded. Meishi sends the images to your chosen AI service, checks the response, and fills in the review form with the contact details it found.",
+    body: "Start the scan after your images are loaded. Meishi sends the images to your chosen AI service, checks the response, and fills in the review form with the contact details it found.",
     imageSrc: "/docs/screenshots/capture-extract-button.png",
-    imageAlt: "Close-up of the Extract contact draft button on the Meishi capture screen.",
+    imageAlt:
+      "Close-up of the Extract contact draft button on the Meishi capture screen.",
   },
   {
     title: "Review and correct the extracted contact",
@@ -73,14 +86,15 @@ const tutorialSteps = [
       </>
     ),
     imageSrc: "/docs/screenshots/review-verify-contact.png",
-    imageAlt: "Cropped Meishi review screen focused on the Verify contact section with extraction notes and editable contact fields.",
-    },
+    imageAlt:
+      "Cropped Meishi review screen focused on the Verify contact section with extraction notes and editable contact fields.",
+  },
   {
     title: "Export or sync",
-    body:
-      "From Review, either save a local `.vcf` file or sync the verified contact to Google Contacts. If you are not connected to Google yet, Meishi can prompt for Google authorization at sync time.",
+    body: "From Review, either save a local `.vcf` file or sync the verified contact to Google Contacts. If you are not connected to Google yet, Meishi can prompt for Google authorization at sync time.",
     imageSrc: "/docs/screenshots/review-save-buttons.png",
-    imageAlt: "Close-up of the Save vCard and Save to Google Contacts buttons on the Meishi review screen.",
+    imageAlt:
+      "Close-up of the Save vCard and Save to Google Contacts buttons on the Meishi review screen.",
   },
 ] as const;
 
@@ -105,7 +119,7 @@ function TutorialImage({
         alt={alt}
         className="h-auto w-full object-cover object-top"
       />
-      <span className="pointer-events-none absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white shadow-sm transition-colors group-hover:bg-black/80">
+      <span className="pointer-events-none absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-background/80 text-foreground shadow-sm backdrop-blur-sm transition-colors group-hover:bg-background/95">
         <Search className="h-4 w-4" />
       </span>
     </button>
@@ -146,8 +160,11 @@ function TutorialStepBody({ body }: { body: ReactNode }) {
 
 export function DocsPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [activeApiProvider, setActiveApiProvider] = useState<"openai" | "anthropic">("openai");
-  const activeImage = lightboxIndex === null ? null : tutorialSteps[lightboxIndex] ?? null;
+  const [activeApiProvider, setActiveApiProvider] = useState<
+    "openai" | "anthropic"
+  >("openai");
+  const activeImage =
+    lightboxIndex === null ? null : (tutorialSteps[lightboxIndex] ?? null);
   const hasMultipleImages = tutorialSteps.length > 1;
 
   function openLightbox(index: number) {
@@ -163,7 +180,9 @@ export function DocsPage() {
       return;
     }
 
-    setLightboxIndex((lightboxIndex - 1 + tutorialSteps.length) % tutorialSteps.length);
+    setLightboxIndex(
+      (lightboxIndex - 1 + tutorialSteps.length) % tutorialSteps.length,
+    );
   }
 
   function showNextImage() {
@@ -176,6 +195,7 @@ export function DocsPage() {
 
   return (
     <>
+      <JsonLdScript graph={getDocsPageSchema()} />
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 pb-8">
         <section className="rounded-[2rem] border border-border bg-gradient-to-br from-card via-card to-muted/50 px-6 py-8 shadow-card sm:px-8 sm:py-10">
           <div className="max-w-3xl space-y-4">
@@ -186,10 +206,10 @@ export function DocsPage() {
               How to use Meishi
             </h1>
             <p className="text-sm leading-6 text-muted-foreground sm:text-base">
-              Meishi is a browser-based app for scanning business cards, turning them into
-              organized contact details with AI, reviewing the results on your device,
-              exporting a vCard, and optionally sending the finished contact to Google
-              Contacts.
+              Meishi is a browser-based app for scanning business cards, turning
+              them into organized contact details with AI, reviewing the results
+              on your device, exporting a vCard, and optionally sending the
+              finished contact to Google Contacts.
             </p>
           </div>
         </section>
@@ -197,7 +217,9 @@ export function DocsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Table of contents</CardTitle>
-            <CardDescription>Jump directly to the section you need.</CardDescription>
+            <CardDescription>
+              Jump directly to the section you need.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ol className="grid gap-3 text-sm sm:grid-cols-2">
@@ -210,7 +232,9 @@ export function DocsPage() {
                     <span className="font-medium text-foreground">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <span className="text-muted-foreground">{section.label}</span>
+                    <span className="text-muted-foreground">
+                      {section.label}
+                    </span>
                   </a>
                 </li>
               ))}
@@ -228,21 +252,47 @@ export function DocsPage() {
           <Card>
             <CardContent className="grid gap-4 pt-6 md:grid-cols-2">
               <div className="space-y-3">
-                <h3 className="font-display text-lg font-semibold">What the app does</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  What the app does
+                </h3>
                 <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
-                  <li>Captures card images from your camera or image library.</li>
-                  <li>Pulls contact details from the card with OpenAI or Anthropic.</li>
-                  <li>Lets you verify and edit the extracted data before saving.</li>
-                  <li>Exports a `.vcf` file or syncs the verified contact to Google Contacts.</li>
+                  <li>
+                    Captures card images from your camera or image library.
+                  </li>
+                  <li>
+                    Pulls contact details from the card with OpenAI or
+                    Anthropic.
+                  </li>
+                  <li>
+                    Lets you verify and edit the extracted data before saving.
+                  </li>
+                  <li>
+                    Exports a `.vcf` file or syncs the verified contact to
+                    Google Contacts.
+                  </li>
                 </ul>
               </div>
               <div className="space-y-3">
-                <h3 className="font-display text-lg font-semibold">Good to know</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  Good to know
+                </h3>
                 <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
-                  <li>Meishi runs in your browser and keeps your AI key on this device.</li>
-                  <li>Google sign-in access is refreshed when needed instead of being permanently saved in the browser.</li>
-                  <li>Extra business-card images remain local even if one photo is uploaded to Google Contacts.</li>
-                  <li>Extraction and Google sync both require a network connection.</li>
+                  <li>
+                    Meishi runs in your browser and keeps your AI key on this
+                    device.
+                  </li>
+                  <li>
+                    Google sign-in access is refreshed when needed instead of
+                    being permanently saved in the browser.
+                  </li>
+                  <li>
+                    Extra business-card images remain local even if one photo is
+                    uploaded to Google Contacts.
+                  </li>
+                  <li>
+                    Extraction and Google sync both require a network
+                    connection.
+                  </li>
                 </ul>
               </div>
             </CardContent>
@@ -303,15 +353,20 @@ export function DocsPage() {
                 >
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      <h3 className="font-display text-lg font-semibold text-foreground">OpenAI</h3>
+                      <h3 className="font-display text-lg font-semibold text-foreground">
+                        OpenAI
+                      </h3>
                       <p className="text-sm leading-6 text-muted-foreground">
-                        Choose this if you want Meishi to read cards using OpenAI.
+                        Choose this if you want Meishi to read cards using
+                        OpenAI.
                       </p>
                     </div>
                     <ol className="space-y-2 text-sm leading-6 text-muted-foreground">
                       <li>Go to the OpenAI platform API keys page.</li>
                       <li>Sign in or create an OpenAI account.</li>
-                      <li>Create a new secret key in your API key dashboard.</li>
+                      <li>
+                        Create a new secret key in your API key dashboard.
+                      </li>
                       <li>
                         Copy the key immediately and paste it into Meishi on the{" "}
                         <Link
@@ -322,7 +377,10 @@ export function DocsPage() {
                         </Link>{" "}
                         page.
                       </li>
-                      <li>Meishi keeps this key in your browser on this device so it can use it again later.</li>
+                      <li>
+                        Meishi keeps this key in your browser on this device so
+                        it can use it again later.
+                      </li>
                     </ol>
                     <a
                       href="https://platform.openai.com/api-keys"
@@ -343,9 +401,12 @@ export function DocsPage() {
                 >
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      <h3 className="font-display text-lg font-semibold text-foreground">Anthropic</h3>
+                      <h3 className="font-display text-lg font-semibold text-foreground">
+                        Anthropic
+                      </h3>
                       <p className="text-sm leading-6 text-muted-foreground">
-                        Choose this if you want Meishi to read cards using Claude.
+                        Choose this if you want Meishi to read cards using
+                        Claude.
                       </p>
                     </div>
                     <ol className="space-y-2 text-sm leading-6 text-muted-foreground">
@@ -353,7 +414,8 @@ export function DocsPage() {
                       <li>Sign in or create an Anthropic account.</li>
                       <li>Create a new API key from the console.</li>
                       <li>
-                        Copy the key and paste it into Meishi during setup or later on the{" "}
+                        Copy the key and paste it into Meishi during setup or
+                        later on the{" "}
                         <Link
                           to="/settings"
                           className="font-medium text-foreground underline-offset-4 hover:underline"
@@ -362,7 +424,10 @@ export function DocsPage() {
                         </Link>{" "}
                         page.
                       </li>
-                      <li>Confirm that your Anthropic account has billing or usage access if your plan requires it.</li>
+                      <li>
+                        Confirm that your Anthropic account has billing or usage
+                        access if your plan requires it.
+                      </li>
                     </ol>
                     <a
                       href="https://console.anthropic.com/settings/keys"
@@ -424,7 +489,9 @@ export function DocsPage() {
           <Card>
             <CardContent className="grid gap-4 pt-6 md:grid-cols-3">
               <div className="space-y-2">
-                <h3 className="font-display text-lg font-semibold">Inside Meishi</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  Inside Meishi
+                </h3>
                 <p className="text-sm leading-6 text-muted-foreground">
                   Open{" "}
                   <Link
@@ -439,13 +506,19 @@ export function DocsPage() {
                 </p>
               </div>
               <div className="space-y-2">
-                <h3 className="font-display text-lg font-semibold">As a vCard</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  As a vCard
+                </h3>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Use the Save vCard action to download a `.vcf` file to your device. You can then open that file in your preferred contacts app.
+                  Use the Save vCard action to download a `.vcf` file to your
+                  device. You can then open that file in your preferred contacts
+                  app.
                 </p>
               </div>
               <div className="space-y-2">
-                <h3 className="font-display text-lg font-semibold">In Google Contacts</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  In Google Contacts
+                </h3>
                 <p className="text-sm leading-6 text-muted-foreground">
                   Use Sync to Google from{" "}
                   <Link
@@ -472,15 +545,21 @@ export function DocsPage() {
           <Card>
             <CardContent className="grid gap-4 pt-6 md:grid-cols-3">
               <div className="space-y-2">
-                <h3 className="font-display text-lg font-semibold">Use it and report gaps</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  Use it and report gaps
+                </h3>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Real card samples and bug reports help improve scan quality, editing flow, and sync reliability.
+                  Real card samples and bug reports help improve scan quality,
+                  editing flow, and sync reliability.
                 </p>
               </div>
               <div className="space-y-2">
-                <h3 className="font-display text-lg font-semibold">Star or share the project</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  Star or share the project
+                </h3>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Follow the repository and share it with people who need an easier way to turn business cards into digital contacts.
+                  Follow the repository and share it with people who need an
+                  easier way to turn business cards into digital contacts.
                 </p>
                 <a
                   href="https://github.com/mundanelunacy/meishi"
@@ -493,9 +572,12 @@ export function DocsPage() {
                 </a>
               </div>
               <div className="space-y-2">
-                <h3 className="font-display text-lg font-semibold">Buy Me a Coffee</h3>
+                <h3 className="font-display text-lg font-semibold">
+                  Buy Me a Coffee
+                </h3>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  If you want to support ongoing work directly, use the Buy Me a Coffee link from the menu or here.
+                  If you want to support ongoing work directly, use the Buy Me a
+                  Coffee link from the menu or here.
                 </p>
                 <a
                   href="https://www.buymeacoffee.com/mundanelunacy"
@@ -528,8 +610,10 @@ export function DocsPage() {
           onNext={hasMultipleImages ? showNextImage : undefined}
           caption={
             <>
-              <p className="text-base font-semibold text-white">{activeImage.title}</p>
-              <div className="mt-2 max-w-3xl text-sm leading-6 text-white/85">
+              <p className="text-base font-semibold text-white">
+                {activeImage.title}
+              </p>
+              <div className="mt-2 max-w-3xl text-sm leading-6 text-white/85 [&_a]:!text-white/85 [&_a]:underline [&_a]:underline-offset-4 [&_a]:decoration-white/40 [&_a:hover]:!text-white">
                 {activeImage.body}
               </div>
             </>

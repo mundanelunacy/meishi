@@ -4,7 +4,7 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 
 ## Product flow
 
-1. On first load, the user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, and can tune one shared advanced extraction prompt.
+1. On first load, the user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, can choose an appearance mode that defaults to the system setting, and can tune one shared advanced extraction prompt.
 2. The user captures one or more business-card images from a mobile camera or image library.
 3. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
 4. The review screen shows source images in the top section and an editable contact form in the lower section. The form covers Google-Contacts-style name/company fields such as prefix, phonetic name parts, nickname, file-as, and department, and expands to repeatable collections such as multiple emails, phone numbers, addresses, websites, related people, significant dates, and custom fields. Draft edits autosave locally for recovery after refresh.
@@ -18,10 +18,12 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 
 - `/`: default entry route that resolves into the app shell and redirects into the main user flow.
 - `/landing`: onboarding and setup entry point for provider selection, API key entry, and optional Google connection.
+- `/privacy`: static privacy policy page linked from the landing footer.
+- `/terms`: static terms of service page linked from the landing footer.
 - `/capture`: capture workspace for camera or file-library imports and extraction kickoff.
 - `/review`: review workspace for verifying extracted contact data, editing fields, exporting a vCard, and syncing to Google Contacts.
 - `/docs`: in-app documentation page with usage guidance, setup help, and walkthrough content.
-- `/settings`: post-onboarding settings screen for changing provider configuration, extraction settings, and Google connection state.
+- `/settings`: post-onboarding settings screen for changing provider configuration, appearance mode, extraction settings, and Google connection state.
 - `/auth/google/callback`: Google OAuth callback route used to complete the popup-based Google connection flow.
 
 ## Stack
@@ -38,33 +40,43 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 ## Architecture
 
 ### `src/modules/app-shell`
-- Top-level frame, navigation, route shell, app documentation page, app readiness display, and PWA update affordances.
+
+- Top-level frame, navigation, route shell, static docs/legal pages, app readiness display, and PWA update affordances.
 
 ### `src/modules/onboarding-settings`
+
 - First-run flow, provider selection, API key entry, readiness selectors, and settings management.
 
 ### `src/modules/google-auth`
+
 - Firebase-backed Google auth client boundary for anonymous Firebase identity, popup OAuth connect, and on-demand access-token retrieval.
 
 ### `src/modules/card-capture`
+
 - Camera and file-library capture flows plus image normalization hooks.
 
 ### `src/modules/card-extraction`
+
 - LLM provider abstraction, OpenAI and Anthropic structured-output extraction, response parsing, and schema validation.
 
 ### `src/modules/contact-review`
+
 - Editable review form, source-image pairing, dynamic repeatable field editing, developer debug preview, and verified-contact finalization.
 
 ### `src/modules/google-contacts`
+
 - Google People API contact creation, contact photo upload, and sync result tracking.
 
 ### `src/modules/vcard-export`
+
 - Browser-side vCard serialization and `.vcf` download handling.
 
 ### `src/modules/local-data`
+
 - Browser persistence boundaries for `localStorage` and IndexedDB, including draft recovery and append-only sync history.
 
 ### `src/modules/pwa-runtime`
+
 - PWA lifecycle hooks, install prompting, prompt-based updates, and explicit offline-runtime messaging.
 
 ## Data boundaries
@@ -73,6 +85,7 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
   - LLM provider choice
   - provider-specific API keys
   - preferred OpenAI and Anthropic models
+  - appearance mode preference (`system`, `light`, or `dark`)
   - shared advanced extraction prompt
   - limited Google auth metadata such as scope, connected account email, and connection timestamp, but not Google bearer tokens
 - IndexedDB
@@ -125,7 +138,8 @@ Cloud Functions for server-side endpoints that should not run in the browser.
 ### Project files
 
 - [firebase.json](./firebase.json):
-  deploy targets, hosting rewrite, and functions predeploy commands
+  deploy targets, hosting rewrite, hosting predeploy build, and functions
+  predeploy commands
 - [.firebaserc](./.firebaserc):
   default Firebase project alias
 - [firestore.rules](./firestore.rules):
@@ -194,11 +208,26 @@ firebase deploy --only functions
 
 ### Hosting behavior
 
-- Hosting publishes the Vite production build from `dist`
+- Hosting runs `npm run build` before deploy, then publishes the Vite
+  production build from `dist`
+- The production build also emits `dist/sitemap.xml` and `dist/robots.txt`
+  for the public app routes
 - All routes rewrite to `/index.html`, which is required for the TanStack
   Router SPA
+- Static files copied from `public/` remain available at the deploy root, so
+  Google Search Console verification files such as
+  `google685cd3cf50f37c24.html` are served directly
 - `VITE_*` values are compiled into the browser build at build time, so update
   env files before running `npm run build`
+
+Set `SITE_ORIGIN` in the build environment to override the default canonical
+origin used for `sitemap.xml` and `robots.txt`. If unset, the build falls back
+to `https://meishi-492400.web.app`.
+
+The sitemap intentionally includes only destination pages:
+`/landing`, `/capture`, `/review`, `/settings`, `/docs`, `/privacy`, and
+`/terms`. It excludes the redirect-only `/` route and the transient
+`/auth/google/callback` OAuth handoff route.
 
 ### Functions behavior
 

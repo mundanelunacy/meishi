@@ -4,7 +4,7 @@
 
 - Provide the top-level application frame.
 - Render navigation for landing, capture, review, docs, settings, and external links.
-- Render the static `/docs` page for in-app usage documentation.
+- Render the static `/docs`, `/privacy`, and `/terms` pages.
 - Surface app-wide onboarding-driven route gating for capture/review navigation.
 - Host PWA update prompts and installation-safe shell behavior.
 
@@ -33,6 +33,8 @@
 - `/capture`: image capture and extraction start point.
 - `/review`: review, edit, export, and sync surface.
 - `/docs`: static in-app help and usage documentation.
+- `/privacy`: static privacy policy page.
+- `/terms`: static terms of service page.
 - `/settings`: later configuration and account-management surface.
 - `/auth/google/callback`: OAuth callback handoff route for Google connection completion.
 
