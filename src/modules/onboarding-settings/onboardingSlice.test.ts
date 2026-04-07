@@ -8,6 +8,7 @@ import {
   setOpenAiApiKey,
   setPreferredAnthropicModel,
   setPreferredOpenAiModel,
+  setThemeMode,
 } from "./onboardingSlice";
 
 describe("onboardingSlice", () => {
@@ -38,6 +39,12 @@ describe("onboardingSlice", () => {
     expect(withAnthropicModel.settings.preferredAnthropicModel).toBe(
       "claude-sonnet-4-20250514",
     );
+  });
+
+  it("updates the persisted theme preference", () => {
+    const withDarkTheme = onboardingReducer(undefined, setThemeMode("dark"));
+
+    expect(withDarkTheme.settings.themeMode).toBe("dark");
   });
 
   it("derives app readiness from auth and settings state", () => {

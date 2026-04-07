@@ -29,6 +29,7 @@ describe("local-data/storage", () => {
           llmApiKey: "sk-test",
           preferredOpenAiModel: "gpt-5.4-mini",
           extractionPrompt: "custom prompt",
+          themeMode: "dark",
         },
         googleAuth: {
           scope: "contacts",
@@ -46,6 +47,7 @@ describe("local-data/storage", () => {
         openAiApiKey: "sk-test",
         preferredOpenAiModel: "gpt-5.4-mini",
         extractionPrompt: "custom prompt",
+        themeMode: "dark",
       },
       googleAuth: {
         scope: "contacts",
@@ -74,5 +76,20 @@ describe("local-data/storage", () => {
       }),
     ).not.toThrow();
     expect(() => clearPersistedState()).not.toThrow();
+  });
+
+  it("falls back to the default theme when the persisted theme is invalid", () => {
+    window.localStorage.setItem(
+      "meishi.settings",
+      JSON.stringify({
+        settings: {
+          themeMode: "sepia",
+        },
+      }),
+    );
+
+    expect(loadPersistedState()).toEqual({
+      settings: defaultSettings,
+    });
   });
 });

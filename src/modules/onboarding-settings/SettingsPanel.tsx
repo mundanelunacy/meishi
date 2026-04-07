@@ -3,12 +3,7 @@ import { hasFirebaseConfiguration } from "../../app/env";
 import { Button } from "../../shared/ui/button";
 import { Select } from "../../shared/ui/select";
 import { Spinner } from "../../shared/ui/spinner";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../../shared/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../../shared/ui/card";
 import { Input } from "../../shared/ui/input";
 import { Label } from "../../shared/ui/label";
 import { Alert } from "../../shared/ui/alert";
@@ -24,6 +19,7 @@ import {
   setOpenAiApiKey,
   setPreferredAnthropicModel,
   setPreferredOpenAiModel,
+  setThemeMode,
   signOutGoogle,
 } from "./onboardingSlice";
 import {
@@ -51,7 +47,9 @@ export function SettingsPanel() {
     providerModel,
   );
 
-  async function handleGoogleStatusChange(nextValue: "connected" | "signed_out") {
+  async function handleGoogleStatusChange(
+    nextValue: "connected" | "signed_out",
+  ) {
     if (nextValue === "connected") {
       if (!hasFirebaseConfiguration() || googleAuth.status === "connecting") {
         return;
@@ -75,7 +73,9 @@ export function SettingsPanel() {
           }),
         );
         pushToast(
-          error instanceof Error ? error.message : "Unable to reconnect Google.",
+          error instanceof Error
+            ? error.message
+            : "Unable to reconnect Google.",
         );
       }
 
@@ -200,10 +200,12 @@ export function SettingsPanel() {
 
           <fieldset>
             <div className="flex flex-wrap gap-3">
-              {([
-                ["connected", "Connected"],
-                ["signed_out", "Disconnected"],
-              ] as const).map(([value, label]) => {
+              {(
+                [
+                  ["connected", "Connected"],
+                  ["signed_out", "Disconnected"],
+                ] as const
+              ).map(([value, label]) => {
                 const checked =
                   value === "connected"
                     ? googleAuth.status === "connected"
@@ -232,7 +234,8 @@ export function SettingsPanel() {
                       }}
                     />
                     {label}
-                    {googleAuth.status === "connecting" && value === "connected" ? (
+                    {googleAuth.status === "connecting" &&
+                    value === "connected" ? (
                       <Spinner />
                     ) : null}
                   </label>
@@ -240,6 +243,37 @@ export function SettingsPanel() {
               })}
             </div>
           </fieldset>
+          {googleAuth.status === "connected" && googleAuth.accountEmail ? (
+            <p className="text-sm text-muted-foreground">
+              Signed in as {googleAuth.accountEmail}
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Label htmlFor="settings-theme">Color theme</Label>
+          <Select
+            id="settings-theme"
+            value={settings.themeMode}
+            onChange={(event) =>
+              dispatch(
+                setThemeMode(event.target.value as typeof settings.themeMode),
+              )
+            }
+          >
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            System follows your device appearance automatically. Light and dark
+            stay pinned until you change them here.
+          </p>
         </CardContent>
       </Card>
 
@@ -275,7 +309,8 @@ export function SettingsPanel() {
           </Button>
           <p className="text-xs text-muted-foreground">
             Clears saved API keys, preferred models, extraction prompt, Google
-            connection metadata, and onboarding progress from this browser.
+            connection metadata, appearance preference, and onboarding progress
+            from this browser.
           </p>
         </CardContent>
       </Card>

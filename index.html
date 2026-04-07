@@ -12,6 +12,42 @@
     />
     <link rel="icon" type="image/svg+xml" href="/meishi-mark.svg" />
     <title>Meishi</title>
+    <script>
+      (() => {
+        const storageKey = "meishi.settings";
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+        function sanitizeThemeMode(value) {
+          return value === "light" || value === "dark" || value === "system"
+            ? value
+            : "system";
+        }
+
+        function resolveTheme(themeMode) {
+          return themeMode === "system"
+            ? mediaQuery.matches
+              ? "dark"
+              : "light"
+            : themeMode;
+        }
+
+        function applyTheme(themeMode) {
+          const effectiveTheme = resolveTheme(themeMode);
+          const root = document.documentElement;
+          root.classList.toggle("dark", effectiveTheme === "dark");
+          root.dataset.theme = effectiveTheme;
+          root.style.colorScheme = effectiveTheme;
+        }
+
+        try {
+          const raw = window.localStorage.getItem(storageKey);
+          const parsed = raw ? JSON.parse(raw) : null;
+          applyTheme(sanitizeThemeMode(parsed?.settings?.themeMode));
+        } catch {
+          applyTheme("system");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

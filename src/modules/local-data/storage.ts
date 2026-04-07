@@ -1,7 +1,12 @@
-import type { AppSettings, GoogleAuthState } from "../../shared/types/models";
+import type {
+  AppSettings,
+  GoogleAuthState,
+  ThemeMode,
+} from "../../shared/types/models";
 import { DEFAULT_EXTRACTION_PROMPT } from "../../shared/lib/extractionPrompt";
 
 const SETTINGS_KEY = "meishi.settings";
+const VALID_THEME_MODES = new Set<ThemeMode>(["system", "light", "dark"]);
 
 export interface PersistedOnboardingState {
   settings: AppSettings;
@@ -15,6 +20,7 @@ const defaultSettings: AppSettings = {
   preferredOpenAiModel: "gpt-5.4-mini",
   preferredAnthropicModel: "claude-sonnet-4-6",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
+  themeMode: "system",
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -32,6 +38,7 @@ function readLocalStorage() {
 function sanitizeSettings(settings: unknown): AppSettings {
   const candidate = isRecord(settings) ? settings : {};
   const llmProvider = candidate.llmProvider;
+  const themeMode = candidate.themeMode;
   const legacyApiKey =
     typeof candidate.llmApiKey === "string" ? candidate.llmApiKey : "";
 
@@ -63,6 +70,11 @@ function sanitizeSettings(settings: unknown): AppSettings {
       candidate.extractionPrompt.trim().length > 0
         ? candidate.extractionPrompt
         : defaultSettings.extractionPrompt,
+    themeMode:
+      typeof themeMode === "string" &&
+      VALID_THEME_MODES.has(themeMode as ThemeMode)
+        ? (themeMode as ThemeMode)
+        : defaultSettings.themeMode,
     onboardingCompletedAt:
       typeof candidate.onboardingCompletedAt === "string"
         ? candidate.onboardingCompletedAt

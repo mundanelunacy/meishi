@@ -10,6 +10,7 @@ import {
   onboardingReducer,
   setGoogleAuthState,
   setOpenAiApiKey,
+  setThemeMode,
 } from "./onboardingSlice";
 import { SettingsPanel } from "./SettingsPanel";
 
@@ -26,7 +27,8 @@ vi.mock("../../app/env", () => ({
 }));
 
 vi.mock("../google-auth/googleIdentity", () => ({
-  connectGoogleContacts: (...args: unknown[]) => connectGoogleContactsMock(...args),
+  connectGoogleContacts: (...args: unknown[]) =>
+    connectGoogleContactsMock(...args),
   createInitialGoogleAuthState: () => ({
     status: "signed_out",
     firebaseUid: null,
@@ -34,7 +36,8 @@ vi.mock("../google-auth/googleIdentity", () => ({
     accountEmail: undefined,
     connectedAt: null,
   }),
-  disconnectGoogleContacts: (...args: unknown[]) => disconnectGoogleContactsMock(...args),
+  disconnectGoogleContacts: (...args: unknown[]) =>
+    disconnectGoogleContactsMock(...args),
 }));
 
 function renderPanel(
@@ -48,10 +51,7 @@ function renderPanel(
     },
     preloadedState: {
       onboarding: onboardingReducer(
-        onboardingReducer(
-          undefined,
-          setOpenAiApiKey("sk-test")
-        ),
+        onboardingReducer(undefined, setOpenAiApiKey("sk-test")),
         setGoogleAuthState({
           status: "connected",
           firebaseUid: "firebase-uid-1",
@@ -59,7 +59,7 @@ function renderPanel(
           accountEmail: "developer@example.com",
           connectedAt: "2026-04-06T00:00:00.000Z",
           ...googleAuthOverride,
-        })
+        }),
       ),
     },
   });
@@ -67,7 +67,7 @@ function renderPanel(
   render(
     <Provider store={store}>
       <SettingsPanel />
-    </Provider>
+    </Provider>,
   );
 
   return { store };
@@ -114,6 +114,10 @@ describe("SettingsPanel", () => {
     const { store } = renderPanel();
     const user = userEvent.setup();
 
+    expect(
+      screen.getByText(/signed in as developer@example.com/i),
+    ).toBeInTheDocument();
+
     await user.click(screen.getByRole("radio", { name: /^disconnected$/i }));
 
     await waitFor(() => {
@@ -122,8 +126,19 @@ describe("SettingsPanel", () => {
 
     expect(store.getState().onboarding.googleAuth.status).toBe("signed_out");
     expect(
+      screen.queryByText(/signed in as developer@example.com/i),
+    ).not.toBeInTheDocument();
+    expect(
       screen.queryByText(/no google account connected/i),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows the signed-in email when Google is connected", () => {
+    renderPanel();
+
+    expect(
+      screen.getByText(/signed in as developer@example.com/i),
+    ).toBeInTheDocument();
   });
 
   it("persists advanced extraction settings in onboarding state", async () => {
@@ -131,22 +146,60 @@ describe("SettingsPanel", () => {
     const user = userEvent.setup();
 
     await user.clear(screen.getByLabelText(/advanced extraction prompt/i));
-    await user.type(screen.getByLabelText(/advanced extraction prompt/i), "Use company name exactly as printed.");
+    await user.type(
+      screen.getByLabelText(/advanced extraction prompt/i),
+      "Use company name exactly as printed.",
+    );
 
     expect(store.getState().onboarding.settings.extractionPrompt).toBe(
-      "Use company name exactly as printed."
+      "Use company name exactly as printed.",
     );
-    expect(screen.queryByLabelText(/developer debug mode/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/developer debug mode/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("updates the color theme preference", async () => {
+    const { store } = renderPanel();
+    const user = userEvent.setup();
+
+    await user.selectOptions(screen.getByLabelText(/color theme/i), "dark");
+
+    expect(store.getState().onboarding.settings.themeMode).toBe("dark");
   });
 
   it("uses the landing-style provider form", async () => {
     renderPanel();
 
     const user = userEvent.setup();
-    await user.selectOptions(screen.getByLabelText(/llm provider/i), "anthropic");
+    await user.selectOptions(
+      screen.getByLabelText(/llm provider/i),
+      "anthropic",
+    );
 
     expect(screen.getByLabelText(/anthropic api key/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/anthropic model/i)).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: /claude sonnet 4\.6/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /claude sonnet 4\.6/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the stored color theme preference", () => {
+    const store = configureStore({
+      reducer: {
+        onboarding: onboardingReducer,
+      },
+      preloadedState: {
+        onboarding: onboardingReducer(undefined, setThemeMode("dark")),
+      },
+    });
+
+    render(
+      <Provider store={store}>
+        <SettingsPanel />
+      </Provider>,
+    );
+
+    expect(screen.getByLabelText(/color theme/i)).toHaveValue("dark");
   });
 });
