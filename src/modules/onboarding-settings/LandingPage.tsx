@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Brain,
   CircleAlert,
@@ -550,17 +550,31 @@ export function LandingPage() {
 
       {/* ───────────────────── FOOTER ───────────────────── */}
       <footer className="border-t border-border bg-muted/20">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6 text-xs text-muted-foreground sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <span>Meishi &mdash; AGPL-3.0 License</span>
-          <a
-            href="https://github.com/mundanelunacy/meishi"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
-          >
-            <Github className="h-3.5 w-3.5" />
-            GitHub
-          </a>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Link
+              to="/privacy"
+              className="transition-colors hover:text-foreground"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              to="/terms"
+              className="transition-colors hover:text-foreground"
+            >
+              Terms of Service
+            </Link>
+            <a
+              href="https://github.com/mundanelunacy/meishi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+            >
+              <Github className="h-3.5 w-3.5" />
+              GitHub
+            </a>
+          </div>
         </div>
       </footer>
     </div>

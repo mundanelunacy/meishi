@@ -18,6 +18,8 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 
 - `/`: default entry route that resolves into the app shell and redirects into the main user flow.
 - `/landing`: onboarding and setup entry point for provider selection, API key entry, and optional Google connection.
+- `/privacy`: static privacy policy page linked from the landing footer.
+- `/terms`: static terms of service page linked from the landing footer.
 - `/capture`: capture workspace for camera or file-library imports and extraction kickoff.
 - `/review`: review workspace for verifying extracted contact data, editing fields, exporting a vCard, and syncing to Google Contacts.
 - `/docs`: in-app documentation page with usage guidance, setup help, and walkthrough content.
@@ -39,7 +41,7 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 
 ### `src/modules/app-shell`
 
-- Top-level frame, navigation, route shell, app documentation page, app readiness display, and PWA update affordances.
+- Top-level frame, navigation, route shell, static docs/legal pages, app readiness display, and PWA update affordances.
 
 ### `src/modules/onboarding-settings`
 
