@@ -363,6 +363,14 @@ describe("CaptureWorkspace", () => {
       screen.getByRole("dialog", { name: /front\.png/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/1 of 2/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /zoom in/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /zoom out/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /reset view/i })).toBeDisabled();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: /zoom in/i }));
+
+    expect(screen.getByRole("button", { name: /zoom out/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /reset view/i })).toBeEnabled();
 
     await userEvent
       .setup()

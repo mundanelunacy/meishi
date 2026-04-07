@@ -8,7 +8,9 @@ import {
 import {
   Camera,
   Coffee,
+  ContactRound,
   Github,
+  BookOpen,
   Menu,
   ScanSearch,
   Settings,
@@ -18,6 +20,7 @@ import { useAppSelector } from "../../app/hooks";
 import { selectAppReadiness } from "../onboarding-settings/onboardingSlice";
 import { Button } from "../../shared/ui/button";
 import { usePwaLifecycle } from "../pwa-runtime";
+import { getPrimarySwipeDestination } from "./navigation";
 
 const primaryNavItems = [
   { type: "internal", to: "/capture", label: "Capture", icon: Camera },
@@ -25,12 +28,14 @@ const primaryNavItems = [
 ] as const;
 
 const overflowNavItems = [
+  { type: "internal", to: "/settings", label: "Settings", icon: Settings },
   {
     type: "external",
-    href: "https://github.com/mundanelunacy/meishi",
-    label: "GitHub",
-    icon: Github,
+    href: "https://contacts.google.com/",
+    label: "Google Contacts",
+    icon: ContactRound,
   },
+  { type: "internal", to: "/docs", label: "Docs", icon: BookOpen },
   {
     type: "external",
     href: "https://buymeacoffee.com/mundanelunacy",
@@ -38,36 +43,13 @@ const overflowNavItems = [
     menuLabel: "Buy Me a Coffee",
     icon: Coffee,
   },
-  { type: "internal", to: "/settings", label: "Settings", icon: Settings },
+  {
+    type: "external",
+    href: "https://github.com/mundanelunacy/meishi",
+    label: "GitHub",
+    icon: Github,
+  },
 ] as const;
-
-export function getPrimarySwipeDestination({
-  currentPath,
-  deltaX,
-  deltaY,
-}: {
-  currentPath: string;
-  deltaX: number;
-  deltaY: number;
-}) {
-  const primaryRouteIndex = primaryNavItems.findIndex(
-    (item) => item.to === currentPath,
-  );
-
-  if (primaryRouteIndex < 0) {
-    return null;
-  }
-
-  const absX = Math.abs(deltaX);
-  const absY = Math.abs(deltaY);
-
-  if (absX < 56 || absX < absY * 1.35) {
-    return null;
-  }
-
-  const nextIndex = deltaX < 0 ? primaryRouteIndex + 1 : primaryRouteIndex - 1;
-  return primaryNavItems[nextIndex]?.to ?? null;
-}
 
 export function AppShell() {
   const navigate = useNavigate();
@@ -190,11 +172,7 @@ export function AppShell() {
           <div
             role="menu"
             aria-label="More navigation"
-            className={
-              placement === "desktop"
-                ? "absolute right-0 top-full z-50 mt-2 flex min-w-52 flex-col rounded-2xl border border-border bg-card p-2 shadow-lg"
-                : "absolute bottom-full right-0 z-50 mb-3 flex min-w-52 flex-col rounded-2xl border border-border bg-card p-2 shadow-lg"
-            }
+            className="absolute right-0 top-full z-50 mt-2 flex min-w-52 flex-col rounded-2xl border border-border bg-card p-2 shadow-lg"
           >
             {overflowNavItems.map((item) => {
               const Icon = item.icon;
@@ -280,7 +258,7 @@ export function AppShell() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 lg:px-8">
       {/* ── Top header / desktop navbar ── */}
-      <header className="grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 border-b border-border">
+      <header className="grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         <div className="flex min-w-0 items-center">
           <Link to="/landing" className="flex items-center gap-2.5">
             <img src="/meishi-mark.svg" alt="" className="h-7 w-7" />
@@ -304,8 +282,9 @@ export function AppShell() {
           </div>
         </nav>
 
-        <div className="hidden items-center justify-end self-stretch md:flex">
-          {renderOverflowMenu("desktop")}
+        <div className="flex items-center justify-end self-stretch">
+          <div className="md:hidden">{renderOverflowMenu("mobile")}</div>
+          <div className="hidden md:flex">{renderOverflowMenu("desktop")}</div>
         </div>
       </header>
 
@@ -356,7 +335,7 @@ export function AppShell() {
 
       {/* ── Bottom nav (mobile only) ── */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden">
-        <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto] items-center gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-center px-4 sm:px-6">
           <div className="flex min-w-0 justify-center">
             <div
               className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 p-1"
@@ -366,9 +345,6 @@ export function AppShell() {
             >
               {primaryNavItems.map((item) => renderPrimaryNavLink(item))}
             </div>
-          </div>
-          <div className="flex items-center justify-end">
-            {renderOverflowMenu("mobile")}
           </div>
         </div>
       </nav>

@@ -14,6 +14,16 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 8. Saving to Google creates a contact and uploads one selected image as the Google contact photo.
 9. Additional captured images remain local in IndexedDB because Google Contacts does not support arbitrary multi-image business-card attachments.
 
+## Routes
+
+- `/`: default entry route that resolves into the app shell and redirects into the main user flow.
+- `/landing`: onboarding and setup entry point for provider selection, API key entry, and optional Google connection.
+- `/capture`: capture workspace for camera or file-library imports and extraction kickoff.
+- `/review`: review workspace for verifying extracted contact data, editing fields, exporting a vCard, and syncing to Google Contacts.
+- `/docs`: in-app documentation page with usage guidance, setup help, and walkthrough content.
+- `/settings`: post-onboarding settings screen for changing provider configuration, extraction settings, and Google connection state.
+- `/auth/google/callback`: Google OAuth callback route used to complete the popup-based Google connection flow.
+
 ## Stack
 
 - React 18 + Vite 5
@@ -28,7 +38,7 @@ Meishi is a TypeScript-only React/Vite PWA for scanning business cards, extracti
 ## Architecture
 
 ### `src/modules/app-shell`
-- Top-level frame, navigation, route shell, app readiness display, and PWA update affordances.
+- Top-level frame, navigation, route shell, app documentation page, app readiness display, and PWA update affordances.
 
 ### `src/modules/onboarding-settings`
 - First-run flow, provider selection, API key entry, readiness selectors, and settings management.

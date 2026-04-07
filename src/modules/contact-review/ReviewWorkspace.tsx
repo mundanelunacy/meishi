@@ -547,6 +547,10 @@ export function ReviewWorkspace() {
   const activeDraft = draft;
 
   async function onSubmit(values: ReviewFormValues) {
+    if (!hasReviewData(values)) {
+      return;
+    }
+
     const draftFields = getDraftFields(values);
     dispatch(updateDraft(draftFields));
     await saveDraft({
@@ -602,6 +606,11 @@ export function ReviewWorkspace() {
 
   async function handleSaveVCard() {
     const values = form.getValues();
+
+    if (!hasReviewData(values)) {
+      return;
+    }
+
     const draftFields = getDraftFields(values);
     const updatedDraft = {
       ...activeDraft,
@@ -979,6 +988,7 @@ export function ReviewWorkspace() {
               type="button"
               variant="outline"
               className="h-14 rounded-xl"
+              disabled={!hasAnyReviewData}
               onClick={() => {
                 void handleSaveVCard();
               }}
@@ -990,7 +1000,7 @@ export function ReviewWorkspace() {
               size="lg"
               type="submit"
               className="h-14 rounded-xl"
-              disabled={isSyncing || isAuthorizing}
+              disabled={!hasAnyReviewData || isSyncing || isAuthorizing}
             >
               <UserRoundPlus className="h-4 w-4" />
               {isSyncing || isAuthorizing ? <Spinner /> : null}

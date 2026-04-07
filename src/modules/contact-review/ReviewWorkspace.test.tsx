@@ -509,6 +509,109 @@ describe("ReviewWorkspace", () => {
     expect(syncContactMock).not.toHaveBeenCalled();
   });
 
+  it("disables both save actions when the review form is clean", async () => {
+    renderWorkspace({
+      reviewDraft: {
+        ...preloadedState.reviewDraft,
+        draft: {
+          ...preloadedState.reviewDraft.draft,
+          fullName: "",
+          namePrefix: "",
+          firstName: "",
+          phoneticFirstName: "",
+          phoneticMiddleName: "",
+          phoneticLastName: "",
+          lastName: "",
+          nickname: "",
+          fileAs: "",
+          organization: "",
+          department: "",
+          title: "",
+          email: "",
+          phone: "",
+          website: "",
+          notes: "",
+          address: "",
+          emails: [],
+          phones: [],
+          websites: [],
+          addresses: [],
+          relatedPeople: [],
+          significantDates: [],
+          customFields: [],
+          confidenceNotes: [],
+        },
+      },
+    });
+
+    const saveVCardButton = screen.getByRole("button", { name: /save vcard/i });
+    const saveToGoogleButton = screen.getByRole("button", {
+      name: /save to google contacts/i,
+    });
+
+    expect(saveVCardButton).toBeDisabled();
+    expect(saveToGoogleButton).toBeDisabled();
+
+    const user = userEvent.setup();
+    await user.click(saveVCardButton);
+    await user.click(saveToGoogleButton);
+
+    expect(saveContactVCardMock).not.toHaveBeenCalled();
+    expect(syncContactMock).not.toHaveBeenCalled();
+  });
+
+  it("re-enables both save actions after the user enters review data", async () => {
+    renderWorkspace({
+      reviewDraft: {
+        ...preloadedState.reviewDraft,
+        draft: {
+          ...preloadedState.reviewDraft.draft,
+          fullName: "",
+          namePrefix: "",
+          firstName: "",
+          phoneticFirstName: "",
+          phoneticMiddleName: "",
+          phoneticLastName: "",
+          lastName: "",
+          nickname: "",
+          fileAs: "",
+          organization: "",
+          department: "",
+          title: "",
+          email: "",
+          phone: "",
+          website: "",
+          notes: "",
+          address: "",
+          emails: [],
+          phones: [],
+          websites: [],
+          addresses: [],
+          relatedPeople: [],
+          significantDates: [],
+          customFields: [],
+          confidenceNotes: [],
+        },
+      },
+    });
+
+    const user = userEvent.setup();
+    const saveVCardButton = screen.getByRole("button", { name: /save vcard/i });
+    const saveToGoogleButton = screen.getByRole("button", {
+      name: /save to google contacts/i,
+    });
+
+    expect(saveVCardButton).toBeDisabled();
+    expect(saveToGoogleButton).toBeDisabled();
+
+    await user.type(screen.getByLabelText(/display name/i), "Ada Byron");
+
+    await waitFor(() => {
+      expect(saveVCardButton).toBeEnabled();
+      expect(saveToGoogleButton).toBeEnabled();
+    });
+  });
+
   it("clears the reviewed form and finalized contact state from the broom action", async () => {
     Object.defineProperty(window, "location", {
       configurable: true,

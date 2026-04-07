@@ -459,14 +459,14 @@ export function CaptureWorkspace() {
                 ) : (
                   <Camera className="h-8 w-8 text-primary" />
                 )}
-                <span className="text-base font-semibold">
+                <span className="text-sm font-medium">
                   {isStartingCamera ? "Opening camera..." : "Open Camera"}
                 </span>
               </Button>
 
               <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-background px-4 py-6 text-center transition-colors hover:bg-muted/40">
                 <ImagePlus className="h-8 w-8 text-primary" />
-                <span className="text-base font-semibold">
+                <span className="text-sm font-medium">
                   Add images from library
                 </span>
                 <input
@@ -492,7 +492,6 @@ export function CaptureWorkspace() {
             <Button
               type="button"
               className="w-full"
-              size="lg"
               onClick={handleExtract}
               disabled={extraction.isLoading || images.length === 0}
             >

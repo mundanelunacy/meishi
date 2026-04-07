@@ -31,7 +31,7 @@ import {
 
 /* ── Hero background ── */
 const HERO_IMAGE_URL =
-	"https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1400&q=80&auto=format&fit=crop";
+	"/landing/networking_scene.jpg";
 
 /* ── Feature cards data ── */
 const features = [

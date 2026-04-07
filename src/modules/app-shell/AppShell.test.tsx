@@ -10,7 +10,8 @@ import {
   completeOnboarding,
   onboardingReducer,
 } from "../onboarding-settings/onboardingSlice";
-import { AppShell, getPrimarySwipeDestination } from "./AppShell";
+import { AppShell } from "./AppShell";
+import { getPrimarySwipeDestination } from "./navigation";
 
 const navigateMock = vi.fn();
 let mockPathname = "/landing";
@@ -61,7 +62,7 @@ function renderShell() {
 }
 
 describe("AppShell", () => {
-  it("renders the minimal shell with primary navigation, overflow menu, and route outlet", () => {
+  it("renders the minimal shell with primary navigation, header overflow menus, and route outlet", () => {
     mockPathname = "/landing";
     navigateMock.mockReset();
     renderShell();
@@ -80,7 +81,7 @@ describe("AppShell", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens the overflow menu with GitHub, Support, and Settings links", async () => {
+  it("opens the overflow menu in the expected order", async () => {
     const user = userEvent.setup();
     mockPathname = "/landing";
     navigateMock.mockReset();
@@ -89,18 +90,27 @@ describe("AppShell", () => {
 
     await user.click(screen.getAllByLabelText("Open navigation menu")[0]);
 
-    expect(screen.getByRole("menu", { name: "More navigation" })).toBeVisible();
-    expect(screen.getByRole("menuitem", { name: "GitHub" })).toHaveAttribute(
-      "href",
-      "https://github.com/mundanelunacy/meishi",
-    );
-    expect(screen.getByRole("menuitem", { name: "Support" })).toHaveAttribute(
+    const menu = screen.getByRole("menu", { name: "More navigation" });
+    expect(menu).toBeVisible();
+
+    const items = screen.getAllByRole("menuitem");
+    expect(items.map((item) => item.textContent?.trim())).toEqual([
+      "Settings",
+      "Google Contacts",
+      "Docs",
+      "Buy Me a Coffee",
+      "GitHub",
+    ]);
+    expect(items[0]).toHaveAttribute("href", "/settings");
+    expect(items[1]).toHaveAttribute("href", "https://contacts.google.com/");
+    expect(items[2]).toHaveAttribute("href", "/docs");
+    expect(items[3]).toHaveAttribute(
       "href",
       "https://buymeacoffee.com/mundanelunacy",
     );
-    expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveAttribute(
+    expect(items[4]).toHaveAttribute(
       "href",
-      "/settings",
+      "https://github.com/mundanelunacy/meishi",
     );
   });
 

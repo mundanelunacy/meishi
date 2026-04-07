@@ -19,6 +19,7 @@
 - Review draft notes preserve extracted `X-` fields and ambiguous text so fidelity is not lost when non-standard or ambiguous card data appears
 - Inline `?debug=1` preview for raw extraction, vCard, and Google payload inspection
 - Explicit export actions for saving a vCard or syncing to Google after verification
+- Save actions stay disabled until the reviewed form contains meaningful contact data
 - On-demand Google authorization from review before sync when no Google session is active
 
 ## Interfaces
