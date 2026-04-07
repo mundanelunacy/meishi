@@ -21,62 +21,11 @@ service cloud.firestore {
     //
     // ===============================================================
 
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    function hasOnlyAllowedFields(fields) {
-      return request.resource.data.keys().hasOnly(fields);
-    }
-
-    function hasRequiredFields(fields) {
-      return request.resource.data.keys().hasAll(fields);
-    }
-
-    function isValidOptionalString(field, minLen, maxLen) {
-      return !(field in request.resource.data) ||
-        request.resource.data[field] == null ||
-        (
-          request.resource.data[field] is string &&
-          request.resource.data[field].size() >= minLen &&
-          request.resource.data[field].size() <= maxLen
-        );
-    }
-
-    function isValidDateString(value) {
-      return value is string &&
-        value.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$");
-    }
-
-    // Domain validator retained so the rules can be hardened from a known schema
-    // baseline if client Firestore access is ever introduced later.
-    function isValidGoogleContactsCredential(data) {
-      return hasOnlyAllowedFields([
-          "refreshToken",
-          "scope",
-          "accountEmail",
-          "connectedAt",
-          "updatedAt",
-        ]) &&
-        hasRequiredFields(["refreshToken", "connectedAt", "updatedAt"]) &&
-        data.refreshToken is string &&
-        data.refreshToken.size() > 0 &&
-        isValidOptionalString("scope", 1, 500) &&
-        isValidOptionalString("accountEmail", 3, 320) &&
-        isValidDateString(data.connectedAt) &&
-        data.updatedAt is timestamp;
-    }
-
     match /googleContactsCredentials/{uid} {
       // Firestore stores refresh tokens and account metadata here.
       // All legitimate access goes through Firebase Functions/Admin SDK.
+      // The schema is documented above, but browser clients are denied before
+      // field-level validation because this app does not use the Firestore Web SDK.
       allow read, write: if false;
     }
 

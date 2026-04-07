@@ -16,7 +16,7 @@ import {
   loadPersistedState,
   persistOnboardingState,
 } from "../local-data";
-import { createInitialGoogleAuthState } from "../google-auth/googleIdentity";
+import { createInitialGoogleAuthState } from "../google-auth/googleAuthState";
 
 const persisted =
   typeof window === "undefined"

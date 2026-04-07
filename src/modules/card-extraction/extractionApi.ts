@@ -1,7 +1,6 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { AppSettings, ExtractionRequest } from "../../shared/types/models";
 import type { BusinessCardExtraction } from "./extractionSchema";
-import { extractBusinessCardWithProvider } from "./structuredExtraction";
 
 interface ExtractionApiState {
   onboarding: {
@@ -21,11 +20,16 @@ export const extractionApi = createApi({
   reducerPath: "extractionApi",
   baseQuery: fakeBaseQuery(),
   endpoints: (builder) => ({
-    extractBusinessCard: builder.mutation<BusinessCardExtraction, ExtractionRequest>({
+    extractBusinessCard: builder.mutation<
+      BusinessCardExtraction,
+      ExtractionRequest
+    >({
       async queryFn(request, api) {
         const state = api.getState() as ExtractionApiState;
 
         try {
+          const { extractBusinessCardWithProvider } =
+            await import("./structuredExtraction");
           const data = await extractBusinessCardWithProvider({
             request,
             settings: state.onboarding.settings,
@@ -35,7 +39,10 @@ export const extractionApi = createApi({
           return {
             error: {
               status: 500,
-              data: error instanceof Error ? error.message : "Business card extraction failed.",
+              data:
+                error instanceof Error
+                  ? error.message
+                  : "Business card extraction failed.",
             },
           };
         }
