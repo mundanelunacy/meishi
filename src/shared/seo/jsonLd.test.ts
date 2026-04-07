@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getDocsPageSchema, getLandingPageSchema } from "./jsonLd";
 
-function findNodeByType(
-  graph: Array<Record<string, unknown>>,
-  type: string,
-) {
+function findNodeByType(graph: Array<Record<string, unknown>>, type: string) {
   return graph.find((node) => node["@type"] === type);
 }
 
