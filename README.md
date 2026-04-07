@@ -138,7 +138,8 @@ Cloud Functions for server-side endpoints that should not run in the browser.
 ### Project files
 
 - [firebase.json](./firebase.json):
-  deploy targets, hosting rewrite, and functions predeploy commands
+  deploy targets, hosting rewrite, hosting predeploy build, and functions
+  predeploy commands
 - [.firebaserc](./.firebaserc):
   default Firebase project alias
 - [firestore.rules](./firestore.rules):
@@ -207,11 +208,26 @@ firebase deploy --only functions
 
 ### Hosting behavior
 
-- Hosting publishes the Vite production build from `dist`
+- Hosting runs `npm run build` before deploy, then publishes the Vite
+  production build from `dist`
+- The production build also emits `dist/sitemap.xml` and `dist/robots.txt`
+  for the public app routes
 - All routes rewrite to `/index.html`, which is required for the TanStack
   Router SPA
+- Static files copied from `public/` remain available at the deploy root, so
+  Google Search Console verification files such as
+  `google685cd3cf50f37c24.html` are served directly
 - `VITE_*` values are compiled into the browser build at build time, so update
   env files before running `npm run build`
+
+Set `SITE_ORIGIN` in the build environment to override the default canonical
+origin used for `sitemap.xml` and `robots.txt`. If unset, the build falls back
+to `https://meishi-492400.web.app`.
+
+The sitemap intentionally includes only destination pages:
+`/landing`, `/capture`, `/review`, `/settings`, `/docs`, `/privacy`, and
+`/terms`. It excludes the redirect-only `/` route and the transient
+`/auth/google/callback` OAuth handoff route.
 
 ### Functions behavior
 

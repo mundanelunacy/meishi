@@ -9,6 +9,8 @@ import {
   CardTitle,
 } from "../../shared/ui/card";
 import { ImageLightbox } from "../../shared/ui/image-lightbox";
+import { JsonLdScript } from "../../shared/seo/JsonLdScript";
+import { getDocsPageSchema } from "../../shared/seo/jsonLd";
 
 const sections = [
   { id: "what-is-meishi", label: "What is Meishi?" },
@@ -193,6 +195,7 @@ export function DocsPage() {
 
   return (
     <>
+      <JsonLdScript graph={getDocsPageSchema()} />
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 pb-8">
         <section className="rounded-[2rem] border border-border bg-gradient-to-br from-card via-card to-muted/50 px-6 py-8 shadow-card sm:px-8 sm:py-10">
           <div className="max-w-3xl space-y-4">

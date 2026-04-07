@@ -9,9 +9,9 @@ export function TermsOfServicePage() {
     >
       <LegalSection title="Use of the app">
         <p>
-          Meishi is provided as a browser-based tool for scanning business cards,
-          extracting structured contact information, reviewing results, exporting
-          vCards, and optionally syncing contacts to Google Contacts.
+          Meishi is provided as a browser-based tool for scanning business
+          cards, extracting structured contact information, reviewing results,
+          exporting vCards, and optionally syncing contacts to Google Contacts.
         </p>
         <p>
           You may use the app only in compliance with applicable law, the rights

@@ -11,6 +11,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { getLandingPageSchema } from "../../shared/seo/jsonLd";
+import { JsonLdScript } from "../../shared/seo/JsonLdScript";
 import { Button } from "../../shared/ui/button";
 import { Input } from "../../shared/ui/input";
 import { Label } from "../../shared/ui/label";
@@ -128,7 +130,9 @@ export function LandingPage() {
   }
 
   return (
-    <div className="-mx-4 -mt-4 sm:-mx-6 lg:-mx-8 md:-mb-6">
+    <>
+      <JsonLdScript graph={getLandingPageSchema()} />
+      <div className="-mx-4 -mt-4 sm:-mx-6 lg:-mx-8 md:-mb-6">
       {/* ───────────────────── HERO ───────────────────── */}
       <section className="relative isolate overflow-hidden">
         {/* Background image with overlay */}
@@ -577,7 +581,8 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }
 

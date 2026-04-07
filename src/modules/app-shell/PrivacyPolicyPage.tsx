@@ -30,8 +30,13 @@ export function PrivacyPolicyPage() {
           <li>Selected LLM provider and preferred model</li>
           <li>Provider API keys entered by you</li>
           <li>Appearance settings and extraction prompt preferences</li>
-          <li>Captured card images, draft contact data, and extraction snapshots</li>
-          <li>Append-only local sync history and lightweight Google connection metadata</li>
+          <li>
+            Captured card images, draft contact data, and extraction snapshots
+          </li>
+          <li>
+            Append-only local sync history and lightweight Google connection
+            metadata
+          </li>
         </ul>
         <p>
           This local data is stored using browser storage such as localStorage
@@ -66,9 +71,9 @@ export function PrivacyPolicyPage() {
           disconnection or retention cleanup tasks.
         </p>
         <p>
-          Meishi does not store durable Google bearer tokens in browser
-          storage. The browser may store lightweight metadata such as connected
-          account email, granted scope, and connection timestamps.
+          Meishi does not store durable Google bearer tokens in browser storage.
+          The browser may store lightweight metadata such as connected account
+          email, granted scope, and connection timestamps.
         </p>
       </LegalSection>
 

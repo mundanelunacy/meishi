@@ -34,7 +34,10 @@ export function LegalPageLayout({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-5 py-4 text-sm text-muted-foreground">
-        <span>Questions about these terms can be directed through the project repository.</span>
+        <span>
+          Questions about these terms can be directed through the project
+          repository.
+        </span>
         <Link
           to="/landing"
           className="font-medium text-foreground transition-colors hover:text-primary"
