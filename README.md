@@ -214,6 +214,9 @@ firebase deploy --only functions
   for the public app routes
 - All routes rewrite to `/index.html`, which is required for the TanStack
   Router SPA
+- The generated PWA service worker excludes file-extension URLs such as
+  `/sitemap.xml`, `/robots.txt`, and verification HTML files from SPA
+  navigation fallback so those documents continue to resolve as static assets
 - Static files copied from `public/` remain available at the deploy root, so
   Google Search Console verification files such as
   `google685cd3cf50f37c24.html` are served directly
