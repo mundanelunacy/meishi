@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useIntl } from "react-intl";
 import {
   Brain,
   CircleAlert,
@@ -11,6 +12,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { JsonLdScript } from "../../shared/seo/JsonLdScript";
+import { getLandingPageSchema } from "../../shared/seo/jsonLd";
 import { Button } from "../../shared/ui/button";
 import { Input } from "../../shared/ui/input";
 import { Label } from "../../shared/ui/label";
@@ -18,6 +21,13 @@ import { Select } from "../../shared/ui/select";
 import { pushToast } from "../../shared/ui/toastBus";
 import { usePwaLifecycle } from "../pwa-runtime";
 import { getSupportedModelOptions } from "./modelOptions";
+import {
+  getCommonToastMessages,
+  getLandingContent,
+  getLandingSchemaContent,
+  getProviderFieldLabels,
+  getProviderOptionLabels,
+} from "./onboardingContent";
 import {
   completeOnboarding,
   selectAppReadiness,
@@ -32,65 +42,15 @@ import {
 /* ── Hero background ── */
 const HERO_IMAGE_URL = "/landing/networking_scene.jpg";
 
-/* ── Feature cards data ── */
-const features = [
-  {
-    icon: Brain,
-    title: "Your AI, Your Choice",
-    description:
-      "Bring your own API key and use the latest models from OpenAI or Anthropic. No vendor lock-in — switch providers any time.",
-    accent: "bg-primary/10 text-primary",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Privacy First",
-    description:
-      "Runs entirely in your browser. Images and drafts stay on your device. Only extraction calls leave the browser — to the LLM you choose.",
-    accent:
-      "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300",
-  },
-  {
-    icon: Zap,
-    title: "Zero Bloat",
-    description:
-      "No ads. No social features. No unnecessary contact organizer. Just scan, extract, review, and sync to Google Contacts.",
-    accent:
-      "bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
-  },
-] as const;
-
-/* ── OCR vs LLM comparison data ── */
-const ocrFailures = [
-  {
-    scenario: "Vertical Japanese card with mixed scripts",
-    ocr: "Garbled kanji, missed furigana, phone parsed as fax",
-    llm: "Full name with reading, correct title, all contact fields placed accurately",
-  },
-  {
-    scenario: "Creative agency card with angled text and icons",
-    ocr: "Fragments — email split across two fields, URL lost entirely",
-    llm: "Every field captured, even the Instagram handle next to the camera icon",
-  },
-  {
-    scenario: "Faded card photographed under warm café lighting",
-    ocr: "40% of characters unrecognized, falls back to manual entry",
-    llm: "Compensates for noise; infers missing characters from context and formatting cues",
-  },
-  {
-    scenario: "Bilingual English / Arabic card with RTL layout",
-    ocr: "RTL text reversed, name and title swapped between languages",
-    llm: "Both languages extracted correctly, fields deduplicated into a single contact",
-  },
-] as const;
-
-const accuracyStats = [
-  { label: "Structured fields correct", ocr: 62, llm: 97 },
-  { label: "Multi-language cards", ocr: 38, llm: 94 },
-  { label: "Creative / non-standard layouts", ocr: 45, llm: 91 },
-  { label: "Low-quality photos", ocr: 29, llm: 85 },
+const featureIcons = [Brain, ShieldCheck, Zap] as const;
+const featureAccents = [
+  "bg-primary/10 text-primary",
+  "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300",
+  "bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
 ] as const;
 
 export function LandingPage() {
+  const intl = useIntl();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const settings = useAppSelector(selectSettings);
@@ -110,12 +70,20 @@ export function LandingPage() {
     selectedProvider === "anthropic" || selectedProvider === "openai"
       ? getSupportedModelOptions(selectedProvider, providerModel)
       : [];
+  const providerLabels = getProviderFieldLabels(
+    intl,
+    selectedProvider === "anthropic" ? "anthropic" : "openai",
+  );
+  const providerOptionLabels = getProviderOptionLabels(intl);
+  const content = getLandingContent(intl);
+  const schemaContent = getLandingSchemaContent(intl, settings.locale);
+  const commonToasts = getCommonToastMessages(intl);
 
   const canContinue = readiness.hasLlmConfiguration;
 
   function handleFinish() {
     dispatch(completeOnboarding());
-    pushToast("Setup complete — start capturing cards.");
+    pushToast(commonToasts.landingSetupComplete);
     navigate({ to: "/capture" });
   }
 
@@ -129,6 +97,7 @@ export function LandingPage() {
 
   return (
     <>
+      <JsonLdScript graph={getLandingPageSchema(schemaContent)} />
       <div className="-mx-4 -mt-4 sm:-mx-6 lg:-mx-8 md:-mb-6">
         {/* ───────────────────── HERO ───────────────────── */}
         <section className="relative isolate overflow-hidden">
@@ -151,18 +120,15 @@ export function LandingPage() {
             <div className="max-w-2xl">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur-sm">
                 <Sparkles className="h-4 w-4" />
-                Open-source &middot; AI-powered &middot; Privacy-first
+                {content.hero.eyebrow}
               </div>
 
               <h1 className="font-display text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Business cards to contacts,{" "}
-                <span className="text-primary">instantly.</span>
+                {content.hero.title}
               </h1>
 
               <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/80">
-                Meishi is the open-source card scanner that puts you in control.
-                Bring your own AI, keep your data private, and skip the bloat of
-                traditional business card apps.
+                {content.hero.description}
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
@@ -171,7 +137,7 @@ export function LandingPage() {
                   onClick={scrollToSetup}
                   className="bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90"
                 >
-                  Get started
+                  {content.hero.getStarted}
                 </Button>
                 {canInstall && !isInstalled ? (
                   <button
@@ -180,7 +146,7 @@ export function LandingPage() {
                     className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
                   >
                     <Download className="h-4 w-4" />
-                    Add App
+                    {content.hero.addApp}
                   </button>
                 ) : null}
               </div>
@@ -192,23 +158,23 @@ export function LandingPage() {
         <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Why Meishi?
+              {content.why.title}
             </h2>
             <p className="mt-3 text-lg text-muted-foreground">
-              An alternative built for people who want control, not clutter.
+              {content.why.description}
             </p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => {
-              const Icon = feature.icon;
+            {content.why.features.map((feature, index) => {
+              const Icon = featureIcons[index];
               return (
                 <div
                   key={feature.title}
                   className="group rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-elevated"
                 >
                   <div
-                    className={`mb-4 inline-flex rounded-xl p-3 ${feature.accent}`}
+                    className={`mb-4 inline-flex rounded-xl p-3 ${featureAccents[index]}`}
                   >
                     <Icon className="h-6 w-6" />
                   </div>
@@ -231,16 +197,13 @@ export function LandingPage() {
             <div className="mb-14 text-center">
               <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
                 <Brain className="h-4 w-4" />
-                Frontier AI vs. legacy OCR
+                {content.ai.eyebrow}
               </div>
               <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Stop wasting time fixing bad scans.
+                {content.ai.title}
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-                Traditional card scanners use decade-old OCR pipelines that
-                choke on creative layouts, mixed scripts, and low-light photos.
-                Frontier LLMs like ChatGPT and Claude understand{" "}
-                <em>context</em> — they read a card the way you do.
+                {content.ai.description}
               </p>
             </div>
 
@@ -248,22 +211,22 @@ export function LandingPage() {
             <div className="mb-16 overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="font-display text-lg font-semibold text-foreground">
-                  Field-level accuracy
+                  {content.ai.accuracyTitle}
                 </h3>
                 <div className="flex items-center gap-4 text-xs font-medium">
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-3 w-3 rounded-sm bg-muted-foreground/25" />
-                    Legacy OCR
+                    {content.ai.accuracyOcr}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-3 w-3 rounded-sm bg-primary" />
-                    Frontier LLM
+                    {content.ai.accuracyLlm}
                   </span>
                 </div>
               </div>
 
               <div className="space-y-5">
-                {accuracyStats.map((stat) => (
+                {content.ai.stats.map((stat) => (
                   <div key={stat.label}>
                     <div className="mb-1.5 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">
@@ -293,10 +256,7 @@ export function LandingPage() {
               </div>
 
               <p className="mt-6 text-xs text-muted-foreground">
-                Estimates based on publicly available benchmarks and real-world
-                testing across 200+ cards in multiple languages and layouts.
-                Individual results vary by model, image quality, and card
-                complexity.
+                {content.ai.accuracyNote}
               </p>
             </div>
 
@@ -305,28 +265,28 @@ export function LandingPage() {
               <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card">
                 <Clock className="mx-auto mb-3 h-8 w-8 text-primary" />
                 <p className="font-display text-3xl font-bold text-foreground">
-                  ~45 s
+                  {content.ai.callouts[0]?.value}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Average time from photo to verified contact with an LLM
+                  {content.ai.callouts[0]?.label}
                 </p>
               </div>
               <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card">
                 <CircleAlert className="mx-auto mb-3 h-8 w-8 text-amber-600 dark:text-amber-300" />
                 <p className="font-display text-3xl font-bold text-foreground">
-                  3&ndash;5 min
+                  {content.ai.callouts[1]?.value}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Average time fixing OCR errors and manually re-entering fields
+                  {content.ai.callouts[1]?.label}
                 </p>
               </div>
               <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card">
                 <Sparkles className="mx-auto mb-3 h-8 w-8 text-emerald-600 dark:text-emerald-300" />
                 <p className="font-display text-3xl font-bold text-foreground">
-                  &lt; $0.01
+                  {content.ai.callouts[2]?.value}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Cost per card with BYOK — a stack of 100 costs under a dollar
+                  {content.ai.callouts[2]?.label}
                 </p>
               </div>
             </div>
@@ -335,16 +295,15 @@ export function LandingPage() {
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
               <div className="border-b border-border bg-muted/40 px-6 py-4 sm:px-8">
                 <h3 className="font-display text-lg font-semibold text-foreground">
-                  Where legacy OCR breaks down
+                  {content.ai.breakdownTitle}
                 </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Real scenarios from conference floors, coffee meetings, and
-                  international trade shows.
+                  {content.ai.breakdownDescription}
                 </p>
               </div>
 
               <div className="divide-y divide-border">
-                {ocrFailures.map((row) => (
+                {content.ai.failures.map((row) => (
                   <div
                     key={row.scenario}
                     className="grid gap-4 px-6 py-5 sm:grid-cols-3 sm:px-8"
@@ -356,13 +315,13 @@ export function LandingPage() {
                     </div>
                     <div className="flex items-start gap-2 text-sm">
                       <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-destructive">
-                        OCR
+                        {content.ai.badges.ocr}
                       </span>
                       <p className="text-muted-foreground">{row.ocr}</p>
                     </div>
                     <div className="flex items-start gap-2 text-sm">
                       <span className="mt-0.5 shrink-0 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
-                        LLM
+                        {content.ai.badges.llm}
                       </span>
                       <p className="text-muted-foreground">{row.llm}</p>
                     </div>
@@ -379,50 +338,26 @@ export function LandingPage() {
             <div className="lg:flex-1">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80">
                 <Github className="h-3.5 w-3.5" />
-                Open Source
+                {content.openSource.eyebrow}
               </div>
               <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-                No black boxes.
-                <br />
-                No subscription traps.
+                {content.openSource.title}
               </h2>
               <p className="mt-4 max-w-lg text-base leading-relaxed text-white/70">
-                Most card scanner apps lock your contacts behind paid tiers,
-                inject ads into your workflow, and bolt on social features you
-                never asked for. Meishi is AGPL-3.0-licensed, community-driven,
-                and laser-focused on one job: turning business cards into
-                contacts.
+                {content.openSource.description}
               </p>
             </div>
 
             <div className="mt-8 lg:mt-0 lg:w-72 lg:shrink-0">
               <div className="space-y-4 text-sm">
-                <ComparisonRow label="Ads" meishi="None" others="Frequent" />
-                <ComparisonRow
-                  label="Social / SNS"
-                  meishi="None"
-                  others="Built-in"
-                />
-                <ComparisonRow
-                  label="AI model"
-                  meishi="Your choice"
-                  others="Vendor-locked"
-                />
-                <ComparisonRow
-                  label="Data privacy"
-                  meishi="On-device"
-                  others="Cloud-stored"
-                />
-                <ComparisonRow
-                  label="Pricing"
-                  meishi="Free forever"
-                  others="Subscription"
-                />
-                <ComparisonRow
-                  label="Source code"
-                  meishi="Open"
-                  others="Closed"
-                />
+                {content.openSource.rows.map((row) => (
+                  <ComparisonRow
+                    key={row.label}
+                    label={row.label}
+                    meishi={row.meishi}
+                    others={row.others}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -436,11 +371,10 @@ export function LandingPage() {
           <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 lg:px-8">
             <div className="mb-10 text-center">
               <h2 className="font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Quick setup
+                {content.setup.title}
               </h2>
               <p className="mt-3 text-muted-foreground">
-                One thing needed: an LLM API key. Google sign-in only happens
-                later if you choose Google Contacts sync.
+                {content.setup.description}
               </p>
             </div>
 
@@ -449,17 +383,16 @@ export function LandingPage() {
               <div className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
                 <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                 <div className="space-y-1 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground">Security note</p>
-                  <p>
-                    Meishi stores your API key in the browser only — acceptable
-                    for personal use on a trusted device.
+                  <p className="font-medium text-foreground">
+                    {content.setup.securityTitle}
                   </p>
+                  <p>{content.setup.securityBody}</p>
                 </div>
               </div>
 
               {/* Provider selection */}
               <div className="space-y-3">
-                <Label htmlFor="provider">LLM provider</Label>
+                <Label htmlFor="provider">{providerLabels.provider}</Label>
                 <Select
                   id="provider"
                   value={settings.llmProvider}
@@ -471,10 +404,12 @@ export function LandingPage() {
                     )
                   }
                 >
-                  <option value="openai">OpenAI</option>
-                  <option value="anthropic">Anthropic</option>
+                  <option value="openai">{providerOptionLabels.openai}</option>
+                  <option value="anthropic">
+                    {providerOptionLabels.anthropic}
+                  </option>
                   <option value="gemini" disabled>
-                    Gemini (planned)
+                    {providerOptionLabels.gemini}
                   </option>
                 </Select>
               </div>
@@ -482,11 +417,7 @@ export function LandingPage() {
               {/* API key + model */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-3">
-                  <Label htmlFor="api-key">
-                    {selectedProvider === "anthropic"
-                      ? "Anthropic API key"
-                      : "OpenAI API key"}
-                  </Label>
+                  <Label htmlFor="api-key">{providerLabels.apiKey}</Label>
                   <Input
                     id="api-key"
                     type="password"
@@ -506,11 +437,7 @@ export function LandingPage() {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="model">
-                    {selectedProvider === "anthropic"
-                      ? "Anthropic model"
-                      : "OpenAI model"}
-                  </Label>
+                  <Label htmlFor="model">{providerLabels.model}</Label>
                   <Select
                     id="model"
                     value={providerModel}
@@ -540,11 +467,10 @@ export function LandingPage() {
                   disabled={!canContinue}
                   className="bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90"
                 >
-                  Continue to capture
+                  {content.setup.continueLabel}
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  Ready when the selected provider is configured. Google
-                  authorization is optional until you save to Google Contacts.
+                  {content.setup.continueHelp}
                 </span>
               </div>
             </div>
@@ -554,19 +480,19 @@ export function LandingPage() {
         {/* ───────────────────── FOOTER ───────────────────── */}
         <footer className="border-t border-border bg-muted/20">
           <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-            <span>Meishi &mdash; AGPL-3.0 License</span>
+            <span>{content.footer.license}</span>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <Link
                 to="/privacy"
                 className="transition-colors hover:text-foreground"
               >
-                Privacy Policy
+                {content.footer.privacy}
               </Link>
               <Link
                 to="/terms"
                 className="transition-colors hover:text-foreground"
               >
-                Terms of Service
+                {content.footer.terms}
               </Link>
               <a
                 href="https://github.com/mundanelunacy/meishi"

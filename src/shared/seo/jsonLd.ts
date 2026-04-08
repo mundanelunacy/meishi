@@ -7,6 +7,16 @@ const CREATOR_URL = "https://github.com/mundanelunacy";
 
 type JsonLdNode = Record<string, unknown>;
 
+interface LandingSchemaContent {
+  locale: "en-US" | "ja";
+  softwareDescription: string;
+  browserRequirements: string;
+  featureList: string[];
+  pageName: string;
+  pageDescription: string;
+  keywords: string[];
+}
+
 interface DocsSchemaContent {
   locale: "en-US" | "ja";
   softwareDescription: string;
@@ -103,8 +113,39 @@ function getBaseGraph(
   };
 }
 
-export function getLandingPageSchema(): JsonLdNode[] {
-  const base = getBaseGraph();
+export function getLandingPageSchema(
+  content: LandingSchemaContent = {
+    locale: "en-US",
+    softwareDescription: SITE_DESCRIPTION,
+    browserRequirements:
+      "Requires JavaScript and a modern browser with camera or image upload support.",
+    featureList: [
+      "Scan business cards from your camera or photo library.",
+      "Extract structured contact details with OpenAI or Anthropic.",
+      "Review and edit the extracted contact data in your browser.",
+      "Export a vCard or sync the verified contact to Google Contacts.",
+      "Keep captured images and draft edits on-device while you work.",
+    ],
+    pageName: "Meishi | AI business card scanner",
+    pageDescription:
+      "Open-source AI business card scanner for private, browser-based capture, review, vCard export, and optional Google Contacts sync.",
+    keywords: [
+      "business card scanner",
+      "AI contact extraction",
+      "Google Contacts sync",
+      "vCard export",
+      "OpenAI business card OCR",
+      "Anthropic business card scanner",
+    ],
+  },
+): JsonLdNode[] {
+  const base = getBaseGraph(
+    content.locale,
+    content.softwareDescription,
+    content.browserRequirements,
+    content.featureList,
+    content.pageName,
+  );
   const landingUrl = absoluteUrl("/landing");
 
   return [
@@ -115,23 +156,16 @@ export function getLandingPageSchema(): JsonLdNode[] {
       "@id": `${landingUrl}#webpage`,
       "@type": "WebPage",
       url: landingUrl,
-      name: "Meishi | AI business card scanner",
-      description:
-        "Open-source AI business card scanner for private, browser-based capture, review, vCard export, and optional Google Contacts sync.",
+      name: content.pageName,
+      description: content.pageDescription,
       isPartOf: { "@id": base.websiteId },
       about: { "@id": base.softwareId },
       primaryImageOfPage: {
         "@type": "ImageObject",
         url: absoluteUrl("/landing/networking_scene.jpg"),
       },
-      keywords: [
-        "business card scanner",
-        "AI contact extraction",
-        "Google Contacts sync",
-        "vCard export",
-        "OpenAI business card OCR",
-        "Anthropic business card scanner",
-      ],
+      keywords: content.keywords,
+      inLanguage: content.locale,
     },
   ];
 }

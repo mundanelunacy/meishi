@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "../../test/renderWithIntl";
 import { onboardingReducer } from "./onboardingSlice";
 import { OnboardingPanel } from "./OnboardingPanel";
 
@@ -21,7 +22,8 @@ vi.mock("../../app/env", () => ({
 }));
 
 vi.mock("../google-auth/googleIdentity", () => ({
-  connectGoogleContacts: (...args: unknown[]) => connectGoogleContactsMock(...args),
+  connectGoogleContacts: (...args: unknown[]) =>
+    connectGoogleContactsMock(...args),
   createInitialGoogleAuthState: () => ({
     status: "signed_out",
     firebaseUid: null,
@@ -39,10 +41,10 @@ function renderPanel() {
     },
   });
 
-  render(
+  renderWithIntl(
     <Provider store={store}>
       <OnboardingPanel />
-    </Provider>
+    </Provider>,
   );
 
   return { store };
@@ -70,12 +72,16 @@ describe("OnboardingPanel", () => {
     renderPanel();
 
     const user = userEvent.setup();
-    const continueButton = screen.getByRole("button", { name: /continue to capture/i });
+    const continueButton = screen.getByRole("button", {
+      name: /continue to capture/i,
+    });
 
     expect(continueButton).toBeDisabled();
 
     await user.type(screen.getByLabelText(/api key/i), "sk-test");
-    await user.click(screen.getByRole("button", { name: /connect google account/i }));
+    await user.click(
+      screen.getByRole("button", { name: /connect google account/i }),
+    );
 
     await waitFor(() => {
       expect(connectGoogleContactsMock).toHaveBeenCalledTimes(1);
@@ -111,21 +117,30 @@ describe("OnboardingPanel", () => {
     renderPanel();
 
     const user = userEvent.setup();
-    await user.selectOptions(screen.getByLabelText(/llm provider/i), "anthropic");
+    await user.selectOptions(
+      screen.getByLabelText(/llm provider/i),
+      "anthropic",
+    );
 
     expect(screen.getByLabelText(/anthropic api key/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/anthropic model/i)).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: /claude sonnet 4\.6/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /claude sonnet 4\.6/i }),
+    ).toBeInTheDocument();
   });
 
   it("explains the Google consent scope more precisely", () => {
     renderPanel();
 
     expect(
-      screen.getByText(/meishi creates new google contacts and can upload one contact photo after save/i),
+      screen.getByText(
+        /meishi creates new google contacts and can upload one contact photo after save/i,
+      ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/consent screen may mention broader contact access than the app uses/i),
+      screen.getByText(
+        /consent screen may mention broader contact access than the app uses/i,
+      ),
     ).toBeInTheDocument();
   });
 });

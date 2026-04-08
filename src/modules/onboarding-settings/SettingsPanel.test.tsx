@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "../../test/renderWithIntl";
 import {
   onboardingReducer,
   setGoogleAuthState,
@@ -68,7 +69,7 @@ function renderPanel(
     },
   });
 
-  render(
+  renderWithIntl(
     <Provider store={store}>
       <SettingsPanel />
     </Provider>,
@@ -172,11 +173,11 @@ describe("SettingsPanel", () => {
     expect(store.getState().onboarding.settings.themeMode).toBe("dark");
   });
 
-  it("updates the docs locale preference", async () => {
+  it("updates the app locale preference", async () => {
     const { store } = renderPanel();
     const user = userEvent.setup();
 
-    await user.selectOptions(screen.getByLabelText(/docs language/i), "ja");
+    await user.selectOptions(screen.getByLabelText(/app language/i), "ja");
 
     expect(store.getState().onboarding.settings.locale).toBe("ja");
   });
@@ -207,13 +208,13 @@ describe("SettingsPanel", () => {
       },
     });
 
-    render(
+    renderWithIntl(
       <Provider store={store}>
         <SettingsPanel />
       </Provider>,
     );
 
     expect(screen.getByLabelText(/color theme/i)).toHaveValue("dark");
-    expect(screen.getByLabelText(/docs language/i)).toHaveValue("en-US");
+    expect(screen.getByLabelText(/app language/i)).toHaveValue("en-US");
   });
 });

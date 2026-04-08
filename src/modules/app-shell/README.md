@@ -15,7 +15,7 @@
 - Route outlet and navigation state
 - Centered two-option primary navigation for capture/review that reads as a toggle, with a right-aligned overflow menu in the desktop header and in the mobile top header beside the brand
 - Overflow-menu navigation for sharing the app site, docs, settings, Google Contacts, and external project/support links on both desktop and mobile
-- React Intl-backed `/docs` content with `en-US` as the default locale and initial `ja` translations
+- React Intl-backed app shell, legal routes, and docs content with `en-US` as the default locale and `ja` translations
 - Header-level language pickers beside the overflow-menu trigger on both mobile and desktop layouts
 - Mobile swipe gestures on the primary navigation surface to move left/right between capture and review
 - PWA update notification hook integration
@@ -45,4 +45,5 @@
 - Keep this module presentation-focused.
 - Do not place provider-specific API logic here.
 - Keep docs copy and docs JSON-LD sourced from the same message/content helpers so localized page text and schema stay aligned.
+- Keep legal route copy sourced from `legalContent.tsx` so page structure and translations stay centralized.
 - The overflow-menu Share action targets the site root URL. It uses the browser's native Web Share flow when available and falls back to an in-app modal with social share links and copy-to-clipboard when native share is unavailable.

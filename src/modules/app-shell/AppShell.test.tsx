@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "../../test/renderWithIntl";
 import {
   completeOnboarding,
   onboardingReducer,
@@ -56,7 +57,7 @@ function renderShell() {
   });
   store.dispatch(completeOnboarding());
 
-  render(
+  renderWithIntl(
     <Provider store={store}>
       <AppShell />
     </Provider>,
@@ -202,7 +203,7 @@ describe("AppShell", () => {
       },
     });
 
-    render(
+    renderWithIntl(
       <Provider store={store}>
         <AppShell />
       </Provider>,

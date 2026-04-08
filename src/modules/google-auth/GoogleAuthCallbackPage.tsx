@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { defineMessages, useIntl } from "react-intl";
 import {
   completeGoogleContactsAuthCallback,
   POPUP_MESSAGE_TYPE,
@@ -6,6 +7,42 @@ import {
 } from "./googleIdentity";
 
 type CallbackStatus = "working" | "success" | "error";
+
+const messages = defineMessages({
+  workingMessage: {
+    id: "googleAuth.callback.workingMessage",
+    defaultMessage: "Finishing Google authorization...",
+  },
+  missingParams: {
+    id: "googleAuth.callback.missingParams",
+    defaultMessage:
+      "Google authorization returned without the required callback parameters.",
+  },
+  successMessage: {
+    id: "googleAuth.callback.successMessage",
+    defaultMessage: "Google Contacts is connected. This window can close now.",
+  },
+  unableComplete: {
+    id: "googleAuth.callback.unableComplete",
+    defaultMessage: "Unable to complete Google authorization.",
+  },
+  eyebrow: {
+    id: "googleAuth.callback.eyebrow",
+    defaultMessage: "Google Contacts",
+  },
+  headingWorking: {
+    id: "googleAuth.callback.headingWorking",
+    defaultMessage: "Connecting...",
+  },
+  headingSuccess: {
+    id: "googleAuth.callback.headingSuccess",
+    defaultMessage: "Connected",
+  },
+  headingError: {
+    id: "googleAuth.callback.headingError",
+    defaultMessage: "Connection failed",
+  },
+});
 
 function readSearchParams() {
   const params = new URLSearchParams(window.location.search);
@@ -18,8 +55,11 @@ function readSearchParams() {
 }
 
 export function GoogleAuthCallbackPage() {
+  const intl = useIntl();
   const [status, setStatus] = useState<CallbackStatus>("working");
-  const [message, setMessage] = useState("Finishing Google authorization...");
+  const [message, setMessage] = useState(
+    intl.formatMessage(messages.workingMessage),
+  );
 
   useEffect(() => {
     const { code, error, errorDescription, state } = readSearchParams();
@@ -37,8 +77,7 @@ export function GoogleAuthCallbackPage() {
     }
 
     if (!code || !state) {
-      const nextMessage =
-        "Google authorization returned without the required callback parameters.";
+      const nextMessage = intl.formatMessage(messages.missingParams);
       setStatus("error");
       setMessage(nextMessage);
       postPopupMessage({
@@ -55,7 +94,7 @@ export function GoogleAuthCallbackPage() {
     })
       .then((googleAuth) => {
         setStatus("success");
-        setMessage("Google Contacts is connected. This window can close now.");
+        setMessage(intl.formatMessage(messages.successMessage));
         postPopupMessage({
           type: POPUP_MESSAGE_TYPE,
           status: "success",
@@ -69,7 +108,7 @@ export function GoogleAuthCallbackPage() {
         const nextMessage =
           callbackError instanceof Error
             ? callbackError.message
-            : "Unable to complete Google authorization.";
+            : intl.formatMessage(messages.unableComplete);
         setStatus("error");
         setMessage(nextMessage);
         postPopupMessage({
@@ -78,20 +117,20 @@ export function GoogleAuthCallbackPage() {
           error: nextMessage,
         });
       });
-  }, []);
+  }, [intl]);
 
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-lg items-center justify-center px-6 py-12">
       <section className="w-full rounded-xl border border-border bg-card p-8 text-center shadow-sm">
         <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-          Google Contacts
+          {intl.formatMessage(messages.eyebrow)}
         </p>
         <h1 className="mt-3 text-2xl font-semibold text-foreground">
           {status === "working"
-            ? "Connecting..."
+            ? intl.formatMessage(messages.headingWorking)
             : status === "success"
-              ? "Connected"
-              : "Connection failed"}
+              ? intl.formatMessage(messages.headingSuccess)
+              : intl.formatMessage(messages.headingError)}
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">{message}</p>
       </section>

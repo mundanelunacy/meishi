@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Camera, Eraser, ImagePlus, Sparkles, Trash2 } from "lucide-react";
+import { defineMessages, useIntl } from "react-intl";
 import { Spinner } from "../../shared/ui/spinner";
 import { appEnv } from "../../app/env";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
@@ -40,9 +41,148 @@ import { useExtractBusinessCardMutation } from "../card-extraction/extractionApi
 import { Photoroll } from "../../shared/ui/photoroll";
 import { pushToast } from "../../shared/ui/toastBus";
 
-function readExtractionError(error: unknown) {
+const messages = defineMessages({
+  extractionFailed: {
+    id: "capture.error.extractionFailed",
+    defaultMessage: "Extraction failed.",
+  },
+  imagesAdded: {
+    id: "capture.toast.imagesAdded",
+    defaultMessage:
+      "{count, plural, one {# image added to the active capture session.} other {# images added to the active capture session.}}",
+  },
+  unableProcessImages: {
+    id: "capture.error.unableProcessImages",
+    defaultMessage: "Unable to process images.",
+  },
+  imageRemoved: {
+    id: "capture.toast.imageRemoved",
+    defaultMessage: "Image removed from the active capture session.",
+  },
+  photorollCleared: {
+    id: "capture.toast.photorollCleared",
+    defaultMessage: "Photoroll cleared.",
+  },
+  unableOpenCamera: {
+    id: "capture.error.unableOpenCamera",
+    defaultMessage: "Unable to open the camera.",
+  },
+  previewNotReady: {
+    id: "capture.error.previewNotReady",
+    defaultMessage: "Camera preview is not ready yet.",
+  },
+  unableCapturePhoto: {
+    id: "capture.error.unableCapturePhoto",
+    defaultMessage: "Unable to capture a photo.",
+  },
+  captureBeforeExtraction: {
+    id: "capture.error.captureBeforeExtraction",
+    defaultMessage: "Capture at least one image before extraction.",
+  },
+  extractionFinished: {
+    id: "capture.toast.extractionFinished",
+    defaultMessage: "Extraction finished. Review the draft before syncing.",
+  },
+  photorollTitle: {
+    id: "capture.photoroll.title",
+    defaultMessage: "Photoroll",
+  },
+  clearPhotoroll: {
+    id: "capture.photoroll.clear",
+    defaultMessage: "Clear photoroll",
+  },
+  deleteImage: {
+    id: "capture.photoroll.deleteImage",
+    defaultMessage: "Delete {fileName}",
+  },
+  delete: {
+    id: "capture.photoroll.delete",
+    defaultMessage: "Delete",
+  },
+  captureTitle: {
+    id: "capture.workspace.title",
+    defaultMessage: "Capture business cards",
+  },
+  openingCamera: {
+    id: "capture.workspace.openingCamera",
+    defaultMessage: "Opening camera...",
+  },
+  openCamera: {
+    id: "capture.workspace.openCamera",
+    defaultMessage: "Open camera",
+  },
+  addFromLibrary: {
+    id: "capture.workspace.addFromLibrary",
+    defaultMessage: "Add images from library",
+  },
+  extracting: {
+    id: "capture.workspace.extracting",
+    defaultMessage: "Extracting...",
+  },
+  extractDraft: {
+    id: "capture.workspace.extractDraft",
+    defaultMessage: "Extract contact draft",
+  },
+  debugTitle: {
+    id: "capture.debug.title",
+    defaultMessage: "Capture debug",
+  },
+  debugDescription: {
+    id: "capture.debug.description",
+    defaultMessage:
+      "Tracks page lifetime and capture events across reloads. Use ?{panelKey}=1 to show this panel, and use ?{maxEdgeKey}=1600 or localStorage to enable temporary downscaling.",
+  },
+  debugPageSession: {
+    id: "capture.debug.pageSession",
+    defaultMessage: "Page session: {value}",
+  },
+  debugDownscale: {
+    id: "capture.debug.downscale",
+    defaultMessage: "Downscale max edge: {value}",
+  },
+  clearDebugLog: {
+    id: "capture.debug.clearLog",
+    defaultMessage: "Clear debug log",
+  },
+  noDebugEvents: {
+    id: "capture.debug.noEvents",
+    defaultMessage: "No capture debug events recorded yet.",
+  },
+  dialogTitle: {
+    id: "capture.dialog.title",
+    defaultMessage: "Camera capture",
+  },
+  dialogDescription: {
+    id: "capture.dialog.description",
+    defaultMessage:
+      "Use the larger webcam preview to frame the business card before capturing.",
+  },
+  closeCamera: {
+    id: "capture.dialog.close",
+    defaultMessage: "Close camera",
+  },
+  cameraPermission: {
+    id: "capture.dialog.permission",
+    defaultMessage:
+      "Camera permission is required. If the preview does not appear, check the browser permission prompt and your system camera settings.",
+  },
+  cameraStarting: {
+    id: "capture.dialog.starting",
+    defaultMessage: "Capturing...",
+  },
+  takePhoto: {
+    id: "capture.dialog.takePhoto",
+    defaultMessage: "Take photo",
+  },
+  captureAnother: {
+    id: "capture.dialog.captureAnother",
+    defaultMessage: "Capture another",
+  },
+});
+
+function readExtractionError(error: unknown, fallbackMessage: string) {
   if (!error || typeof error !== "object") {
-    return "Extraction failed.";
+    return fallbackMessage;
   }
 
   const data = Reflect.get(error, "data");
@@ -55,10 +195,11 @@ function readExtractionError(error: unknown) {
     return message;
   }
 
-  return "Extraction failed.";
+  return fallbackMessage;
 }
 
 export function CaptureWorkspace() {
+  const intl = useIntl();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const images = useAppSelector(selectCapturedImages);
@@ -237,7 +378,7 @@ export function CaptureWorkspace() {
         nextImageCount: nextImages.length,
       });
       pushToast(
-        `${files.length} image${files.length === 1 ? "" : "s"} added to the active capture session.`,
+        intl.formatMessage(messages.imagesAdded, { count: files.length }),
       );
       logDebugEvent("toast:pushed", { fileCount: files.length });
       setCameraError(null);
@@ -247,7 +388,9 @@ export function CaptureWorkspace() {
           error instanceof Error ? error.message : "Unable to process images.",
       });
       setCameraError(
-        error instanceof Error ? error.message : "Unable to process images.",
+        error instanceof Error
+          ? error.message
+          : intl.formatMessage(messages.unableProcessImages),
       );
     }
   }
@@ -264,7 +407,7 @@ export function CaptureWorkspace() {
       imageId,
       nextImageCount: nextImages.length,
     });
-    pushToast("Image removed from the active capture session.");
+    pushToast(intl.formatMessage(messages.imageRemoved));
   }
 
   async function handleClearImages() {
@@ -274,7 +417,7 @@ export function CaptureWorkspace() {
     });
     await saveCapturedImages([]);
     logDebugEvent("handleClearImages:end");
-    pushToast("Photoroll cleared.");
+    pushToast(intl.formatMessage(messages.photorollCleared));
   }
 
   function stopCamera() {
@@ -326,7 +469,9 @@ export function CaptureWorkspace() {
           error instanceof Error ? error.message : "Unable to open the camera.",
       });
       setCameraError(
-        error instanceof Error ? error.message : "Unable to open the camera.",
+        error instanceof Error
+          ? error.message
+          : intl.formatMessage(messages.unableOpenCamera),
       );
     } finally {
       setIsStartingCamera(false);
@@ -336,12 +481,12 @@ export function CaptureWorkspace() {
   async function handleCapturePhoto() {
     const videoElement = videoRef.current;
     if (!videoElement) {
-      setCameraError("Camera preview is not ready yet.");
+      setCameraError(intl.formatMessage(messages.previewNotReady));
       return;
     }
 
     if (!videoElement.videoWidth || !videoElement.videoHeight) {
-      setCameraError("Camera preview is not ready yet.");
+      setCameraError(intl.formatMessage(messages.previewNotReady));
       return;
     }
 
@@ -393,7 +538,9 @@ export function CaptureWorkspace() {
           error instanceof Error ? error.message : "Unable to capture a photo.",
       });
       setCameraError(
-        error instanceof Error ? error.message : "Unable to capture a photo.",
+        error instanceof Error
+          ? error.message
+          : intl.formatMessage(messages.unableCapturePhoto),
       );
     } finally {
       setIsCapturingPhoto(false);
@@ -402,7 +549,7 @@ export function CaptureWorkspace() {
 
   async function handleExtract() {
     if (!images.length) {
-      setCameraError("Capture at least one image before extraction.");
+      setCameraError(intl.formatMessage(messages.captureBeforeExtraction));
       return;
     }
 
@@ -416,12 +563,17 @@ export function CaptureWorkspace() {
         }),
       );
       await saveDraft(nextDraft);
-      pushToast("Extraction finished. Review the draft before syncing.");
+      pushToast(intl.formatMessage(messages.extractionFinished));
       navigate({ to: "/review" });
       return;
     }
 
-    setCameraError(readExtractionError(result.error));
+    setCameraError(
+      readExtractionError(
+        result.error,
+        intl.formatMessage(messages.extractionFailed),
+      ),
+    );
   }
 
   return (
@@ -430,14 +582,16 @@ export function CaptureWorkspace() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <CardTitle>Photoroll</CardTitle>
+              <CardTitle>
+                {intl.formatMessage(messages.photorollTitle)}
+              </CardTitle>
               {images.length ? (
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   className="h-9 w-9 rounded-full p-0 text-muted-foreground"
-                  aria-label="Clear photoroll"
+                  aria-label={intl.formatMessage(messages.clearPhotoroll)}
                   onClick={() => {
                     void handleClearImages();
                   }}
@@ -457,10 +611,12 @@ export function CaptureWorkspace() {
                   size="sm"
                   className="bg-background/90"
                   onClick={() => void handleRemoveImage(image.id)}
-                  aria-label={`Delete ${image.fileName}`}
+                  aria-label={intl.formatMessage(messages.deleteImage, {
+                    fileName: image.fileName,
+                  })}
                 >
                   <Trash2 className="h-4 w-4" />
-                  Delete
+                  {intl.formatMessage(messages.delete)}
                 </Button>
               )}
             />
@@ -469,7 +625,7 @@ export function CaptureWorkspace() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Capture business cards</CardTitle>
+            <CardTitle>{intl.formatMessage(messages.captureTitle)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -486,14 +642,16 @@ export function CaptureWorkspace() {
                   <Camera className="h-8 w-8 text-primary" />
                 )}
                 <span className="text-sm font-medium">
-                  {isStartingCamera ? "Opening camera..." : "Open Camera"}
+                  {isStartingCamera
+                    ? intl.formatMessage(messages.openingCamera)
+                    : intl.formatMessage(messages.openCamera)}
                 </span>
               </Button>
 
               <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-background px-4 py-6 text-center transition-colors hover:bg-muted/40">
                 <ImagePlus className="h-8 w-8 text-primary" />
                 <span className="text-sm font-medium">
-                  Add images from library
+                  {intl.formatMessage(messages.addFromLibrary)}
                 </span>
                 <input
                   className="hidden"
@@ -526,7 +684,9 @@ export function CaptureWorkspace() {
               ) : (
                 <Sparkles className="h-4 w-4" />
               )}
-              {extraction.isLoading ? "Extracting..." : "Extract contact draft"}
+              {extraction.isLoading
+                ? intl.formatMessage(messages.extracting)
+                : intl.formatMessage(messages.extractDraft)}
             </Button>
 
             {cameraError ? (
@@ -541,27 +701,25 @@ export function CaptureWorkspace() {
       {isDebugPanelEnabled ? (
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Capture debug</CardTitle>
+            <CardTitle>{intl.formatMessage(messages.debugTitle)}</CardTitle>
             <CardDescription>
-              Tracks page lifetime and capture events across reloads. Use `?
-              {getCaptureDebugPanelQueryKey()}=1` to show this panel, and use `?
-              {getCaptureDebugMaxEdgeStorageKey()}=1600` or localStorage to
-              enable temporary downscaling.
+              {intl.formatMessage(messages.debugDescription, {
+                panelKey: getCaptureDebugPanelQueryKey(),
+                maxEdgeKey: getCaptureDebugMaxEdgeStorageKey(),
+              })}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="rounded-full border border-border px-3 py-1">
-                Page session:{" "}
-                <span className="font-mono text-foreground">
-                  {pageSessionId}
-                </span>
+                {intl.formatMessage(messages.debugPageSession, {
+                  value: pageSessionId,
+                })}
               </span>
               <span className="rounded-full border border-border px-3 py-1">
-                Downscale max edge:{" "}
-                <span className="font-mono text-foreground">
-                  {captureDebugMaxEdge ?? "disabled"}
-                </span>
+                {intl.formatMessage(messages.debugDownscale, {
+                  value: captureDebugMaxEdge ?? "disabled",
+                })}
               </span>
             </div>
             <Button
@@ -573,7 +731,7 @@ export function CaptureWorkspace() {
                 refreshDebugEntries();
               }}
             >
-              Clear debug log
+              {intl.formatMessage(messages.clearDebugLog)}
             </Button>
             <div className="rounded-xl border border-border bg-background p-4">
               {debugEntries.length ? (
@@ -591,7 +749,7 @@ export function CaptureWorkspace() {
                   ))}
                 </ol>
               ) : (
-                <Alert>No capture debug events recorded yet.</Alert>
+                <Alert>{intl.formatMessage(messages.noDebugEvents)}</Alert>
               )}
             </div>
           </CardContent>
@@ -612,15 +770,14 @@ export function CaptureWorkspace() {
                   id="desktop-camera-dialog-title"
                   className="text-xl font-semibold"
                 >
-                  Camera capture
+                  {intl.formatMessage(messages.dialogTitle)}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Use the larger webcam preview to frame the business card
-                  before capturing.
+                  {intl.formatMessage(messages.dialogDescription)}
                 </p>
               </div>
               <Button type="button" variant="outline" onClick={stopCamera}>
-                Close camera
+                {intl.formatMessage(messages.closeCamera)}
               </Button>
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 sm:p-6">
@@ -646,7 +803,9 @@ export function CaptureWorkspace() {
                   ) : (
                     <Camera className="h-4 w-4" />
                   )}
-                  {isCapturingPhoto ? "Capturing..." : "Capture photo"}
+                  {isCapturingPhoto
+                    ? intl.formatMessage(messages.cameraStarting)
+                    : intl.formatMessage(messages.takePhoto)}
                 </Button>
                 <Button
                   type="button"
@@ -654,7 +813,7 @@ export function CaptureWorkspace() {
                   className="flex-1"
                   onClick={stopCamera}
                 >
-                  Close camera
+                  {intl.formatMessage(messages.closeCamera)}
                 </Button>
               </div>
             </div>

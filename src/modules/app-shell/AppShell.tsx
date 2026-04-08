@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { defineMessages, useIntl } from "react-intl";
 import {
   Link,
   Outlet,
@@ -37,37 +38,195 @@ import {
   shareSiteUrl,
 } from "./siteShare";
 
-const primaryNavItems = [
-  { type: "internal", to: "/capture", label: "Capture", icon: Camera },
-  { type: "internal", to: "/review", label: "Review", icon: ScanSearch },
-] as const;
+const messages = defineMessages({
+  navCapture: {
+    id: "shell.nav.capture",
+    defaultMessage: "Capture",
+  },
+  navReview: {
+    id: "shell.nav.review",
+    defaultMessage: "Review",
+  },
+  navSettings: {
+    id: "shell.nav.settings",
+    defaultMessage: "Settings",
+  },
+  navGoogleContacts: {
+    id: "shell.nav.googleContacts",
+    defaultMessage: "Google Contacts",
+  },
+  navDocs: {
+    id: "shell.nav.docs",
+    defaultMessage: "Docs",
+  },
+  navShare: {
+    id: "shell.nav.share",
+    defaultMessage: "Share",
+  },
+  navCoffee: {
+    id: "shell.nav.coffee",
+    defaultMessage: "Buy Me a Coffee",
+  },
+  navGithub: {
+    id: "shell.nav.github",
+    defaultMessage: "GitHub",
+  },
+  openNavigationMenu: {
+    id: "shell.menu.openNavigation",
+    defaultMessage: "Open navigation menu",
+  },
+  moreNavigation: {
+    id: "shell.menu.moreNavigation",
+    defaultMessage: "More navigation",
+  },
+  selectLanguageDesktop: {
+    id: "shell.languagePicker.desktop",
+    defaultMessage: "Select language (desktop)",
+  },
+  selectLanguageMobile: {
+    id: "shell.languagePicker.mobile",
+    defaultMessage: "Select language (mobile)",
+  },
+  primaryNavigation: {
+    id: "shell.navigation.primary",
+    defaultMessage: "Primary navigation",
+  },
+  primaryNavigationToggle: {
+    id: "shell.navigation.primaryToggle",
+    defaultMessage: "Primary navigation toggle",
+  },
+  unableNativeShare: {
+    id: "shell.toast.unableNativeShare",
+    defaultMessage: "Unable to open the native share sheet.",
+  },
+  copiedLink: {
+    id: "shell.toast.copiedLink",
+    defaultMessage: "Link copied to clipboard.",
+  },
+  unableCopyLink: {
+    id: "shell.toast.unableCopyLink",
+    defaultMessage: "Unable to copy the link.",
+  },
+  optionEnglish: {
+    id: "shell.languageOption.english",
+    defaultMessage: "English",
+  },
+  optionJapanese: {
+    id: "shell.languageOption.japanese",
+    defaultMessage: "Japanese",
+  },
+  updateAvailableBanner: {
+    id: "shell.banner.updateAvailable",
+    defaultMessage: "A new version is available.",
+  },
+  updateButton: {
+    id: "shell.banner.updateButton",
+    defaultMessage: "Update",
+  },
+  offlineReadyBanner: {
+    id: "shell.banner.offlineReady",
+    defaultMessage:
+      "Offline shell cached. Extraction and sync still need a connection.",
+  },
+  dismiss: {
+    id: "shell.banner.dismiss",
+    defaultMessage: "Dismiss",
+  },
+  installBanner: {
+    id: "shell.banner.install",
+    defaultMessage: "Install Meishi for faster access.",
+  },
+  installButton: {
+    id: "shell.banner.installButton",
+    defaultMessage: "Install",
+  },
+  shareTitle: {
+    id: "shell.share.title",
+    defaultMessage: "Meishi",
+  },
+  shareText: {
+    id: "shell.share.text",
+    defaultMessage: "Scan business cards and keep contact details organized with Meishi.",
+  },
+  shareFacebook: {
+    id: "shell.share.facebook",
+    defaultMessage: "Facebook",
+  },
+  shareX: {
+    id: "shell.share.x",
+    defaultMessage: "X",
+  },
+  shareLinkedIn: {
+    id: "shell.share.linkedIn",
+    defaultMessage: "LinkedIn",
+  },
+  shareEmail: {
+    id: "shell.share.email",
+    defaultMessage: "Email",
+  },
+});
 
-const overflowNavItems = [
-  { type: "internal", to: "/settings", label: "Settings", icon: Settings },
-  {
-    type: "external",
-    href: "https://contacts.google.com/",
-    label: "Google Contacts",
-    icon: ContactRound,
-  },
-  { type: "internal", to: "/docs", label: "Docs", icon: BookOpen },
-  { type: "action", action: "share-site", label: "Share", icon: Share2 },
-  {
-    type: "external",
-    href: "https://buymeacoffee.com/mundanelunacy",
-    label: "Buy Me a Coffee",
-    menuLabel: "Buy Me a Coffee",
-    icon: Coffee,
-  },
-  {
-    type: "external",
-    href: "https://github.com/mundanelunacy/meishi",
-    label: "GitHub",
-    icon: Github,
-  },
-] as const;
+function getPrimaryNavItems(intl: ReturnType<typeof useIntl>) {
+  return [
+    {
+      type: "internal",
+      to: "/capture",
+      label: intl.formatMessage(messages.navCapture),
+      icon: Camera,
+    },
+    {
+      type: "internal",
+      to: "/review",
+      label: intl.formatMessage(messages.navReview),
+      icon: ScanSearch,
+    },
+  ] as const;
+}
+
+function getOverflowNavItems(intl: ReturnType<typeof useIntl>) {
+  return [
+    {
+      type: "internal",
+      to: "/settings",
+      label: intl.formatMessage(messages.navSettings),
+      icon: Settings,
+    },
+    {
+      type: "external",
+      href: "https://contacts.google.com/",
+      label: intl.formatMessage(messages.navGoogleContacts),
+      icon: ContactRound,
+    },
+    {
+      type: "internal",
+      to: "/docs",
+      label: intl.formatMessage(messages.navDocs),
+      icon: BookOpen,
+    },
+    {
+      type: "action",
+      action: "share-site",
+      label: intl.formatMessage(messages.navShare),
+      icon: Share2,
+    },
+    {
+      type: "external",
+      href: "https://buymeacoffee.com/mundanelunacy",
+      label: intl.formatMessage(messages.navCoffee),
+      menuLabel: intl.formatMessage(messages.navCoffee),
+      icon: Coffee,
+    },
+    {
+      type: "external",
+      href: "https://github.com/mundanelunacy/meishi",
+      label: intl.formatMessage(messages.navGithub),
+      icon: Github,
+    },
+  ] as const;
+}
 
 export function AppShell() {
+  const intl = useIntl();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const pathname = useRouterState({
@@ -90,7 +249,19 @@ export function AppShell() {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const shareUrl = getAppShareUrl();
-  const shareLinks = buildSiteShareLinks(shareUrl);
+  const primaryNavItems = getPrimaryNavItems(intl);
+  const overflowNavItems = getOverflowNavItems(intl);
+  const shareCopy = {
+    title: intl.formatMessage(messages.shareTitle),
+    text: intl.formatMessage(messages.shareText),
+    labels: {
+      facebook: intl.formatMessage(messages.shareFacebook),
+      x: intl.formatMessage(messages.shareX),
+      linkedIn: intl.formatMessage(messages.shareLinkedIn),
+      email: intl.formatMessage(messages.shareEmail),
+    },
+  };
+  const shareLinks = buildSiteShareLinks(shareUrl, shareCopy);
 
   const canSwipeBetweenPrimaryRoutes =
     readiness.hasCompletedOnboarding &&
@@ -106,7 +277,7 @@ export function AppShell() {
     setOpenMenu(null);
 
     try {
-      const shared = await shareSiteUrl(shareUrl);
+    const shared = await shareSiteUrl(shareUrl, shareCopy);
 
       if (!shared) {
         setIsShareDialogOpen(true);
@@ -116,7 +287,7 @@ export function AppShell() {
         return;
       }
 
-      pushToast("Unable to open the native share sheet.");
+      pushToast(intl.formatMessage(messages.unableNativeShare));
       setIsShareDialogOpen(true);
     }
   }
@@ -126,14 +297,14 @@ export function AppShell() {
       const copied = await copySiteShareUrl(shareUrl);
 
       if (copied) {
-        pushToast("Link copied to clipboard.");
+        pushToast(intl.formatMessage(messages.copiedLink));
         return;
       }
     } catch {
       // Fall through to the shared failure toast below.
     }
 
-    pushToast("Unable to copy the link.");
+    pushToast(intl.formatMessage(messages.unableCopyLink));
   }
 
   useEffect(() => {
@@ -218,7 +389,7 @@ export function AppShell() {
           }
           aria-expanded={isOpen}
           aria-haspopup="menu"
-          aria-label="Open navigation menu"
+          aria-label={intl.formatMessage(messages.openNavigationMenu)}
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -226,7 +397,7 @@ export function AppShell() {
         {isOpen ? (
           <div
             role="menu"
-            aria-label="More navigation"
+            aria-label={intl.formatMessage(messages.moreNavigation)}
             className="absolute right-0 top-full z-50 mt-2 flex min-w-52 flex-col rounded-2xl border border-border bg-card p-2 shadow-lg"
           >
             {overflowNavItems.map((item) => {
@@ -300,16 +471,18 @@ export function AppShell() {
   const renderLanguagePicker = (placement: "desktop" | "mobile") => (
     <label className="relative block">
       <span className="sr-only">
-        {placement === "desktop"
-          ? "Select language (desktop)"
-          : "Select language (mobile)"}
+        {intl.formatMessage(
+          placement === "desktop"
+            ? messages.selectLanguageDesktop
+            : messages.selectLanguageMobile,
+        )}
       </span>
       <select
-        aria-label={
+        aria-label={intl.formatMessage(
           placement === "desktop"
-            ? "Select language (desktop)"
-            : "Select language (mobile)"
-        }
+            ? messages.selectLanguageDesktop
+            : messages.selectLanguageMobile,
+        )}
         value={locale}
         onChange={(event) =>
           dispatch(setLocale(event.target.value as typeof locale))
@@ -318,7 +491,9 @@ export function AppShell() {
       >
         {Object.keys(LOCALE_LABELS).map((value) => (
           <option key={value} value={value}>
-            {value === "en-US" ? "English" : "日本語"}
+            {value === "en-US"
+              ? intl.formatMessage(messages.optionEnglish)
+              : intl.formatMessage(messages.optionJapanese)}
           </option>
         ))}
       </select>
@@ -372,13 +547,13 @@ export function AppShell() {
 
         <nav
           className="hidden items-center justify-center md:flex"
-          aria-label="Primary navigation"
+          aria-label={intl.formatMessage(messages.primaryNavigation)}
         >
           <div
             className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 p-1"
             onTouchStart={handlePrimaryNavTouchStart}
             onTouchEnd={handlePrimaryNavTouchEnd}
-            aria-label="Primary navigation toggle"
+            aria-label={intl.formatMessage(messages.primaryNavigationToggle)}
           >
             {primaryNavItems.map((item) => renderPrimaryNavLink(item))}
           </div>
@@ -399,9 +574,11 @@ export function AppShell() {
       {/* ── Inline banners ── */}
       {needRefresh ? (
         <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 text-sm">
-          <span className="flex-1">A new version is available.</span>
+          <span className="flex-1">
+            {intl.formatMessage(messages.updateAvailableBanner)}
+          </span>
           <Button type="button" size="sm" onClick={() => void applyUpdate()}>
-            Update
+            {intl.formatMessage(messages.updateButton)}
           </Button>
         </div>
       ) : null}
@@ -409,13 +586,13 @@ export function AppShell() {
       {offlineReady ? (
         <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 text-sm">
           <span className="flex-1 text-muted-foreground">
-            Offline shell cached. Extraction and sync still need a connection.
+            {intl.formatMessage(messages.offlineReadyBanner)}
           </span>
           <button
             type="button"
             className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             onClick={dismissOfflineReady}
-            aria-label="Dismiss"
+            aria-label={intl.formatMessage(messages.dismiss)}
           >
             <X className="h-4 w-4" />
           </button>
@@ -424,14 +601,16 @@ export function AppShell() {
 
       {canInstall && !isInstalled ? (
         <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 text-sm">
-          <span className="flex-1">Install Meishi for faster access.</span>
+          <span className="flex-1">
+            {intl.formatMessage(messages.installBanner)}
+          </span>
           <Button
             type="button"
             size="sm"
             variant="outline"
             onClick={() => void promptInstall()}
           >
-            Install
+            {intl.formatMessage(messages.installButton)}
           </Button>
         </div>
       ) : null}
@@ -458,7 +637,7 @@ export function AppShell() {
               className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 p-1"
               onTouchStart={handlePrimaryNavTouchStart}
               onTouchEnd={handlePrimaryNavTouchEnd}
-              aria-label="Primary navigation toggle"
+              aria-label={intl.formatMessage(messages.primaryNavigationToggle)}
             >
               {primaryNavItems.map((item) => renderPrimaryNavLink(item))}
             </div>

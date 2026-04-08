@@ -1,6 +1,13 @@
-const APP_SHARE_TITLE = "Meishi";
-const APP_SHARE_TEXT =
-  "Scan business cards and keep contact details organized with Meishi.";
+export type SiteShareCopy = {
+  title: string;
+  text: string;
+  labels: {
+    facebook: string;
+    x: string;
+    linkedIn: string;
+    email: string;
+  };
+};
 
 type NavigatorShareLike = Pick<Navigator, "share"> & {
   canShare?: Navigator["canShare"];
@@ -23,6 +30,7 @@ export function canUseNativeSiteShare(
 
 export async function shareSiteUrl(
   url: string,
+  copy: SiteShareCopy,
   navigatorLike: NavigatorShareLike = navigator,
 ) {
   if (!canUseNativeSiteShare(navigatorLike)) {
@@ -30,8 +38,8 @@ export async function shareSiteUrl(
   }
 
   const shareData = {
-    text: APP_SHARE_TEXT,
-    title: APP_SHARE_TITLE,
+    text: copy.text,
+    title: copy.title,
     url,
   };
 
@@ -46,26 +54,29 @@ export async function shareSiteUrl(
   return true;
 }
 
-export function buildSiteShareLinks(url: string): SiteShareLink[] {
+export function buildSiteShareLinks(
+  url: string,
+  copy: SiteShareCopy,
+): SiteShareLink[] {
   const encodedUrl = encodeURIComponent(url);
-  const encodedText = encodeURIComponent(APP_SHARE_TEXT);
-  const encodedTitle = encodeURIComponent(APP_SHARE_TITLE);
+  const encodedText = encodeURIComponent(copy.text);
+  const encodedTitle = encodeURIComponent(copy.title);
 
   return [
     {
-      label: "Facebook",
+      label: copy.labels.facebook,
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
     },
     {
-      label: "X",
+      label: copy.labels.x,
       href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
     },
     {
-      label: "LinkedIn",
+      label: copy.labels.linkedIn,
       href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
     },
     {
-      label: "Email",
+      label: copy.labels.email,
       href: `mailto:?subject=${encodedTitle}&body=${encodedText}%0A%0A${encodedUrl}`,
     },
   ];

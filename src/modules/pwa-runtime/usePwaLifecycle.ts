@@ -1,6 +1,28 @@
 import { useEffect, useState } from "react";
+import { defineMessages, useIntl } from "react-intl";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { pushToast } from "../../shared/ui/toastBus";
+
+const messages = defineMessages({
+  updateAvailable: {
+    id: "pwa.toast.updateAvailable",
+    defaultMessage:
+      "A Meishi update is available. Refresh the app to apply it.",
+  },
+  offlineReady: {
+    id: "pwa.toast.offlineReady",
+    defaultMessage:
+      "Meishi can reopen its shell and saved local data offline. Extraction and Google sync still require a network connection.",
+  },
+  canInstall: {
+    id: "pwa.toast.canInstall",
+    defaultMessage: "Meishi can be installed on this device.",
+  },
+  installed: {
+    id: "pwa.toast.installed",
+    defaultMessage: "Meishi was installed on this device.",
+  },
+});
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -42,18 +64,17 @@ function setSharedInstallEvent(event: BeforeInstallPromptEvent | null) {
 }
 
 export function usePwaLifecycle() {
+  const intl = useIntl();
   const {
     needRefresh: [needRefresh],
     offlineReady: [offlineReady, setOfflineReady],
     updateServiceWorker,
   } = useRegisterSW({
     onNeedRefresh() {
-      pushToast("A Meishi update is available. Refresh the app to apply it.");
+      pushToast(intl.formatMessage(messages.updateAvailable));
     },
     onOfflineReady() {
-      pushToast(
-        "Meishi can reopen its shell and saved local data offline. Extraction and Google sync still require a network connection.",
-      );
+      pushToast(intl.formatMessage(messages.offlineReady));
     },
     onRegisterError(error) {
       console.error("PWA registration failed", error);
@@ -89,13 +110,13 @@ export function usePwaLifecycle() {
 
       event.preventDefault();
       setSharedInstallEvent(nextInstallEvent);
-      pushToast("Meishi can be installed on this device.");
+      pushToast(intl.formatMessage(messages.canInstall));
     };
 
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setSharedInstallEvent(null);
-      pushToast("Meishi was installed on this device.");
+      pushToast(intl.formatMessage(messages.installed));
     };
 
     const handleDisplayModeChange = (event: MediaQueryListEvent) => {
@@ -120,7 +141,7 @@ export function usePwaLifecycle() {
       window.removeEventListener("appinstalled", handleAppInstalled);
       mediaQuery?.removeEventListener("change", handleDisplayModeChange);
     };
-  }, []);
+  }, [intl]);
 
   async function promptInstall() {
     if (!installEvent) {

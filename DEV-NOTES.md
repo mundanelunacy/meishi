@@ -263,9 +263,9 @@ Vite loads env files from the repo root automatically. Meishi now assumes this l
 
 ## Localization notes
 
-- The first i18n rollout is intentionally limited to `/docs` and its docs-specific JSON-LD output. The rest of the UI remains English even when the stored locale is `ja`.
+- Route UI copy is localized across landing, capture, review, settings, docs, privacy, terms, shell navigation, and the Google OAuth callback route. Landing and docs JSON-LD also follow the active locale.
 - Locale is stored in the same `meishi.settings` payload as the other onboarding preferences. Unknown locale values must sanitize back to `en-US`.
-- Docs copy is sourced from `src/modules/app-shell/docsContent.tsx`, which keeps the rendered page copy and docs schema text in one place.
+- Docs copy is sourced from `src/modules/app-shell/docsContent.tsx`, legal copy from `src/modules/app-shell/legalContent.tsx`, and landing/onboarding/settings copy from `src/modules/onboarding-settings/onboardingContent.tsx` so rendered text and localized schema content stay aligned.
 - Manual FormatJS extraction is documented in [skills/formatjs-extract-workflow.md](skills/formatjs-extract-workflow.md) rather than package scripts.
 
 - The extracted `en-US.messages.json` file is the source catalog for translation updates; the runtime currently uses descriptor defaults for `en-US` fallback and `src/app/locales/ja.json` for Japanese overrides.
