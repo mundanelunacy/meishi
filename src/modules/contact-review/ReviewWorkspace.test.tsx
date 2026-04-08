@@ -11,20 +11,24 @@ import { onboardingReducer } from "../onboarding-settings/onboardingSlice";
 import { reviewDraftReducer } from "./reviewDraftSlice";
 import { ReviewWorkspace } from "./ReviewWorkspace";
 
+const navigateMock = vi.fn();
 const saveCapturedImagesMock = vi.fn(() => Promise.resolve());
+const saveDraftMock = vi.fn(() => Promise.resolve());
+const clearLatestDraftMock = vi.fn(() => Promise.resolve());
 
 vi.mock("@tanstack/react-router", () => ({
-  useNavigate: () => vi.fn(),
+  useNavigate: () => navigateMock,
 }));
 
 vi.mock("../local-data", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../local-data")>();
   return {
     ...actual,
+    clearLatestDraft: (...args: unknown[]) => clearLatestDraftMock(...args),
     loadCapturedImages: vi.fn(() => Promise.resolve([])),
     loadLatestDraft: vi.fn(() => Promise.resolve(null)),
     saveCapturedImages: (...args: unknown[]) => saveCapturedImagesMock(...args),
-    saveDraft: vi.fn(() => Promise.resolve()),
+    saveDraft: (...args: unknown[]) => saveDraftMock(...args),
     saveSyncOutcome: vi.fn(() => Promise.resolve()),
   };
 });
@@ -225,8 +229,13 @@ describe("ReviewWorkspace", () => {
       isSyncing: false,
       errorMessage: null,
     });
+    navigateMock.mockReset();
+    clearLatestDraftMock.mockReset();
+    clearLatestDraftMock.mockResolvedValue(undefined);
     saveCapturedImagesMock.mockReset();
     saveCapturedImagesMock.mockResolvedValue(undefined);
+    saveDraftMock.mockReset();
+    saveDraftMock.mockResolvedValue(undefined);
     pushToastMock.mockReset();
     saveContactVCardMock.mockReset();
     saveContactVCardMock.mockResolvedValue("downloaded");
@@ -295,6 +304,9 @@ describe("ReviewWorkspace", () => {
     expect(pushToastMock).toHaveBeenCalledWith(
       "Verified contact synced to Google Contacts.",
     );
+    expect(
+      screen.getByRole("dialog", { name: /contact saved/i }),
+    ).toBeInTheDocument();
   });
 
   it("updates preview output from current form edits", async () => {
@@ -546,6 +558,9 @@ describe("ReviewWorkspace", () => {
     expect(pushToastMock).toHaveBeenCalledWith(
       "Verified contact synced to Google Contacts.",
     );
+    expect(
+      screen.getByRole("dialog", { name: /contact saved/i }),
+    ).toBeInTheDocument();
   });
 
   it("exports a vCard from the current reviewed form values", async () => {
@@ -569,6 +584,82 @@ describe("ReviewWorkspace", () => {
       "vCard downloaded to your device.",
     );
     expect(syncContactMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("dialog", { name: /contact saved/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("dismisses the post-save modal without clearing review state", async () => {
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /save vcard/i }));
+
+    expect(
+      screen.getByRole("dialog", { name: /contact saved/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^cancel$/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: /contact saved/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByLabelText(/display name/i)).toHaveValue("Ada Lovelace");
+    expect(saveCapturedImagesMock).not.toHaveBeenCalledWith([]);
+    expect(clearLatestDraftMock).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it("clears persisted review state and returns to capture when scanning another card", async () => {
+    const { store } = renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", { name: /save to google contacts/i }),
+    );
+
+    expect(
+      screen.getByRole("dialog", { name: /contact saved/i }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /scan another card/i }),
+    );
+
+    await waitFor(() => {
+      expect(saveCapturedImagesMock).toHaveBeenCalledWith([]);
+      expect(clearLatestDraftMock).toHaveBeenCalledTimes(1);
+      expect(navigateMock).toHaveBeenCalledWith({ to: "/capture" });
+    });
+
+    expect(store.getState().reviewDraft.images).toEqual([]);
+    expect(store.getState().reviewDraft.draft).toBeNull();
+    expect(store.getState().reviewDraft.verifiedContact).toBeNull();
+    expect(
+      screen.queryByRole("dialog", { name: /contact saved/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not open the post-save modal when Google sync fails", async () => {
+    syncContactMock.mockRejectedValueOnce(new Error("sync failed"));
+
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", { name: /save to google contacts/i }),
+    );
+
+    await waitFor(() => {
+      expect(pushToastMock).toHaveBeenCalledWith("sync failed");
+    });
+
+    expect(
+      screen.queryByRole("dialog", { name: /contact saved/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("disables both save actions when the review form is clean", async () => {

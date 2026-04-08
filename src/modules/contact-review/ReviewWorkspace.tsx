@@ -56,6 +56,7 @@ import { Badge } from "../../shared/ui/badge";
 import { Alert } from "../../shared/ui/alert";
 import { Photoroll } from "../../shared/ui/photoroll";
 import {
+  clearReviewDraft,
   finalizeDraft,
   selectCapturedImages,
   selectDraft,
@@ -64,6 +65,7 @@ import {
   updateDraft,
 } from "./reviewDraftSlice";
 import {
+  clearLatestDraft,
   loadCapturedImages,
   loadLatestDraft,
   saveCapturedImages,
@@ -173,6 +175,22 @@ const messages = defineMessages({
   saveToGoogle: {
     id: "review.action.saveToGoogle",
     defaultMessage: "Save to Google Contacts",
+  },
+  saveSuccessTitle: {
+    id: "review.success.title",
+    defaultMessage: "Contact saved",
+  },
+  saveSuccessDescription: {
+    id: "review.success.description",
+    defaultMessage: "What would you like to do next?",
+  },
+  scanAnotherCard: {
+    id: "review.success.scanAnotherCard",
+    defaultMessage: "Scan another card",
+  },
+  cancel: {
+    id: "review.success.cancel",
+    defaultMessage: "Cancel",
   },
   sectionName: { id: "review.section.name", defaultMessage: "Name" },
   sectionCompany: { id: "review.section.company", defaultMessage: "Company" },
@@ -640,11 +658,14 @@ export function ReviewWorkspace() {
   const { syncContact, isSyncing, errorMessage } = useSyncGoogleContact();
   const autosaveTimeoutRef = useRef<number | null>(null);
   const hydratedDraftSignatureRef = useRef<string | null>(null);
+  const isAutosavePausedRef = useRef(false);
+  const isHydrationPausedRef = useRef(false);
   const [isAuthorizing, setIsAuthorizing] = useState(false);
+  const [isSaveSuccessModalOpen, setIsSaveSuccessModalOpen] = useState(false);
   const [showMoreFields, setShowMoreFields] = useState(false);
 
   useEffect(() => {
-    if (draft || images.length) {
+    if (draft || images.length || isHydrationPausedRef.current) {
       return;
     }
 
@@ -717,6 +738,10 @@ export function ReviewWorkspace() {
     const activeDraft = draft;
 
     const subscription = form.watch((values) => {
+      if (isAutosavePausedRef.current) {
+        return;
+      }
+
       if (autosaveTimeoutRef.current) {
         window.clearTimeout(autosaveTimeoutRef.current);
       }
@@ -748,6 +773,13 @@ export function ReviewWorkspace() {
   const currentValues = normalizeWatchedValues(form.watch());
   const selectedPhotoImageId = form.watch("selectedPhotoImageId");
   const hasAnyReviewData = hasReviewData(currentValues);
+
+  function clearPendingAutosave() {
+    if (autosaveTimeoutRef.current) {
+      window.clearTimeout(autosaveTimeoutRef.current);
+      autosaveTimeoutRef.current = null;
+    }
+  }
 
   if (!draft) {
     return (
@@ -818,6 +850,7 @@ export function ReviewWorkspace() {
       pushToast(
         result.warningMessage ?? intl.formatMessage(messages.syncedToGoogle),
       );
+      setIsSaveSuccessModalOpen(true);
     } catch (error) {
       pushToast(
         error instanceof Error
@@ -858,6 +891,7 @@ export function ReviewWorkspace() {
           ? intl.formatMessage(messages.vcardShared)
           : intl.formatMessage(messages.vcardDownloaded),
       );
+      setIsSaveSuccessModalOpen(true);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         return;
@@ -876,11 +910,6 @@ export function ReviewWorkspace() {
       return;
     }
 
-    if (autosaveTimeoutRef.current) {
-      window.clearTimeout(autosaveTimeoutRef.current);
-      autosaveTimeoutRef.current = null;
-    }
-
     const emptyValues = buildEmptyFormValues();
     const emptyDraftFields = getDraftFields(emptyValues);
     const resetDraftFields = {
@@ -895,10 +924,37 @@ export function ReviewWorkspace() {
       updatedAt: new Date().toISOString(),
     };
 
-    form.reset(emptyValues);
-    setShowMoreFields(false);
-    dispatch(updateDraft(resetDraftFields));
-    await saveDraft(resetDraft);
+    isAutosavePausedRef.current = true;
+    clearPendingAutosave();
+
+    try {
+      form.reset(emptyValues);
+      setShowMoreFields(false);
+      dispatch(updateDraft(resetDraftFields));
+      await saveDraft(resetDraft);
+    } finally {
+      isAutosavePausedRef.current = false;
+    }
+  }
+
+  async function handleScanAnotherCard() {
+    isHydrationPausedRef.current = true;
+    isAutosavePausedRef.current = true;
+    clearPendingAutosave();
+
+    try {
+      hydratedDraftSignatureRef.current = null;
+      form.reset(buildEmptyFormValues());
+      setShowMoreFields(false);
+      setIsSaveSuccessModalOpen(false);
+      dispatch(clearReviewDraft());
+
+      await Promise.all([saveCapturedImages([]), clearLatestDraft()]);
+      navigate({ to: "/capture" });
+    } finally {
+      isAutosavePausedRef.current = false;
+      isHydrationPausedRef.current = false;
+    }
   }
 
   async function handleClearPhotoroll() {
@@ -909,399 +965,456 @@ export function ReviewWorkspace() {
   }
 
   return (
-    <form
-      className="grid min-h-[70vh] gap-6 lg:grid-cols-2"
-      onSubmit={form.handleSubmit(onSubmit)}
-    >
-      <Card className="min-w-0 overflow-hidden">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle>{intl.formatMessage(messages.photorollTitle)}</CardTitle>
-            {images.length ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 rounded-full p-0 text-muted-foreground"
-                aria-label={intl.formatMessage(messages.clearPhotoroll)}
-                onClick={() => {
-                  void handleClearPhotoroll();
-                }}
-              >
-                <Eraser className="h-4 w-4" />
-              </Button>
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Photoroll
-            images={images}
-            getItemClassName={(image) =>
-              selectedPhotoImageId === image.id
-                ? "border-primary ring-2 ring-primary/25"
-                : undefined
-            }
-            renderOverlayAction={(image) => {
-              const isSelected = selectedPhotoImageId === image.id;
-
-              return (
+    <>
+      <form
+        className="grid min-h-[70vh] gap-6 lg:grid-cols-2"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <Card className="min-w-0 overflow-hidden">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>
+                {intl.formatMessage(messages.photorollTitle)}
+              </CardTitle>
+              {images.length ? (
                 <Button
                   type="button"
-                  variant={isSelected ? "default" : "secondary"}
+                  variant="ghost"
                   size="sm"
-                  className={isSelected ? undefined : "bg-background/90"}
-                  aria-pressed={isSelected}
-                  aria-label={intl.formatMessage(messages.uploadImage, {
-                    fileName: image.fileName,
-                  })}
-                  onClick={() =>
-                    form.setValue(
-                      "selectedPhotoImageId",
-                      isSelected ? undefined : image.id,
-                    )
-                  }
+                  className="h-9 w-9 rounded-full p-0 text-muted-foreground"
+                  aria-label={intl.formatMessage(messages.clearPhotoroll)}
+                  onClick={() => {
+                    void handleClearPhotoroll();
+                  }}
                 >
-                  <Upload className="h-4 w-4" />
-                  {intl.formatMessage(messages.upload)}
+                  <Eraser className="h-4 w-4" />
                 </Button>
-              );
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      <Card className="h-full">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle>{intl.formatMessage(messages.verifyTitle)}</CardTitle>
-            {hasAnyReviewData ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 rounded-full p-0 text-muted-foreground"
-                aria-label={intl.formatMessage(messages.clearReviewedData)}
-                onClick={() => {
-                  void handleResetReview();
-                }}
-              >
-                <Eraser className="h-4 w-4" />
-              </Button>
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-7">
-          {draft.confidenceNotes.length ? (
-            <div className="flex flex-wrap gap-2">
-              {draft.confidenceNotes.map((note) => (
-                <Badge
-                  key={note}
-                  className="bg-primary text-primary-foreground"
-                >
-                  {note}
-                </Badge>
-              ))}
-            </div>
-          ) : null}
-
-          <GoogleSection
-            icon={UserRound}
-            title={intl.formatMessage(messages.sectionName)}
-            action={
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 rounded-full p-0 text-muted-foreground"
-                onClick={() => setShowMoreFields((value) => !value)}
-                aria-label={
-                  showMoreFields
-                    ? intl.formatMessage(messages.showFewerFields)
-                    : intl.formatMessage(messages.showMoreFields)
-                }
-              >
-                {showMoreFields ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            }
-          >
-            <div className="space-y-3">
-              {showMoreFields ? (
-                <GoogleField
-                  label={intl.formatMessage(messages.labelPrefix)}
-                  htmlFor="review-name-prefix"
-                >
-                  <Input
-                    id="review-name-prefix"
-                    {...form.register("namePrefix")}
-                  />
-                </GoogleField>
               ) : null}
-              <GoogleField
-                label={intl.formatMessage(messages.labelFirstName)}
-                htmlFor="review-first-name"
-              >
-                <Input id="review-first-name" {...form.register("firstName")} />
-              </GoogleField>
-              <GoogleField
-                label={intl.formatMessage(messages.labelLastName)}
-                htmlFor="review-last-name"
-              >
-                <Input id="review-last-name" {...form.register("lastName")} />
-              </GoogleField>
-              {showMoreFields ? (
-                <GoogleField
-                  label={intl.formatMessage(messages.labelNickname)}
-                  htmlFor="review-nickname"
-                >
-                  <Input id="review-nickname" {...form.register("nickname")} />
-                </GoogleField>
-              ) : null}
-              <GoogleField
-                label={intl.formatMessage(messages.labelPhoneticFirst)}
-                htmlFor="review-phonetic-first-name"
-              >
-                <Input
-                  id="review-phonetic-first-name"
-                  {...form.register("phoneticFirstName")}
-                />
-              </GoogleField>
-              {showMoreFields ? (
-                <GoogleField
-                  label={intl.formatMessage(messages.labelPhoneticMiddle)}
-                  htmlFor="review-phonetic-middle-name"
-                >
-                  <Input
-                    id="review-phonetic-middle-name"
-                    {...form.register("phoneticMiddleName")}
-                  />
-                </GoogleField>
-              ) : null}
-              <GoogleField
-                label={intl.formatMessage(messages.labelPhoneticLast)}
-                htmlFor="review-phonetic-last-name"
-              >
-                <Input
-                  id="review-phonetic-last-name"
-                  {...form.register("phoneticLastName")}
-                />
-              </GoogleField>
-              <GoogleField
-                label={intl.formatMessage(messages.labelDisplayName)}
-                htmlFor="review-full-name"
-              >
-                <Input id="review-full-name" {...form.register("fullName")} />
-              </GoogleField>
-              <GoogleField
-                label={intl.formatMessage(messages.labelFileAs)}
-                htmlFor="review-file-as"
-              >
-                <Input id="review-file-as" {...form.register("fileAs")} />
-              </GoogleField>
             </div>
-          </GoogleSection>
-
-          <GoogleSection
-            icon={Building2}
-            title={intl.formatMessage(messages.sectionCompany)}
-          >
-            <div className="space-y-3">
-              <GoogleField
-                label={intl.formatMessage(messages.labelCompany)}
-                htmlFor="review-organization"
-              >
-                <Input
-                  id="review-organization"
-                  {...form.register("organization")}
-                />
-              </GoogleField>
-              <GoogleField
-                label={intl.formatMessage(messages.labelJobTitle)}
-                htmlFor="review-title"
-              >
-                <Input id="review-title" {...form.register("title")} />
-              </GoogleField>
-              <GoogleField
-                label={intl.formatMessage(messages.labelDepartment)}
-                htmlFor="review-department"
-              >
-                <Input
-                  id="review-department"
-                  {...form.register("department")}
-                />
-              </GoogleField>
-            </div>
-          </GoogleSection>
-
-          <RepeatableFieldSection
-            title={intl.formatMessage(messages.sectionEmails)}
-            icon={Mail}
-            addLabel={intl.formatMessage(messages.addEmail)}
-            fieldArray={emailsFieldArray}
-            register={form.register}
-            name="emails"
-            legend={intl.formatMessage(messages.legendEmail)}
-          />
-
-          <RepeatableFieldSection
-            title={intl.formatMessage(messages.sectionPhones)}
-            icon={Phone}
-            addLabel={intl.formatMessage(messages.addPhone)}
-            fieldArray={phonesFieldArray}
-            register={form.register}
-            name="phones"
-            legend={intl.formatMessage(messages.legendPhone)}
-          />
-
-          <RepeatableFieldSection
-            title={intl.formatMessage(messages.sectionAddresses)}
-            icon={MapPin}
-            addLabel={intl.formatMessage(messages.addAddress)}
-            fieldArray={addressesFieldArray}
-            register={form.register}
-            name="addresses"
-            legend={intl.formatMessage(messages.legendAddress)}
-            multiline
-          />
-
-          <RepeatableFieldSection
-            title={intl.formatMessage(messages.sectionDates)}
-            icon={CalendarDays}
-            addLabel={intl.formatMessage(messages.addDate)}
-            fieldArray={significantDatesFieldArray}
-            register={form.register}
-            name="significantDates"
-            legend={intl.formatMessage(messages.legendDate)}
-            valueInputType="date"
-            showAddButton={showMoreFields}
-            hideWhenEmpty={!showMoreFields}
-          />
-
-          <RepeatableFieldSection
-            title={intl.formatMessage(messages.sectionWebsites)}
-            icon={Link2}
-            addLabel={intl.formatMessage(messages.addWebsite)}
-            fieldArray={websitesFieldArray}
-            register={form.register}
-            name="websites"
-            legend={intl.formatMessage(messages.legendWebsite)}
-          />
-
-          <RepeatableFieldSection
-            title={intl.formatMessage(messages.sectionPeople)}
-            icon={UsersRound}
-            addLabel={intl.formatMessage(messages.addPerson)}
-            fieldArray={relatedPeopleFieldArray}
-            register={form.register}
-            name="relatedPeople"
-            legend={intl.formatMessage(messages.legendPerson)}
-            hideWhenEmpty={!showMoreFields}
-          />
-
-          <CustomFieldSection
-            fieldArray={customFieldsFieldArray}
-            register={form.register}
-          />
-
-          <GoogleSection
-            icon={FileText}
-            title={intl.formatMessage(messages.sectionNotes)}
-          >
-            <GoogleField
-              label={intl.formatMessage(messages.labelNotes)}
-              htmlFor="review-notes"
-            >
-              <Textarea
-                id="review-notes"
-                {...form.register("notes")}
-                className="min-h-[140px] rounded-xl"
-              />
-            </GoogleField>
-          </GoogleSection>
-
-          <div>
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full border-primary px-6 text-primary hover:bg-primary/5"
-              onClick={() => setShowMoreFields((value) => !value)}
-            >
-              {showMoreFields
-                ? intl.formatMessage(messages.showLess)
-                : intl.formatMessage(messages.showMore)}
-            </Button>
-          </div>
-
-          {errorMessage ? (
-            <Alert className="border-destructive/30 text-destructive">
-              {errorMessage}
-            </Alert>
-          ) : null}
-
-          {debugQueryEnabled ? (
-            <DebugPanel
-              draft={draft}
+          </CardHeader>
+          <CardContent>
+            <Photoroll
               images={images}
-              values={{
-                fullName: currentValues.fullName ?? "",
-                namePrefix: currentValues.namePrefix ?? "",
-                firstName: currentValues.firstName ?? "",
-                phoneticFirstName: currentValues.phoneticFirstName ?? "",
-                phoneticMiddleName: currentValues.phoneticMiddleName ?? "",
-                phoneticLastName: currentValues.phoneticLastName ?? "",
-                lastName: currentValues.lastName ?? "",
-                nickname: currentValues.nickname ?? "",
-                fileAs: currentValues.fileAs ?? "",
-                organization: currentValues.organization ?? "",
-                department: currentValues.department ?? "",
-                title: currentValues.title ?? "",
-                notes: currentValues.notes ?? "",
-                emails: currentValues.emails ?? [],
-                phones: currentValues.phones ?? [],
-                websites: currentValues.websites ?? [],
-                addresses: currentValues.addresses ?? [],
-                relatedPeople: currentValues.relatedPeople ?? [],
-                significantDates: currentValues.significantDates ?? [],
-                customFields: currentValues.customFields ?? [],
-                selectedPhotoImageId: currentValues.selectedPhotoImageId,
+              getItemClassName={(image) =>
+                selectedPhotoImageId === image.id
+                  ? "border-primary ring-2 ring-primary/25"
+                  : undefined
+              }
+              renderOverlayAction={(image) => {
+                const isSelected = selectedPhotoImageId === image.id;
+
+                return (
+                  <Button
+                    type="button"
+                    variant={isSelected ? "default" : "secondary"}
+                    size="sm"
+                    className={isSelected ? undefined : "bg-background/90"}
+                    aria-pressed={isSelected}
+                    aria-label={intl.formatMessage(messages.uploadImage, {
+                      fileName: image.fileName,
+                    })}
+                    onClick={() =>
+                      form.setValue(
+                        "selectedPhotoImageId",
+                        isSelected ? undefined : image.id,
+                      )
+                    }
+                  >
+                    <Upload className="h-4 w-4" />
+                    {intl.formatMessage(messages.upload)}
+                  </Button>
+                );
               }}
             />
-          ) : null}
+          </CardContent>
+        </Card>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-14 rounded-xl"
-              disabled={!hasAnyReviewData}
-              onClick={() => {
-                void handleSaveVCard();
-              }}
+        <Card className="h-full">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>{intl.formatMessage(messages.verifyTitle)}</CardTitle>
+              {hasAnyReviewData ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 rounded-full p-0 text-muted-foreground"
+                  aria-label={intl.formatMessage(messages.clearReviewedData)}
+                  onClick={() => {
+                    void handleResetReview();
+                  }}
+                >
+                  <Eraser className="h-4 w-4" />
+                </Button>
+              ) : null}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-7">
+            {draft.confidenceNotes.length ? (
+              <div className="flex flex-wrap gap-2">
+                {draft.confidenceNotes.map((note) => (
+                  <Badge
+                    key={note}
+                    className="bg-primary text-primary-foreground"
+                  >
+                    {note}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
+
+            <GoogleSection
+              icon={UserRound}
+              title={intl.formatMessage(messages.sectionName)}
+              action={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 rounded-full p-0 text-muted-foreground"
+                  onClick={() => setShowMoreFields((value) => !value)}
+                  aria-label={
+                    showMoreFields
+                      ? intl.formatMessage(messages.showFewerFields)
+                      : intl.formatMessage(messages.showMoreFields)
+                  }
+                >
+                  {showMoreFields ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              }
             >
-              <Download className="h-4 w-4" />
-              {intl.formatMessage(messages.saveVcard)}
-            </Button>
-            <Button
-              size="lg"
-              type="submit"
-              className="h-14 rounded-xl"
-              disabled={!hasAnyReviewData || isSyncing || isAuthorizing}
+              <div className="space-y-3">
+                {showMoreFields ? (
+                  <GoogleField
+                    label={intl.formatMessage(messages.labelPrefix)}
+                    htmlFor="review-name-prefix"
+                  >
+                    <Input
+                      id="review-name-prefix"
+                      {...form.register("namePrefix")}
+                    />
+                  </GoogleField>
+                ) : null}
+                <GoogleField
+                  label={intl.formatMessage(messages.labelFirstName)}
+                  htmlFor="review-first-name"
+                >
+                  <Input
+                    id="review-first-name"
+                    {...form.register("firstName")}
+                  />
+                </GoogleField>
+                <GoogleField
+                  label={intl.formatMessage(messages.labelLastName)}
+                  htmlFor="review-last-name"
+                >
+                  <Input id="review-last-name" {...form.register("lastName")} />
+                </GoogleField>
+                {showMoreFields ? (
+                  <GoogleField
+                    label={intl.formatMessage(messages.labelNickname)}
+                    htmlFor="review-nickname"
+                  >
+                    <Input
+                      id="review-nickname"
+                      {...form.register("nickname")}
+                    />
+                  </GoogleField>
+                ) : null}
+                <GoogleField
+                  label={intl.formatMessage(messages.labelPhoneticFirst)}
+                  htmlFor="review-phonetic-first-name"
+                >
+                  <Input
+                    id="review-phonetic-first-name"
+                    {...form.register("phoneticFirstName")}
+                  />
+                </GoogleField>
+                {showMoreFields ? (
+                  <GoogleField
+                    label={intl.formatMessage(messages.labelPhoneticMiddle)}
+                    htmlFor="review-phonetic-middle-name"
+                  >
+                    <Input
+                      id="review-phonetic-middle-name"
+                      {...form.register("phoneticMiddleName")}
+                    />
+                  </GoogleField>
+                ) : null}
+                <GoogleField
+                  label={intl.formatMessage(messages.labelPhoneticLast)}
+                  htmlFor="review-phonetic-last-name"
+                >
+                  <Input
+                    id="review-phonetic-last-name"
+                    {...form.register("phoneticLastName")}
+                  />
+                </GoogleField>
+                <GoogleField
+                  label={intl.formatMessage(messages.labelDisplayName)}
+                  htmlFor="review-full-name"
+                >
+                  <Input id="review-full-name" {...form.register("fullName")} />
+                </GoogleField>
+                <GoogleField
+                  label={intl.formatMessage(messages.labelFileAs)}
+                  htmlFor="review-file-as"
+                >
+                  <Input id="review-file-as" {...form.register("fileAs")} />
+                </GoogleField>
+              </div>
+            </GoogleSection>
+
+            <GoogleSection
+              icon={Building2}
+              title={intl.formatMessage(messages.sectionCompany)}
             >
-              <UserRoundPlus className="h-4 w-4" />
-              {isSyncing || isAuthorizing ? <Spinner /> : null}
-              {isAuthorizing
-                ? intl.formatMessage(messages.connectingGoogle)
-                : isSyncing
-                  ? intl.formatMessage(messages.syncing)
-                  : intl.formatMessage(messages.saveToGoogle)}
-            </Button>
+              <div className="space-y-3">
+                <GoogleField
+                  label={intl.formatMessage(messages.labelCompany)}
+                  htmlFor="review-organization"
+                >
+                  <Input
+                    id="review-organization"
+                    {...form.register("organization")}
+                  />
+                </GoogleField>
+                <GoogleField
+                  label={intl.formatMessage(messages.labelJobTitle)}
+                  htmlFor="review-title"
+                >
+                  <Input id="review-title" {...form.register("title")} />
+                </GoogleField>
+                <GoogleField
+                  label={intl.formatMessage(messages.labelDepartment)}
+                  htmlFor="review-department"
+                >
+                  <Input
+                    id="review-department"
+                    {...form.register("department")}
+                  />
+                </GoogleField>
+              </div>
+            </GoogleSection>
+
+            <RepeatableFieldSection
+              title={intl.formatMessage(messages.sectionEmails)}
+              icon={Mail}
+              addLabel={intl.formatMessage(messages.addEmail)}
+              fieldArray={emailsFieldArray}
+              register={form.register}
+              name="emails"
+              legend={intl.formatMessage(messages.legendEmail)}
+            />
+
+            <RepeatableFieldSection
+              title={intl.formatMessage(messages.sectionPhones)}
+              icon={Phone}
+              addLabel={intl.formatMessage(messages.addPhone)}
+              fieldArray={phonesFieldArray}
+              register={form.register}
+              name="phones"
+              legend={intl.formatMessage(messages.legendPhone)}
+            />
+
+            <RepeatableFieldSection
+              title={intl.formatMessage(messages.sectionAddresses)}
+              icon={MapPin}
+              addLabel={intl.formatMessage(messages.addAddress)}
+              fieldArray={addressesFieldArray}
+              register={form.register}
+              name="addresses"
+              legend={intl.formatMessage(messages.legendAddress)}
+              multiline
+            />
+
+            <RepeatableFieldSection
+              title={intl.formatMessage(messages.sectionDates)}
+              icon={CalendarDays}
+              addLabel={intl.formatMessage(messages.addDate)}
+              fieldArray={significantDatesFieldArray}
+              register={form.register}
+              name="significantDates"
+              legend={intl.formatMessage(messages.legendDate)}
+              valueInputType="date"
+              showAddButton={showMoreFields}
+              hideWhenEmpty={!showMoreFields}
+            />
+
+            <RepeatableFieldSection
+              title={intl.formatMessage(messages.sectionWebsites)}
+              icon={Link2}
+              addLabel={intl.formatMessage(messages.addWebsite)}
+              fieldArray={websitesFieldArray}
+              register={form.register}
+              name="websites"
+              legend={intl.formatMessage(messages.legendWebsite)}
+            />
+
+            <RepeatableFieldSection
+              title={intl.formatMessage(messages.sectionPeople)}
+              icon={UsersRound}
+              addLabel={intl.formatMessage(messages.addPerson)}
+              fieldArray={relatedPeopleFieldArray}
+              register={form.register}
+              name="relatedPeople"
+              legend={intl.formatMessage(messages.legendPerson)}
+              hideWhenEmpty={!showMoreFields}
+            />
+
+            <CustomFieldSection
+              fieldArray={customFieldsFieldArray}
+              register={form.register}
+            />
+
+            <GoogleSection
+              icon={FileText}
+              title={intl.formatMessage(messages.sectionNotes)}
+            >
+              <GoogleField
+                label={intl.formatMessage(messages.labelNotes)}
+                htmlFor="review-notes"
+              >
+                <Textarea
+                  id="review-notes"
+                  {...form.register("notes")}
+                  className="min-h-[140px] rounded-xl"
+                />
+              </GoogleField>
+            </GoogleSection>
+
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full border-primary px-6 text-primary hover:bg-primary/5"
+                onClick={() => setShowMoreFields((value) => !value)}
+              >
+                {showMoreFields
+                  ? intl.formatMessage(messages.showLess)
+                  : intl.formatMessage(messages.showMore)}
+              </Button>
+            </div>
+
+            {errorMessage ? (
+              <Alert className="border-destructive/30 text-destructive">
+                {errorMessage}
+              </Alert>
+            ) : null}
+
+            {debugQueryEnabled ? (
+              <DebugPanel
+                draft={draft}
+                images={images}
+                values={{
+                  fullName: currentValues.fullName ?? "",
+                  namePrefix: currentValues.namePrefix ?? "",
+                  firstName: currentValues.firstName ?? "",
+                  phoneticFirstName: currentValues.phoneticFirstName ?? "",
+                  phoneticMiddleName: currentValues.phoneticMiddleName ?? "",
+                  phoneticLastName: currentValues.phoneticLastName ?? "",
+                  lastName: currentValues.lastName ?? "",
+                  nickname: currentValues.nickname ?? "",
+                  fileAs: currentValues.fileAs ?? "",
+                  organization: currentValues.organization ?? "",
+                  department: currentValues.department ?? "",
+                  title: currentValues.title ?? "",
+                  notes: currentValues.notes ?? "",
+                  emails: currentValues.emails ?? [],
+                  phones: currentValues.phones ?? [],
+                  websites: currentValues.websites ?? [],
+                  addresses: currentValues.addresses ?? [],
+                  relatedPeople: currentValues.relatedPeople ?? [],
+                  significantDates: currentValues.significantDates ?? [],
+                  customFields: currentValues.customFields ?? [],
+                  selectedPhotoImageId: currentValues.selectedPhotoImageId,
+                }}
+              />
+            ) : null}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-14 rounded-xl"
+                disabled={!hasAnyReviewData}
+                onClick={() => {
+                  void handleSaveVCard();
+                }}
+              >
+                <Download className="h-4 w-4" />
+                {intl.formatMessage(messages.saveVcard)}
+              </Button>
+              <Button
+                size="lg"
+                type="submit"
+                className="h-14 rounded-xl"
+                disabled={!hasAnyReviewData || isSyncing || isAuthorizing}
+              >
+                <UserRoundPlus className="h-4 w-4" />
+                {isSyncing || isAuthorizing ? <Spinner /> : null}
+                {isAuthorizing
+                  ? intl.formatMessage(messages.connectingGoogle)
+                  : isSyncing
+                    ? intl.formatMessage(messages.syncing)
+                    : intl.formatMessage(messages.saveToGoogle)}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </form>
+
+      {isSaveSuccessModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="review-save-success-title"
+          aria-describedby="review-save-success-description"
+        >
+          <div className="flex w-full max-w-lg flex-col gap-6 rounded-3xl border border-border bg-background px-6 py-8 shadow-elevated sm:px-8">
+            <div className="space-y-2 text-center">
+              <h2
+                id="review-save-success-title"
+                className="text-2xl font-semibold"
+              >
+                {intl.formatMessage(messages.saveSuccessTitle)}
+              </h2>
+              <p
+                id="review-save-success-description"
+                className="text-sm text-muted-foreground"
+              >
+                {intl.formatMessage(messages.saveSuccessDescription)}
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button
+                type="button"
+                className="h-12 rounded-xl"
+                onClick={() => {
+                  void handleScanAnotherCard();
+                }}
+              >
+                {intl.formatMessage(messages.scanAnotherCard)}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 rounded-xl"
+                onClick={() => setIsSaveSuccessModalOpen(false)}
+              >
+                {intl.formatMessage(messages.cancel)}
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </form>
+        </div>
+      ) : null}
+    </>
   );
 }
 

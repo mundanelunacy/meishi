@@ -1,4 +1,5 @@
 export {
+  clearLatestDraft,
   db,
   loadCapturedImages,
   loadLatestDraft,

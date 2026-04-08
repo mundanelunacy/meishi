@@ -1,5 +1,9 @@
 import Dexie, { type Table } from "dexie";
-import type { CapturedCardImage, ContactDraft, SyncOutcome } from "../../shared/types/models";
+import type {
+  CapturedCardImage,
+  ContactDraft,
+  SyncOutcome,
+} from "../../shared/types/models";
 
 export interface StoredCaptureSession {
   id: string;
@@ -61,8 +65,16 @@ export async function saveDraft(draft: ContactDraft) {
   await db.drafts.put(draft);
 }
 
+export async function clearLatestDraft() {
+  await db.drafts.clear();
+}
+
 export async function loadLatestDraft() {
-  const drafts = await db.drafts.orderBy("updatedAt").reverse().limit(1).toArray();
+  const drafts = await db.drafts
+    .orderBy("updatedAt")
+    .reverse()
+    .limit(1)
+    .toArray();
   return drafts[0];
 }
 

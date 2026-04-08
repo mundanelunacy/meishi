@@ -2,8 +2,20 @@
 
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { CapturedCardImage, ContactDraft, SyncOutcome } from "../../shared/types/models";
-import { db, loadCapturedImages, loadLatestDraft, saveCapturedImages, saveDraft, saveSyncOutcome } from "./index";
+import type {
+  CapturedCardImage,
+  ContactDraft,
+  SyncOutcome,
+} from "../../shared/types/models";
+import {
+  clearLatestDraft,
+  db,
+  loadCapturedImages,
+  loadLatestDraft,
+  saveCapturedImages,
+  saveDraft,
+  saveSyncOutcome,
+} from "./index";
 
 const baseImage: CapturedCardImage = {
   id: "image-1",
@@ -69,7 +81,10 @@ describe("local-data/database", () => {
 
     await saveCapturedImages([secondImage, baseImage]);
 
-    await expect(loadCapturedImages()).resolves.toEqual([secondImage, baseImage]);
+    await expect(loadCapturedImages()).resolves.toEqual([
+      secondImage,
+      baseImage,
+    ]);
   });
 
   it("loads the most recently updated draft", async () => {
@@ -85,6 +100,14 @@ describe("local-data/database", () => {
       id: "draft-2",
       fullName: "Grace Hopper",
     });
+  });
+
+  it("clears saved review drafts", async () => {
+    await saveDraft(baseDraft);
+
+    await clearLatestDraft();
+
+    await expect(loadLatestDraft()).resolves.toBeUndefined();
   });
 
   it("stores sync outcomes as append-only records", async () => {

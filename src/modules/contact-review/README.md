@@ -20,6 +20,7 @@
 - Review draft notes preserve extracted `X-` fields and ambiguous text so fidelity is not lost when non-standard or ambiguous card data appears
 - Inline `?debug=1` preview for raw extraction, vCard, and Google payload inspection
 - Explicit export actions for saving a vCard or syncing to Google after verification
+- Successful vCard export and Google sync open a full-screen follow-up modal with actions to scan another card or dismiss the prompt
 - Save actions stay disabled until the reviewed form contains meaningful contact data
 - On-demand Google authorization from review before sync when no Google session is active
 
@@ -46,3 +47,4 @@
 - Keep vCard serialization and browser download logic inside `src/modules/vcard-export`; this module should only finalize the reviewed contact and trigger export.
 - Developer debug preview must reflect the current edited form values, not just the initial extraction response.
 - Review autosave must not reset in-progress edits while dynamic field arrays are being added or removed.
+- The success modal's "Scan another card" path clears both persisted review data and the active photoroll before returning to capture, while the manual broom and photoroll clear controls keep their narrower existing behavior.

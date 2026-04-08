@@ -1172,6 +1172,18 @@
   "review.section.websites": {
     "defaultMessage": "Websites"
   },
+  "review.success.cancel": {
+    "defaultMessage": "Cancel"
+  },
+  "review.success.description": {
+    "defaultMessage": "What would you like to do next?"
+  },
+  "review.success.scanAnotherCard": {
+    "defaultMessage": "Scan another card"
+  },
+  "review.success.title": {
+    "defaultMessage": "Contact saved"
+  },
   "review.toast.photorollCleared": {
     "defaultMessage": "Photoroll cleared."
   },
@@ -1288,12 +1300,6 @@
   },
   "shell.banner.updateButton": {
     "defaultMessage": "Update"
-  },
-  "shell.languageOption.english": {
-    "defaultMessage": "English"
-  },
-  "shell.languageOption.japanese": {
-    "defaultMessage": "Japanese"
   },
   "shell.languagePicker.desktop": {
     "defaultMessage": "Select language (desktop)"
