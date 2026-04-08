@@ -757,6 +757,23 @@ export function getDocsPageContent(
   };
 }
 
+export function getApiKeyLinkContent(intl: IntlShape) {
+  return {
+    sectionHref: "/docs#api-keys",
+    sectionLabel: intl.formatMessage(messages.sectionApiKeys),
+    providers: {
+      openai: {
+        href: "https://platform.openai.com/api-keys",
+        linkLabel: intl.formatMessage(messages.openAiLinkLabel),
+      },
+      anthropic: {
+        href: "https://console.anthropic.com/settings/keys",
+        linkLabel: intl.formatMessage(messages.anthropicLinkLabel),
+      },
+    },
+  };
+}
+
 export function getDocsSchemaContent(
   intl: IntlShape,
   locale: AppLocale,

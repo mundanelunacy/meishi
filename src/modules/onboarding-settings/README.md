@@ -14,6 +14,9 @@
 - Provider picker with OpenAI and Anthropic support
 - Provider-specific BYOK API key entry
 - Provider-specific model selection from the app's current supported-model list
+- Standalone `/setup` page that reuses the landing-page quick setup section
+- `/capture`, `/review`, and `/settings` route entry now redirects through `/setup` until an API key is configured
+- `/setup` redirects to `/settings` once an API key is configured
 - Appearance preference with `system`, `light`, and `dark` modes
 - Docs language preference with `en-US` and `ja` options
 - Shared advanced extraction guidance setting appended to fixed structured-output and fidelity rules

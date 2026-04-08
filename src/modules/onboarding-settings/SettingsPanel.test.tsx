@@ -215,6 +215,10 @@ describe("SettingsPanel", () => {
     );
 
     expect(screen.getByLabelText(/color theme/i)).toHaveValue("dark");
-    expect(screen.getByLabelText(/app language/i)).toHaveValue("en-US");
+    const localePicker = screen.getByLabelText(/app language/i);
+
+    expect(localePicker).toHaveValue("en-US");
+    expect(screen.getByRole("option", { name: "English" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "日本語" })).toBeInTheDocument();
   });
 });

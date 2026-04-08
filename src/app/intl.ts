@@ -4,8 +4,8 @@ import jaMessages from "./locales/ja.json";
 export const DEFAULT_LOCALE: AppLocale = "en-US";
 
 export const LOCALE_LABELS: Record<AppLocale, string> = {
-  "en-US": "English (US)",
-  ja: "Japanese",
+  "en-US": "English",
+  ja: "日本語",
 };
 
 const localeMessages: Record<AppLocale, Record<string, string>> = {

@@ -5,7 +5,7 @@
 - Provide the top-level application frame.
 - Render navigation for landing, capture, review, docs, settings, and external links.
 - Render the static `/docs`, `/privacy`, and `/terms` pages.
-- Surface app-wide onboarding-driven route gating for capture/review navigation.
+- Surface app-wide API-key-driven route gating for setup, capture, review, and settings navigation.
 - Host PWA update prompts and installation-safe shell behavior.
 
 ## Features
@@ -24,7 +24,7 @@
 ## Interfaces
 
 - Consumes Redux selectors from onboarding and sync-related modules.
-- Consumes stable onboarding readiness selectors rather than direct provider or auth transport APIs.
+- Consumes stable setup/readiness selectors rather than direct provider or auth transport APIs.
 - Consumes the PWA lifecycle hook from `src/modules/pwa-runtime`.
 - Exposes the route shell through `AppShell`.
 - Exposes the static `DocsPage` for route-level app documentation.
@@ -32,6 +32,7 @@
 ## Route Map
 
 - `/landing`: app entry and onboarding surface.
+- `/setup`: standalone quick-setup surface that reuses the landing-page setup form.
 - `/capture`: image capture and extraction start point.
 - `/review`: review, edit, export, and sync surface.
 - `/docs`: static in-app help and usage documentation.

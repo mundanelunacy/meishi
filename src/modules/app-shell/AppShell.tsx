@@ -107,14 +107,6 @@ const messages = defineMessages({
     id: "shell.toast.unableCopyLink",
     defaultMessage: "Unable to copy the link.",
   },
-  optionEnglish: {
-    id: "shell.languageOption.english",
-    defaultMessage: "English",
-  },
-  optionJapanese: {
-    id: "shell.languageOption.japanese",
-    defaultMessage: "Japanese",
-  },
   updateAvailableBanner: {
     id: "shell.banner.updateAvailable",
     defaultMessage: "A new version is available.",
@@ -146,7 +138,8 @@ const messages = defineMessages({
   },
   shareText: {
     id: "shell.share.text",
-    defaultMessage: "Scan business cards and keep contact details organized with Meishi.",
+    defaultMessage:
+      "Scan business cards and keep contact details organized with Meishi.",
   },
   shareFacebook: {
     id: "shell.share.facebook",
@@ -264,7 +257,7 @@ export function AppShell() {
   const shareLinks = buildSiteShareLinks(shareUrl, shareCopy);
 
   const canSwipeBetweenPrimaryRoutes =
-    readiness.hasCompletedOnboarding &&
+    readiness.hasLlmConfiguration &&
     primaryNavItems.some((item) => item.to === pathname) &&
     typeof window !== "undefined" &&
     window.matchMedia("(max-width: 767px)").matches;
@@ -277,7 +270,7 @@ export function AppShell() {
     setOpenMenu(null);
 
     try {
-    const shared = await shareSiteUrl(shareUrl, shareCopy);
+      const shared = await shareSiteUrl(shareUrl, shareCopy);
 
       if (!shared) {
         setIsShareDialogOpen(true);
@@ -344,13 +337,10 @@ export function AppShell() {
   const renderPrimaryNavLink = (item: (typeof primaryNavItems)[number]) => {
     const Icon = item.icon;
     const active = pathname === item.to;
-    const isUnlocked = readiness.hasCompletedOnboarding;
     const className = `inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
       active
         ? "bg-muted text-primary"
-        : isUnlocked
-          ? "text-muted-foreground hover:bg-muted hover:text-foreground"
-          : "pointer-events-none text-muted-foreground/40"
+        : "text-muted-foreground hover:bg-muted hover:text-foreground"
     }`;
 
     return (
@@ -358,11 +348,6 @@ export function AppShell() {
         key={item.to}
         to={item.to}
         className={className}
-        onClick={(event) => {
-          if (!isUnlocked) {
-            event.preventDefault();
-          }
-        }}
         aria-current={active ? "page" : undefined}
       >
         <Icon className="h-4 w-4" strokeWidth={active ? 2.25 : 1.75} />
@@ -487,13 +472,11 @@ export function AppShell() {
         onChange={(event) =>
           dispatch(setLocale(event.target.value as typeof locale))
         }
-        className="appearance-none rounded-full border border-border bg-background py-1 px-2.5 pr-2.5 text-xs text-foreground shadow-sm transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="appearance-none rounded-full border border-border bg-background py-1 px-2.5 pr-2.5 text-xs text-foreground shadow-sm transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-center"
       >
-        {Object.keys(LOCALE_LABELS).map((value) => (
+        {Object.entries(LOCALE_LABELS).map(([value, label]) => (
           <option key={value} value={value}>
-            {value === "en-US"
-              ? intl.formatMessage(messages.optionEnglish)
-              : intl.formatMessage(messages.optionJapanese)}
+            {label}
           </option>
         ))}
       </select>

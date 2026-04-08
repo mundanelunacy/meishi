@@ -1,16 +1,16 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "../../test/renderWithIntl";
 import {
-  completeOnboarding,
   onboardingReducer,
   setLocale,
+  setOpenAiApiKey,
 } from "../onboarding-settings/onboardingSlice";
 import { AppShell } from "./AppShell";
 import { getPrimarySwipeDestination } from "./navigation";
@@ -55,7 +55,23 @@ function renderShell() {
       onboarding: onboardingReducer,
     },
   });
-  store.dispatch(completeOnboarding());
+  store.dispatch(setOpenAiApiKey("sk-test"));
+
+  renderWithIntl(
+    <Provider store={store}>
+      <AppShell />
+    </Provider>,
+  );
+
+  return { store };
+}
+
+function renderShellWithoutApiKey() {
+  const store = configureStore({
+    reducer: {
+      onboarding: onboardingReducer,
+    },
+  });
 
   renderWithIntl(
     <Provider store={store}>
@@ -178,6 +194,23 @@ describe("AppShell", () => {
     );
   });
 
+  it("keeps capture and review links active before an API key is configured", () => {
+    mockPathname = "/landing";
+    navigateMock.mockReset();
+
+    renderShellWithoutApiKey();
+
+    const captureLinks = screen.getAllByRole("link", { name: "Capture" });
+    const reviewLinks = screen.getAllByRole("link", { name: "Review" });
+
+    for (const link of [...captureLinks, ...reviewLinks]) {
+      expect(link).not.toHaveClass("pointer-events-none");
+    }
+
+    expect(captureLinks[0]).toHaveAttribute("href", "/capture");
+    expect(reviewLinks[0]).toHaveAttribute("href", "/review");
+  });
+
   it("updates the stored locale from the header picker", async () => {
     const user = userEvent.setup();
     mockPathname = "/landing";
@@ -215,6 +248,16 @@ describe("AppShell", () => {
     expect(screen.getAllByLabelText("Select language (mobile)")[0]).toHaveValue(
       "ja",
     );
+
+    const desktopPicker = screen.getAllByLabelText(
+      "Select language (desktop)",
+    )[0];
+    const desktopOptions = within(desktopPicker).getAllByRole("option");
+
+    expect(desktopOptions.map((option) => option.textContent)).toEqual([
+      "English",
+      "日本語",
+    ]);
   });
 
   it("uses the native share sheet when navigator.share is available", async () => {

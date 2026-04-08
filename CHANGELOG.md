@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-04-08
+
+### Dedicated setup route and API-key gating
+
+- Added a dedicated `/setup` route and `SetupPage` so new users now have a standalone quick-setup surface instead of relying only on the landing page's inline onboarding section.
+- Extracted the landing-page setup form into a reusable `LandingQuickSetupSection`, then reused app-shell docs content so both setup surfaces can link directly to the API-key documentation section and provider key pages.
+- Updated `/capture`, `/review`, and `/settings` to redirect through `/setup` until an LLM API key is configured, and added shared `setupGate` helpers so `/setup` can bounce configured users back to `/settings` consistently.
+- Relaxed primary navigation locking so capture and review links remain reachable in the shell before onboarding completion, while keeping swipe navigation gated on actual LLM configuration.
+
+### Localization and copy refresh
+
+- Simplified locale-picker labels to native-language names (`English` and `日本語`) sourced directly from `LOCALE_LABELS` instead of separate translated option strings.
+- Refreshed Japanese copy across the landing page, docs, capture, review, settings, and legal content to use more natural phrasing and more consistent terminology around setup, scanning, analysis, and sync.
+- Expanded shared onboarding and app-shell content to support the broader localized docs and legal-page copy updates shipped in today's history.
+
 ## 2026-04-07
 
 ### Documentation page, shared image lightbox, and review UX hardening
