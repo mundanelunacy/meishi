@@ -159,6 +159,20 @@ describe("AppShell", () => {
     ).toBeInTheDocument();
   });
 
+  it("omits app chrome on the Google auth callback route", () => {
+    mockPathname = "/auth/google/callback";
+    navigateMock.mockReset();
+
+    renderShell();
+
+    expect(screen.getByTestId("route-outlet")).toBeInTheDocument();
+    expect(screen.queryByText("Meishi")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("navigation", { name: "Primary navigation" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryAllByLabelText("Open navigation menu")).toHaveLength(0);
+  });
+
   it("opens the overflow menu in the expected order", async () => {
     const user = userEvent.setup();
     mockPathname = "/landing";

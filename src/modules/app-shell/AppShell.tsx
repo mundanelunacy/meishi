@@ -218,6 +218,8 @@ function getOverflowNavItems(intl: ReturnType<typeof useIntl>) {
   ] as const;
 }
 
+const CHROMELESS_PATHS = new Set(["/auth/google/callback"]);
+
 export function AppShell() {
   const intl = useIntl();
   const dispatch = useAppDispatch();
@@ -225,6 +227,7 @@ export function AppShell() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+  const isChromelessRoute = CHROMELESS_PATHS.has(pathname);
   const readiness = useAppSelector(selectAppReadiness);
   const locale = useAppSelector(selectLocale);
   const {
@@ -513,6 +516,10 @@ export function AppShell() {
     }
 
     navigate({ to: nextRoute });
+  }
+
+  if (isChromelessRoute) {
+    return <Outlet />;
   }
 
   return (

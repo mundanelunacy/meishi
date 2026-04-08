@@ -39,7 +39,7 @@
 - `/privacy`: static privacy policy page.
 - `/terms`: static terms of service page.
 - `/settings`: later configuration and account-management surface.
-- `/auth/google/callback`: OAuth callback handoff route for Google connection completion.
+- `/auth/google/callback`: OAuth callback handoff route for Google connection completion, rendered without the shared app chrome so the popup only shows the connection status.
 
 ## Notes
 
