@@ -1,14 +1,16 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "../../test/renderWithIntl";
 import {
-  completeOnboarding,
   onboardingReducer,
+  setLocale,
+  setOpenAiApiKey,
 } from "../onboarding-settings/onboardingSlice";
 import { AppShell } from "./AppShell";
 import { getPrimarySwipeDestination } from "./navigation";
@@ -53,13 +55,31 @@ function renderShell() {
       onboarding: onboardingReducer,
     },
   });
-  store.dispatch(completeOnboarding());
+  store.dispatch(setOpenAiApiKey("sk-test"));
 
-  render(
+  renderWithIntl(
     <Provider store={store}>
       <AppShell />
     </Provider>,
   );
+
+  return { store };
+}
+
+function renderShellWithoutApiKey() {
+  const store = configureStore({
+    reducer: {
+      onboarding: onboardingReducer,
+    },
+  });
+
+  renderWithIntl(
+    <Provider store={store}>
+      <AppShell />
+    </Provider>,
+  );
+
+  return { store };
 }
 
 async function openOverflowMenu(user: ReturnType<typeof userEvent.setup>) {
@@ -108,6 +128,10 @@ function setWindowMatchMedia(matches = false) {
 }
 
 describe("AppShell", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     window.history.replaceState({}, "", "/landing");
     setNavigatorShare(undefined);
@@ -124,6 +148,7 @@ describe("AppShell", () => {
     expect(screen.getAllByText("Capture").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Review").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByLabelText("Open navigation menu")).toHaveLength(2);
+    expect(screen.getAllByLabelText(/select language/i)).toHaveLength(2);
     expect(screen.getByTestId("route-outlet")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Meishi" })).toHaveAttribute(
       "href",
@@ -132,6 +157,20 @@ describe("AppShell", () => {
     expect(
       screen.getByRole("navigation", { name: "Primary navigation" }),
     ).toBeInTheDocument();
+  });
+
+  it("omits app chrome on the Google auth callback route", () => {
+    mockPathname = "/auth/google/callback";
+    navigateMock.mockReset();
+
+    renderShell();
+
+    expect(screen.getByTestId("route-outlet")).toBeInTheDocument();
+    expect(screen.queryByText("Meishi")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("navigation", { name: "Primary navigation" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryAllByLabelText("Open navigation menu")).toHaveLength(0);
   });
 
   it("opens the overflow menu in the expected order", async () => {
@@ -167,6 +206,72 @@ describe("AppShell", () => {
       "href",
       "https://github.com/mundanelunacy/meishi",
     );
+  });
+
+  it("keeps capture and review links active before an API key is configured", () => {
+    mockPathname = "/landing";
+    navigateMock.mockReset();
+
+    renderShellWithoutApiKey();
+
+    const captureLinks = screen.getAllByRole("link", { name: "Capture" });
+    const reviewLinks = screen.getAllByRole("link", { name: "Review" });
+
+    for (const link of [...captureLinks, ...reviewLinks]) {
+      expect(link).not.toHaveClass("pointer-events-none");
+    }
+
+    expect(captureLinks[0]).toHaveAttribute("href", "/capture");
+    expect(reviewLinks[0]).toHaveAttribute("href", "/review");
+  });
+
+  it("updates the stored locale from the header picker", async () => {
+    const user = userEvent.setup();
+    mockPathname = "/landing";
+    navigateMock.mockReset();
+
+    const { store } = renderShell();
+
+    await user.selectOptions(
+      screen.getAllByLabelText("Select language (desktop)")[0],
+      "ja",
+    );
+
+    expect(store.getState().onboarding.settings.locale).toBe("ja");
+  });
+
+  it("renders the stored locale in both header pickers", () => {
+    const store = configureStore({
+      reducer: {
+        onboarding: onboardingReducer,
+      },
+      preloadedState: {
+        onboarding: onboardingReducer(undefined, setLocale("ja")),
+      },
+    });
+
+    renderWithIntl(
+      <Provider store={store}>
+        <AppShell />
+      </Provider>,
+    );
+
+    expect(
+      screen.getAllByLabelText("Select language (desktop)")[0],
+    ).toHaveValue("ja");
+    expect(screen.getAllByLabelText("Select language (mobile)")[0]).toHaveValue(
+      "ja",
+    );
+
+    const desktopPicker = screen.getAllByLabelText(
+      "Select language (desktop)",
+    )[0];
+    const desktopOptions = within(desktopPicker).getAllByRole("option");
+
+    expect(desktopOptions.map((option) => option.textContent)).toEqual([
+      "English",
+      "日本語",
+    ]);
   });
 
   it("uses the native share sheet when navigator.share is available", async () => {

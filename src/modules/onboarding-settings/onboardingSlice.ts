@@ -5,6 +5,7 @@ import {
 } from "@reduxjs/toolkit";
 import type { RootState } from "../../app/store";
 import type {
+  AppLocale,
   AppSettings,
   GoogleAuthState,
   SupportedLlmProvider,
@@ -87,6 +88,10 @@ const onboardingSlice = createSlice({
       state.settings.themeMode = action.payload;
       persistState(state);
     },
+    setLocale(state, action: PayloadAction<AppLocale>) {
+      state.settings.locale = action.payload;
+      persistState(state);
+    },
     setGoogleAuthState(state, action: PayloadAction<GoogleAuthState>) {
       state.googleAuth = action.payload;
       persistState(state);
@@ -115,6 +120,7 @@ export const {
   setPreferredAnthropicModel,
   setExtractionPrompt,
   setThemeMode,
+  setLocale,
   setGoogleAuthState,
   completeOnboarding,
   signOutGoogle,
@@ -128,6 +134,8 @@ export const selectGoogleAuth = (state: RootState) =>
   state.onboarding.googleAuth;
 export const selectThemeMode = (state: RootState) =>
   state.onboarding.settings.themeMode;
+export const selectLocale = (state: RootState) =>
+  state.onboarding.settings.locale;
 export const selectHasCompletedOnboarding = (state: RootState) =>
   Boolean(state.onboarding.settings.onboardingCompletedAt);
 export const selectHasLlmConfiguration = (state: RootState) =>

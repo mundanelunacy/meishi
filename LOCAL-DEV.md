@@ -125,6 +125,8 @@ http://localhost:5173/auth/google/callback
 http://127.0.0.1:5173/auth/google/callback
 http://localhost:4173/auth/google/callback
 http://127.0.0.1:4173/auth/google/callback
+https://meishi.dev/auth/google/callback
+https://www.meishi.dev/auth/google/callback
 https://meishi-492400.web.app/auth/google/callback
 https://meishi-492400.firebaseapp.com/auth/google/callback
 ```

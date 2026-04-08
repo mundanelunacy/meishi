@@ -2,10 +2,11 @@
 
 import "@testing-library/jest-dom/vitest";
 import { configureStore } from "@reduxjs/toolkit";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "../../test/renderWithIntl";
 import type {
   CapturedCardImage,
   ContactDraft,
@@ -188,7 +189,7 @@ describe("CaptureWorkspace", () => {
       },
     ]);
 
-    render(
+    renderWithIntl(
       <Provider store={store}>
         <CaptureWorkspace />
       </Provider>,
@@ -225,63 +226,6 @@ describe("CaptureWorkspace", () => {
       },
       {
         id: "img-2",
-
-        it("hides the clear photoroll action when there are no images", () => {
-          const store = createStore();
-
-          render(
-            <Provider store={store}>
-              <CaptureWorkspace />
-            </Provider>,
-          );
-
-          expect(
-            screen.queryByRole("button", { name: /clear photoroll/i }),
-          ).not.toBeInTheDocument();
-        });
-
-        it("clears all images from the active capture session", async () => {
-          const store = createStore([
-            {
-              id: "img-1",
-              dataUrl: "data:image/png;base64,ZmFrZQ==",
-              fileName: "front.png",
-              mimeType: "image/png",
-              capturedAt: "2026-04-05T00:00:00.000Z",
-              width: 1200,
-              height: 800,
-            },
-            {
-              id: "img-2",
-              dataUrl: "data:image/png;base64,YmFjaw==",
-              fileName: "back.png",
-              mimeType: "image/png",
-              capturedAt: "2026-04-05T00:01:00.000Z",
-              width: 1200,
-              height: 800,
-            },
-          ]);
-
-          render(
-            <Provider store={store}>
-              <CaptureWorkspace />
-            </Provider>,
-          );
-
-          await userEvent
-            .setup()
-            .click(screen.getByRole("button", { name: /clear photoroll/i }));
-
-          await waitFor(() => {
-            expect(saveCapturedImagesMock).toHaveBeenCalledWith([]);
-          });
-
-          expect(screen.getByText(/no images captured yet\./i)).toBeInTheDocument();
-          expect(store.getState().reviewDraft.images).toEqual([]);
-          expect(
-            screen.queryByRole("button", { name: /clear photoroll/i }),
-          ).not.toBeInTheDocument();
-        });
         dataUrl: "data:image/png;base64,ZmFrZTI=",
         fileName: "back.png",
         mimeType: "image/png",
@@ -291,7 +235,7 @@ describe("CaptureWorkspace", () => {
       },
     ]);
 
-    render(
+    renderWithIntl(
       <Provider store={store}>
         <CaptureWorkspace />
       </Provider>,
@@ -312,6 +256,63 @@ describe("CaptureWorkspace", () => {
 
     expect(screen.queryByText("front.png")).not.toBeInTheDocument();
     expect(screen.getByText("back.png")).toBeInTheDocument();
+  });
+
+  it("hides the clear photoroll action when there are no images", () => {
+    const store = createStore();
+
+    renderWithIntl(
+      <Provider store={store}>
+        <CaptureWorkspace />
+      </Provider>,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /clear photoroll/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears all images from the active capture session", async () => {
+    const store = createStore([
+      {
+        id: "img-1",
+        dataUrl: "data:image/png;base64,ZmFrZQ==",
+        fileName: "front.png",
+        mimeType: "image/png",
+        capturedAt: "2026-04-05T00:00:00.000Z",
+        width: 1200,
+        height: 800,
+      },
+      {
+        id: "img-2",
+        dataUrl: "data:image/png;base64,YmFjaw==",
+        fileName: "back.png",
+        mimeType: "image/png",
+        capturedAt: "2026-04-05T00:01:00.000Z",
+        width: 1200,
+        height: 800,
+      },
+    ]);
+
+    renderWithIntl(
+      <Provider store={store}>
+        <CaptureWorkspace />
+      </Provider>,
+    );
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /clear photoroll/i }));
+
+    await waitFor(() => {
+      expect(saveCapturedImagesMock).toHaveBeenCalledWith([]);
+    });
+
+    expect(screen.getByText(/no images captured yet\./i)).toBeInTheDocument();
+    expect(store.getState().reviewDraft.images).toEqual([]);
+    expect(
+      screen.queryByRole("button", { name: /clear photoroll/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not rehydrate a stale last image while the final delete is persisting", async () => {
@@ -335,7 +336,7 @@ describe("CaptureWorkspace", () => {
     };
     const store = createStore([frontImage, backImage]);
 
-    render(
+    renderWithIntl(
       <Provider store={store}>
         <CaptureWorkspace />
       </Provider>,
@@ -371,7 +372,9 @@ describe("CaptureWorkspace", () => {
       .setup()
       .click(screen.getByRole("button", { name: /delete back\.png/i }));
 
-    expect(await screen.findByText(/no images captured yet\./i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/no images captured yet\./i),
+    ).toBeInTheDocument();
 
     resolveStaleLoad([backImage]);
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -404,7 +407,7 @@ describe("CaptureWorkspace", () => {
       },
     ]);
 
-    render(
+    renderWithIntl(
       <Provider store={store}>
         <CaptureWorkspace />
       </Provider>,
@@ -420,11 +423,15 @@ describe("CaptureWorkspace", () => {
       screen.getByRole("dialog", { name: /front\.png/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/1 of 2/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /zoom in/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /zoom in/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /zoom out/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /reset view/i })).toBeDisabled();
 
-    await userEvent.setup().click(screen.getByRole("button", { name: /zoom in/i }));
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /zoom in/i }));
 
     expect(screen.getByRole("button", { name: /zoom out/i })).toBeEnabled();
     expect(screen.getByRole("button", { name: /reset view/i })).toBeEnabled();
@@ -433,10 +440,14 @@ describe("CaptureWorkspace", () => {
       .setup()
       .click(screen.getByRole("button", { name: /next image/i }));
 
-    expect(screen.getByRole("dialog", { name: /back\.png/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: /back\.png/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/2 of 2/i)).toBeInTheDocument();
 
-    await userEvent.setup().click(screen.getByRole("button", { name: /close/i }));
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /close/i }));
 
     expect(
       screen.queryByRole("dialog", { name: /back\.png/i }),
@@ -468,7 +479,7 @@ describe("CaptureWorkspace", () => {
 
     const store = createStore();
 
-    const { container } = render(
+    const { container } = renderWithIntl(
       <Provider store={store}>
         <CaptureWorkspace />
       </Provider>,
@@ -492,7 +503,7 @@ describe("CaptureWorkspace", () => {
 
     const store = createStore();
 
-    const { container } = render(
+    const { container } = renderWithIntl(
       <Provider store={store}>
         <CaptureWorkspace />
       </Provider>,
@@ -555,7 +566,7 @@ describe("CaptureWorkspace", () => {
 
     const store = createStore();
 
-    render(
+    renderWithIntl(
       <Provider store={store}>
         <CaptureWorkspace />
       </Provider>,
@@ -595,7 +606,7 @@ describe("CaptureWorkspace", () => {
 
     const store = createStore();
 
-    render(
+    renderWithIntl(
       <Provider store={store}>
         <CaptureWorkspace />
       </Provider>,
@@ -618,7 +629,7 @@ describe("CaptureWorkspace", () => {
   it("falls back to the native camera input when getUserMedia is unavailable", async () => {
     const store = createStore();
 
-    const { container } = render(
+    const { container } = renderWithIntl(
       <Provider store={store}>
         <CaptureWorkspace />
       </Provider>,

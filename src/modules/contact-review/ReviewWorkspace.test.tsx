@@ -1,17 +1,12 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import {
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "../../test/renderWithIntl";
 import { onboardingReducer } from "../onboarding-settings/onboardingSlice";
 import { reviewDraftReducer } from "./reviewDraftSlice";
 import { ReviewWorkspace } from "./ReviewWorkspace";
@@ -196,7 +191,7 @@ function renderWorkspace(overrideState?: Partial<typeof preloadedState>) {
     },
   });
 
-  render(
+  renderWithIntl(
     <Provider store={store}>
       <ReviewWorkspace />
     </Provider>,

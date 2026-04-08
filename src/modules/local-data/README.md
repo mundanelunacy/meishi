@@ -29,6 +29,7 @@
 
 - `localStorage`
   - settings
+  - docs locale preference
   - light Google auth metadata only
 - IndexedDB
   - card images
@@ -40,3 +41,4 @@
 
 - Do not store Google access tokens or refresh tokens here.
 - Keep review-draft autosave recoverable after navigation or refresh.
+- Keep locale settings sanitized at the storage boundary so unknown values fall back to `en-US`.

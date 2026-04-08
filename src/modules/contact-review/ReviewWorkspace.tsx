@@ -28,6 +28,7 @@ import {
   type FieldArrayWithId,
   type UseFormRegister,
 } from "react-hook-form";
+import { defineMessages, useIntl } from "react-intl";
 import { z } from "zod";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { isDebugQueryEnabled } from "../../app/debug";
@@ -78,6 +79,219 @@ import {
   selectGoogleAuth,
   setGoogleAuthState,
 } from "../onboarding-settings/onboardingSlice";
+
+const messages = defineMessages({
+  noDraftTitle: {
+    id: "review.empty.title",
+    defaultMessage: "No draft available",
+  },
+  noDraftDescription: {
+    id: "review.empty.description",
+    defaultMessage:
+      "Capture at least one business-card image and run extraction before opening the review screen.",
+  },
+  goToCapture: {
+    id: "review.empty.goToCapture",
+    defaultMessage: "Go to capture",
+  },
+  syncedToGoogle: {
+    id: "review.toast.syncedToGoogle",
+    defaultMessage: "Verified contact synced to Google Contacts.",
+  },
+  unableCreateGoogle: {
+    id: "review.error.unableCreateGoogle",
+    defaultMessage: "Unable to create Google contact.",
+  },
+  vcardShared: {
+    id: "review.toast.vcardShared",
+    defaultMessage: "vCard opened in the share sheet.",
+  },
+  vcardDownloaded: {
+    id: "review.toast.vcardDownloaded",
+    defaultMessage: "vCard downloaded to your device.",
+  },
+  unableSaveVcard: {
+    id: "review.error.unableSaveVcard",
+    defaultMessage: "Unable to save vCard.",
+  },
+  photorollCleared: {
+    id: "review.toast.photorollCleared",
+    defaultMessage: "Photoroll cleared.",
+  },
+  photorollTitle: {
+    id: "review.photoroll.title",
+    defaultMessage: "Photoroll",
+  },
+  clearPhotoroll: {
+    id: "review.photoroll.clear",
+    defaultMessage: "Clear photoroll",
+  },
+  uploadImage: {
+    id: "review.photoroll.uploadImage",
+    defaultMessage: "Upload {fileName}",
+  },
+  upload: {
+    id: "review.photoroll.upload",
+    defaultMessage: "Upload",
+  },
+  verifyTitle: {
+    id: "review.workspace.title",
+    defaultMessage: "Verify contact",
+  },
+  clearReviewedData: {
+    id: "review.workspace.clearReviewedData",
+    defaultMessage: "Clear reviewed contact data",
+  },
+  showFewerFields: {
+    id: "review.workspace.showFewerFields",
+    defaultMessage: "Show fewer name fields",
+  },
+  showMoreFields: {
+    id: "review.workspace.showMoreFields",
+    defaultMessage: "Show more name fields",
+  },
+  showLess: {
+    id: "review.workspace.showLess",
+    defaultMessage: "Show less",
+  },
+  showMore: {
+    id: "review.workspace.showMore",
+    defaultMessage: "Show more",
+  },
+  saveVcard: {
+    id: "review.action.saveVcard",
+    defaultMessage: "Save vCard",
+  },
+  connectingGoogle: {
+    id: "review.action.connectingGoogle",
+    defaultMessage: "Connecting Google...",
+  },
+  syncing: {
+    id: "review.action.syncing",
+    defaultMessage: "Syncing...",
+  },
+  saveToGoogle: {
+    id: "review.action.saveToGoogle",
+    defaultMessage: "Save to Google Contacts",
+  },
+  sectionName: { id: "review.section.name", defaultMessage: "Name" },
+  sectionCompany: { id: "review.section.company", defaultMessage: "Company" },
+  sectionEmails: {
+    id: "review.section.emails",
+    defaultMessage: "Email addresses",
+  },
+  sectionPhones: {
+    id: "review.section.phones",
+    defaultMessage: "Phone numbers",
+  },
+  sectionAddresses: {
+    id: "review.section.addresses",
+    defaultMessage: "Addresses",
+  },
+  sectionDates: {
+    id: "review.section.dates",
+    defaultMessage: "Significant dates",
+  },
+  sectionWebsites: {
+    id: "review.section.websites",
+    defaultMessage: "Websites",
+  },
+  sectionPeople: {
+    id: "review.section.people",
+    defaultMessage: "Related people",
+  },
+  sectionCustom: {
+    id: "review.section.custom",
+    defaultMessage: "Custom fields",
+  },
+  sectionNotes: { id: "review.section.notes", defaultMessage: "Notes" },
+  labelPrefix: { id: "review.label.prefix", defaultMessage: "Prefix" },
+  labelFirstName: {
+    id: "review.label.firstName",
+    defaultMessage: "First name",
+  },
+  labelLastName: { id: "review.label.lastName", defaultMessage: "Last name" },
+  labelNickname: { id: "review.label.nickname", defaultMessage: "Nickname" },
+  labelPhoneticFirst: {
+    id: "review.label.phoneticFirst",
+    defaultMessage: "Phonetic first",
+  },
+  labelPhoneticMiddle: {
+    id: "review.label.phoneticMiddle",
+    defaultMessage: "Phonetic middle",
+  },
+  labelPhoneticLast: {
+    id: "review.label.phoneticLast",
+    defaultMessage: "Phonetic last",
+  },
+  labelDisplayName: {
+    id: "review.label.displayName",
+    defaultMessage: "Display name",
+  },
+  labelFileAs: { id: "review.label.fileAs", defaultMessage: "File as" },
+  labelCompany: { id: "review.label.company", defaultMessage: "Company" },
+  labelJobTitle: { id: "review.label.jobTitle", defaultMessage: "Job title" },
+  labelDepartment: {
+    id: "review.label.department",
+    defaultMessage: "Department",
+  },
+  labelNotes: { id: "review.label.notes", defaultMessage: "Notes" },
+  addEmail: { id: "review.add.email", defaultMessage: "Add email" },
+  addPhone: { id: "review.add.phone", defaultMessage: "Add phone" },
+  addAddress: { id: "review.add.address", defaultMessage: "Add address" },
+  addDate: { id: "review.add.date", defaultMessage: "Add significant date" },
+  addWebsite: { id: "review.add.website", defaultMessage: "Add website" },
+  addPerson: { id: "review.add.person", defaultMessage: "Add related person" },
+  addCustomField: {
+    id: "review.add.customField",
+    defaultMessage: "Add custom field",
+  },
+  legendEmail: { id: "review.legend.email", defaultMessage: "Email" },
+  legendPhone: { id: "review.legend.phone", defaultMessage: "Phone" },
+  legendAddress: { id: "review.legend.address", defaultMessage: "Address" },
+  legendDate: { id: "review.legend.date", defaultMessage: "Significant date" },
+  legendWebsite: { id: "review.legend.website", defaultMessage: "Website" },
+  legendPerson: {
+    id: "review.legend.person",
+    defaultMessage: "Related person",
+  },
+  legendCustomField: {
+    id: "review.legend.customField",
+    defaultMessage: "Custom field",
+  },
+  fieldType: { id: "review.field.type", defaultMessage: "Type" },
+  fieldLabel: { id: "review.field.label", defaultMessage: "Label" },
+  removeItem: {
+    id: "review.field.removeItem",
+    defaultMessage: "Remove {legend} {index}",
+  },
+  remove: { id: "review.field.remove", defaultMessage: "Remove" },
+  debugTitle: {
+    id: "review.debug.title",
+    defaultMessage: "Developer debug preview",
+  },
+  debugRaw: {
+    id: "review.debug.raw",
+    defaultMessage: "Raw extraction snapshot",
+  },
+  debugRawMissing: {
+    id: "review.debug.rawMissing",
+    defaultMessage: "No extraction snapshot is available for this draft.",
+  },
+  debugVcard: { id: "review.debug.vcard", defaultMessage: "Derived vCard" },
+  debugPayload: {
+    id: "review.debug.payload",
+    defaultMessage: "Derived Google createContact payload",
+  },
+  debugPhoto: {
+    id: "review.debug.photo",
+    defaultMessage: "Selected photo metadata",
+  },
+  debugNoPhoto: {
+    id: "review.debug.noPhoto",
+    defaultMessage: "No image is currently selected.",
+  },
+});
 
 const multiValueFieldSchema = z.object({
   value: z.string(),
@@ -414,6 +628,7 @@ function getDraftFields(values: ReviewFormValues) {
 }
 
 export function ReviewWorkspace() {
+  const intl = useIntl();
   useGoogleAuthStateSync();
 
   const dispatch = useAppDispatch();
@@ -538,15 +753,14 @@ export function ReviewWorkspace() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>No draft available</CardTitle>
+          <CardTitle>{intl.formatMessage(messages.noDraftTitle)}</CardTitle>
           <CardDescription>
-            Capture at least one business-card image and run extraction before
-            opening the review screen.
+            {intl.formatMessage(messages.noDraftDescription)}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={() => navigate({ to: "/capture" })}>
-            Go to capture
+            {intl.formatMessage(messages.goToCapture)}
           </Button>
         </CardContent>
       </Card>
@@ -602,13 +816,13 @@ export function ReviewWorkspace() {
       });
 
       pushToast(
-        result.warningMessage ?? "Verified contact synced to Google Contacts.",
+        result.warningMessage ?? intl.formatMessage(messages.syncedToGoogle),
       );
     } catch (error) {
       pushToast(
         error instanceof Error
           ? error.message
-          : "Unable to create Google contact.",
+          : intl.formatMessage(messages.unableCreateGoogle),
       );
     }
   }
@@ -641,8 +855,8 @@ export function ReviewWorkspace() {
       );
       pushToast(
         exportResult === "shared"
-          ? "vCard opened in the share sheet."
-          : "vCard downloaded to your device.",
+          ? intl.formatMessage(messages.vcardShared)
+          : intl.formatMessage(messages.vcardDownloaded),
       );
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
@@ -650,7 +864,9 @@ export function ReviewWorkspace() {
       }
 
       pushToast(
-        error instanceof Error ? error.message : "Unable to save vCard.",
+        error instanceof Error
+          ? error.message
+          : intl.formatMessage(messages.unableSaveVcard),
       );
     }
   }
@@ -689,7 +905,7 @@ export function ReviewWorkspace() {
     dispatch(setCapturedImages([]));
     form.setValue("selectedPhotoImageId", undefined);
     await saveCapturedImages([]);
-    pushToast("Photoroll cleared.");
+    pushToast(intl.formatMessage(messages.photorollCleared));
   }
 
   return (
@@ -700,14 +916,14 @@ export function ReviewWorkspace() {
       <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
-            <CardTitle>Photoroll</CardTitle>
+            <CardTitle>{intl.formatMessage(messages.photorollTitle)}</CardTitle>
             {images.length ? (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 className="h-9 w-9 rounded-full p-0 text-muted-foreground"
-                aria-label="Clear photoroll"
+                aria-label={intl.formatMessage(messages.clearPhotoroll)}
                 onClick={() => {
                   void handleClearPhotoroll();
                 }}
@@ -735,7 +951,9 @@ export function ReviewWorkspace() {
                   size="sm"
                   className={isSelected ? undefined : "bg-background/90"}
                   aria-pressed={isSelected}
-                  aria-label={`Upload ${image.fileName}`}
+                  aria-label={intl.formatMessage(messages.uploadImage, {
+                    fileName: image.fileName,
+                  })}
                   onClick={() =>
                     form.setValue(
                       "selectedPhotoImageId",
@@ -744,7 +962,7 @@ export function ReviewWorkspace() {
                   }
                 >
                   <Upload className="h-4 w-4" />
-                  Upload
+                  {intl.formatMessage(messages.upload)}
                 </Button>
               );
             }}
@@ -755,14 +973,14 @@ export function ReviewWorkspace() {
       <Card className="h-full">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
-            <CardTitle>Verify contact</CardTitle>
+            <CardTitle>{intl.formatMessage(messages.verifyTitle)}</CardTitle>
             {hasAnyReviewData ? (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 className="h-9 w-9 rounded-full p-0 text-muted-foreground"
-                aria-label="Clear reviewed contact data"
+                aria-label={intl.formatMessage(messages.clearReviewedData)}
                 onClick={() => {
                   void handleResetReview();
                 }}
@@ -788,7 +1006,7 @@ export function ReviewWorkspace() {
 
           <GoogleSection
             icon={UserRound}
-            title="Name"
+            title={intl.formatMessage(messages.sectionName)}
             action={
               <Button
                 type="button"
@@ -798,8 +1016,8 @@ export function ReviewWorkspace() {
                 onClick={() => setShowMoreFields((value) => !value)}
                 aria-label={
                   showMoreFields
-                    ? "Show fewer name fields"
-                    : "Show more name fields"
+                    ? intl.formatMessage(messages.showFewerFields)
+                    : intl.formatMessage(messages.showMoreFields)
                 }
               >
                 {showMoreFields ? (
@@ -812,26 +1030,38 @@ export function ReviewWorkspace() {
           >
             <div className="space-y-3">
               {showMoreFields ? (
-                <GoogleField label="Prefix" htmlFor="review-name-prefix">
+                <GoogleField
+                  label={intl.formatMessage(messages.labelPrefix)}
+                  htmlFor="review-name-prefix"
+                >
                   <Input
                     id="review-name-prefix"
                     {...form.register("namePrefix")}
                   />
                 </GoogleField>
               ) : null}
-              <GoogleField label="First name" htmlFor="review-first-name">
+              <GoogleField
+                label={intl.formatMessage(messages.labelFirstName)}
+                htmlFor="review-first-name"
+              >
                 <Input id="review-first-name" {...form.register("firstName")} />
               </GoogleField>
-              <GoogleField label="Last name" htmlFor="review-last-name">
+              <GoogleField
+                label={intl.formatMessage(messages.labelLastName)}
+                htmlFor="review-last-name"
+              >
                 <Input id="review-last-name" {...form.register("lastName")} />
               </GoogleField>
               {showMoreFields ? (
-                <GoogleField label="Nickname" htmlFor="review-nickname">
+                <GoogleField
+                  label={intl.formatMessage(messages.labelNickname)}
+                  htmlFor="review-nickname"
+                >
                   <Input id="review-nickname" {...form.register("nickname")} />
                 </GoogleField>
               ) : null}
               <GoogleField
-                label="Phonetic first"
+                label={intl.formatMessage(messages.labelPhoneticFirst)}
                 htmlFor="review-phonetic-first-name"
               >
                 <Input
@@ -841,7 +1071,7 @@ export function ReviewWorkspace() {
               </GoogleField>
               {showMoreFields ? (
                 <GoogleField
-                  label="Phonetic middle"
+                  label={intl.formatMessage(messages.labelPhoneticMiddle)}
                   htmlFor="review-phonetic-middle-name"
                 >
                   <Input
@@ -851,7 +1081,7 @@ export function ReviewWorkspace() {
                 </GoogleField>
               ) : null}
               <GoogleField
-                label="Phonetic last"
+                label={intl.formatMessage(messages.labelPhoneticLast)}
                 htmlFor="review-phonetic-last-name"
               >
                 <Input
@@ -859,27 +1089,45 @@ export function ReviewWorkspace() {
                   {...form.register("phoneticLastName")}
                 />
               </GoogleField>
-              <GoogleField label="Display name" htmlFor="review-full-name">
+              <GoogleField
+                label={intl.formatMessage(messages.labelDisplayName)}
+                htmlFor="review-full-name"
+              >
                 <Input id="review-full-name" {...form.register("fullName")} />
               </GoogleField>
-              <GoogleField label="File as" htmlFor="review-file-as">
+              <GoogleField
+                label={intl.formatMessage(messages.labelFileAs)}
+                htmlFor="review-file-as"
+              >
                 <Input id="review-file-as" {...form.register("fileAs")} />
               </GoogleField>
             </div>
           </GoogleSection>
 
-          <GoogleSection icon={Building2} title="Company">
+          <GoogleSection
+            icon={Building2}
+            title={intl.formatMessage(messages.sectionCompany)}
+          >
             <div className="space-y-3">
-              <GoogleField label="Company" htmlFor="review-organization">
+              <GoogleField
+                label={intl.formatMessage(messages.labelCompany)}
+                htmlFor="review-organization"
+              >
                 <Input
                   id="review-organization"
                   {...form.register("organization")}
                 />
               </GoogleField>
-              <GoogleField label="Job title" htmlFor="review-title">
+              <GoogleField
+                label={intl.formatMessage(messages.labelJobTitle)}
+                htmlFor="review-title"
+              >
                 <Input id="review-title" {...form.register("title")} />
               </GoogleField>
-              <GoogleField label="Department" htmlFor="review-department">
+              <GoogleField
+                label={intl.formatMessage(messages.labelDepartment)}
+                htmlFor="review-department"
+              >
                 <Input
                   id="review-department"
                   {...form.register("department")}
@@ -889,67 +1137,67 @@ export function ReviewWorkspace() {
           </GoogleSection>
 
           <RepeatableFieldSection
-            title="Email addresses"
+            title={intl.formatMessage(messages.sectionEmails)}
             icon={Mail}
-            addLabel="Add email"
+            addLabel={intl.formatMessage(messages.addEmail)}
             fieldArray={emailsFieldArray}
             register={form.register}
             name="emails"
-            legend="Email"
+            legend={intl.formatMessage(messages.legendEmail)}
           />
 
           <RepeatableFieldSection
-            title="Phone numbers"
+            title={intl.formatMessage(messages.sectionPhones)}
             icon={Phone}
-            addLabel="Add phone"
+            addLabel={intl.formatMessage(messages.addPhone)}
             fieldArray={phonesFieldArray}
             register={form.register}
             name="phones"
-            legend="Phone"
+            legend={intl.formatMessage(messages.legendPhone)}
           />
 
           <RepeatableFieldSection
-            title="Addresses"
+            title={intl.formatMessage(messages.sectionAddresses)}
             icon={MapPin}
-            addLabel="Add address"
+            addLabel={intl.formatMessage(messages.addAddress)}
             fieldArray={addressesFieldArray}
             register={form.register}
             name="addresses"
-            legend="Address"
+            legend={intl.formatMessage(messages.legendAddress)}
             multiline
           />
 
           <RepeatableFieldSection
-            title="Significant dates"
+            title={intl.formatMessage(messages.sectionDates)}
             icon={CalendarDays}
-            addLabel="Add significant date"
+            addLabel={intl.formatMessage(messages.addDate)}
             fieldArray={significantDatesFieldArray}
             register={form.register}
             name="significantDates"
-            legend="Significant date"
+            legend={intl.formatMessage(messages.legendDate)}
             valueInputType="date"
             showAddButton={showMoreFields}
             hideWhenEmpty={!showMoreFields}
           />
 
           <RepeatableFieldSection
-            title="Websites"
+            title={intl.formatMessage(messages.sectionWebsites)}
             icon={Link2}
-            addLabel="Add website"
+            addLabel={intl.formatMessage(messages.addWebsite)}
             fieldArray={websitesFieldArray}
             register={form.register}
             name="websites"
-            legend="Website"
+            legend={intl.formatMessage(messages.legendWebsite)}
           />
 
           <RepeatableFieldSection
-            title="Related people"
+            title={intl.formatMessage(messages.sectionPeople)}
             icon={UsersRound}
-            addLabel="Add related person"
+            addLabel={intl.formatMessage(messages.addPerson)}
             fieldArray={relatedPeopleFieldArray}
             register={form.register}
             name="relatedPeople"
-            legend="Related person"
+            legend={intl.formatMessage(messages.legendPerson)}
             hideWhenEmpty={!showMoreFields}
           />
 
@@ -958,8 +1206,14 @@ export function ReviewWorkspace() {
             register={form.register}
           />
 
-          <GoogleSection icon={FileText} title="Notes">
-            <GoogleField label="Notes" htmlFor="review-notes">
+          <GoogleSection
+            icon={FileText}
+            title={intl.formatMessage(messages.sectionNotes)}
+          >
+            <GoogleField
+              label={intl.formatMessage(messages.labelNotes)}
+              htmlFor="review-notes"
+            >
               <Textarea
                 id="review-notes"
                 {...form.register("notes")}
@@ -975,7 +1229,9 @@ export function ReviewWorkspace() {
               className="rounded-full border-primary px-6 text-primary hover:bg-primary/5"
               onClick={() => setShowMoreFields((value) => !value)}
             >
-              {showMoreFields ? "Show less" : "Show more"}
+              {showMoreFields
+                ? intl.formatMessage(messages.showLess)
+                : intl.formatMessage(messages.showMore)}
             </Button>
           </div>
 
@@ -1026,7 +1282,7 @@ export function ReviewWorkspace() {
               }}
             >
               <Download className="h-4 w-4" />
-              Save vCard
+              {intl.formatMessage(messages.saveVcard)}
             </Button>
             <Button
               size="lg"
@@ -1037,10 +1293,10 @@ export function ReviewWorkspace() {
               <UserRoundPlus className="h-4 w-4" />
               {isSyncing || isAuthorizing ? <Spinner /> : null}
               {isAuthorizing
-                ? "Connecting Google..."
+                ? intl.formatMessage(messages.connectingGoogle)
                 : isSyncing
-                  ? "Syncing..."
-                  : "Save to Google Contacts"}
+                  ? intl.formatMessage(messages.syncing)
+                  : intl.formatMessage(messages.saveToGoogle)}
             </Button>
           </div>
         </CardContent>
@@ -1133,6 +1389,7 @@ function RepeatableFieldSection({
   showAddButton?: boolean;
   hideWhenEmpty?: boolean;
 }) {
+  const intl = useIntl();
   const shouldRender = !hideWhenEmpty || fieldArray.fields.length > 0;
   const rowGridClassName = multiline
     ? "grid gap-3 sm:grid-cols-[minmax(0,2.4fr)_minmax(5rem,0.45fr)_auto]"
@@ -1164,7 +1421,10 @@ function RepeatableFieldSection({
                   />
                 )}
               </GoogleField>
-              <GoogleField label="Type" htmlFor={`${name}-${index}-type`}>
+              <GoogleField
+                label={intl.formatMessage(messages.fieldType)}
+                htmlFor={`${name}-${index}-type`}
+              >
                 <Input
                   id={`${name}-${index}-type`}
                   className="rounded-xl"
@@ -1172,7 +1432,10 @@ function RepeatableFieldSection({
                 />
               </GoogleField>
               {multiline ? null : (
-                <GoogleField label="Label" htmlFor={`${name}-${index}-label`}>
+                <GoogleField
+                  label={intl.formatMessage(messages.fieldLabel)}
+                  htmlFor={`${name}-${index}-label`}
+                >
                   <Input
                     id={`${name}-${index}-label`}
                     className="rounded-xl"
@@ -1187,7 +1450,10 @@ function RepeatableFieldSection({
                   size="sm"
                   className="h-10 w-10 rounded-full border-border p-0 text-muted-foreground hover:bg-muted/60"
                   onClick={() => fieldArray.remove(index)}
-                  aria-label={`Remove ${legend.toLowerCase()} ${index + 1}`}
+                  aria-label={intl.formatMessage(messages.removeItem, {
+                    legend,
+                    index: index + 1,
+                  })}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
@@ -1231,8 +1497,13 @@ function CustomFieldSection({
   };
   register: UseFormRegister<ReviewFormValues>;
 }) {
+  const intl = useIntl();
+
   return (
-    <GoogleSection icon={Rows3} title="Custom fields">
+    <GoogleSection
+      icon={Rows3}
+      title={intl.formatMessage(messages.sectionCustom)}
+    >
       <div className="space-y-3">
         {fieldArray.fields.map((field, index) => (
           <div
@@ -1240,7 +1511,7 @@ function CustomFieldSection({
             className="grid gap-3 sm:grid-cols-[1.1fr_1.1fr_auto]"
           >
             <GoogleField
-              label="Custom field"
+              label={intl.formatMessage(messages.legendCustomField)}
               htmlFor={`custom-fields-${index}-value`}
             >
               <Input
@@ -1249,7 +1520,10 @@ function CustomFieldSection({
                 {...register(`customFields.${index}.value` as const)}
               />
             </GoogleField>
-            <GoogleField label="Label" htmlFor={`custom-fields-${index}-key`}>
+            <GoogleField
+              label={intl.formatMessage(messages.fieldLabel)}
+              htmlFor={`custom-fields-${index}-key`}
+            >
               <Input
                 id={`custom-fields-${index}-key`}
                 className="rounded-xl"
@@ -1264,7 +1538,7 @@ function CustomFieldSection({
                 className="rounded-full text-muted-foreground"
                 onClick={() => fieldArray.remove(index)}
               >
-                Remove
+                {intl.formatMessage(messages.remove)}
               </Button>
             </div>
           </div>
@@ -1277,7 +1551,7 @@ function CustomFieldSection({
           onClick={() => fieldArray.append(emptyCustomField())}
         >
           <Plus className="h-4 w-4" />
-          Add custom field
+          {intl.formatMessage(messages.addCustomField)}
         </Button>
       </div>
     </GoogleSection>
@@ -1293,6 +1567,7 @@ function DebugPanel({
   images: CapturedCardImage[];
   values: ReviewFormValues;
 }) {
+  const intl = useIntl();
   const previewContact = {
     ...draft,
     ...getDraftFields(values),
@@ -1309,27 +1584,27 @@ function DebugPanel({
       open
     >
       <summary className="cursor-pointer text-sm font-medium text-foreground">
-        Developer debug preview
+        {intl.formatMessage(messages.debugTitle)}
       </summary>
       <div className="mt-4 space-y-4">
         <DebugBlock
-          title="Raw extraction snapshot"
+          title={intl.formatMessage(messages.debugRaw)}
           body={
             draft.extractionSnapshot
               ? JSON.stringify(draft.extractionSnapshot, null, 2)
-              : "No extraction snapshot is available for this draft."
+              : intl.formatMessage(messages.debugRawMissing)
           }
         />
         <DebugBlock
-          title="Derived vCard"
+          title={intl.formatMessage(messages.debugVcard)}
           body={buildContactVCard(previewContact)}
         />
         <DebugBlock
-          title="Derived Google createContact payload"
+          title={intl.formatMessage(messages.debugPayload)}
           body={JSON.stringify(buildContactPayload(previewContact), null, 2)}
         />
         <DebugBlock
-          title="Selected photo metadata"
+          title={intl.formatMessage(messages.debugPhoto)}
           body={JSON.stringify(
             selectedPhoto
               ? {
@@ -1341,7 +1616,7 @@ function DebugPanel({
                 }
               : {
                   selectedPhotoImageId: values.selectedPhotoImageId ?? null,
-                  note: "No image is currently selected.",
+                  note: intl.formatMessage(messages.debugNoPhoto),
                 },
             null,
             2,

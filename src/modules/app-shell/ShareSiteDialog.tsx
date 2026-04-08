@@ -7,8 +7,36 @@ import {
   Twitter,
   X,
 } from "lucide-react";
+import { defineMessages, useIntl } from "react-intl";
 import { Button } from "../../shared/ui/button";
 import type { SiteShareLink } from "./siteShare";
+
+const messages = defineMessages({
+  title: {
+    id: "shell.shareDialog.title",
+    defaultMessage: "Share Meishi",
+  },
+  description: {
+    id: "shell.shareDialog.description",
+    defaultMessage: "Share the app link with a social app or copy it directly.",
+  },
+  close: {
+    id: "shell.shareDialog.close",
+    defaultMessage: "Close",
+  },
+  appUrlLabel: {
+    id: "shell.shareDialog.appUrlLabel",
+    defaultMessage: "App URL",
+  },
+  copyLink: {
+    id: "shell.shareDialog.copyLink",
+    defaultMessage: "Copy link",
+  },
+  done: {
+    id: "shell.shareDialog.done",
+    defaultMessage: "Done",
+  },
+});
 
 type ShareSiteDialogProps = {
   onClose: () => void;
@@ -30,6 +58,8 @@ export function ShareSiteDialog({
   shareLinks,
   url,
 }: ShareSiteDialogProps) {
+  const intl = useIntl();
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
@@ -41,21 +71,23 @@ export function ShareSiteDialog({
         <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
           <div className="space-y-1">
             <h2 id="share-site-dialog-title" className="text-xl font-semibold">
-              Share Meishi
+              {intl.formatMessage(messages.title)}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Share the app link with a social app or copy it directly.
+              {intl.formatMessage(messages.description)}
             </p>
           </div>
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
-            Close
+            {intl.formatMessage(messages.close)}
           </Button>
         </div>
 
         <div className="space-y-5 px-6 py-5">
           <div className="rounded-2xl border border-border bg-muted/30 p-4">
-            <p className="mb-2 text-sm font-medium text-foreground">App URL</p>
+            <p className="mb-2 text-sm font-medium text-foreground">
+              {intl.formatMessage(messages.appUrlLabel)}
+            </p>
             <p className="break-all text-sm text-muted-foreground">{url}</p>
           </div>
 
@@ -87,11 +119,11 @@ export function ShareSiteDialog({
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={onCopy}>
               <Copy className="h-4 w-4" />
-              Copy link
+              {intl.formatMessage(messages.copyLink)}
             </Button>
             <Button type="button" onClick={onClose}>
               <Share2 className="h-4 w-4" />
-              Done
+              {intl.formatMessage(messages.done)}
             </Button>
           </div>
         </div>

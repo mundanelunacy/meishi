@@ -1,22 +1,28 @@
 /* eslint-disable require-jsdoc, max-len */
-import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
-import {getApps, initializeApp} from "firebase-admin/app";
-import {FieldValue, getFirestore} from "firebase-admin/firestore";
-import {defineSecret} from "firebase-functions/params";
-import {HttpsError, onCall} from "firebase-functions/v2/https";
-import type {CallableRequest} from "firebase-functions/v2/https";
-import {GOOGLE_CONTACTS_CREDENTIALS_COLLECTION} from "./googleContactsCredentialRetention.js";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { defineSecret } from "firebase-functions/params";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
+import type { CallableRequest } from "firebase-functions/v2/https";
+import { GOOGLE_CONTACTS_CREDENTIALS_COLLECTION } from "./googleContactsCredentialRetention.js";
 
 const GOOGLE_CONTACTS_SCOPE = "https://www.googleapis.com/auth/contacts";
 const GOOGLE_AUTH_STATE_TTL_MS = 10 * 60 * 1000;
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const GOOGLE_REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke";
+// Keep this allowlist in sync with the Google Cloud OAuth client configuration.
 const GOOGLE_OAUTH_REDIRECT_URIS_BY_ORIGIN = new Map<string, string>([
   ["http://localhost:5173", "http://localhost:5173/auth/google/callback"],
   ["http://127.0.0.1:5173", "http://127.0.0.1:5173/auth/google/callback"],
   ["http://localhost:4173", "http://localhost:4173/auth/google/callback"],
   ["http://127.0.0.1:4173", "http://127.0.0.1:4173/auth/google/callback"],
-  ["https://meishi-492400.web.app", "https://meishi-492400.web.app/auth/google/callback"],
+  ["https://meishi.dev", "https://meishi.dev/auth/google/callback"],
+  ["https://www.meishi.dev", "https://www.meishi.dev/auth/google/callback"],
+  [
+    "https://meishi-492400.web.app",
+    "https://meishi-492400.web.app/auth/google/callback",
+  ],
   [
     "https://meishi-492400.firebaseapp.com",
     "https://meishi-492400.firebaseapp.com/auth/google/callback",
@@ -79,7 +85,10 @@ function signStatePayload(encodedPayload: string) {
 
 function assertAuthenticated(uid: string | undefined): string {
   if (!uid) {
-    throw new HttpsError("unauthenticated", "A Firebase-authenticated session is required.");
+    throw new HttpsError(
+      "unauthenticated",
+      "A Firebase-authenticated session is required.",
+    );
   }
 
   return uid;
@@ -112,7 +121,7 @@ function getRedirectUriForRequest(request: CallableRequest): string {
   if (!origin) {
     throw new HttpsError(
       "failed-precondition",
-      "Unable to determine the caller origin for Google OAuth."
+      "Unable to determine the caller origin for Google OAuth.",
     );
   }
 
@@ -120,33 +129,46 @@ function getRedirectUriForRequest(request: CallableRequest): string {
   if (!redirectUri) {
     throw new HttpsError(
       "permission-denied",
-      `Origin ${origin} is not allowed for Google OAuth redirects.`
+      `Origin ${origin} is not allowed for Google OAuth redirects.`,
     );
   }
 
   return redirectUri;
 }
 
-async function readStoredCredential(uid: string): Promise<StoredGoogleCredential | null> {
+async function readStoredCredential(
+  uid: string,
+): Promise<StoredGoogleCredential | null> {
   const snapshot = await getCredentialDocument(uid).get();
   if (!snapshot.exists) {
     return null;
   }
 
   const data = snapshot.data();
-  if (!data || typeof data.refreshToken !== "string" || typeof data.connectedAt !== "string") {
-    throw new HttpsError("internal", "Stored Google credential data is malformed.");
+  if (
+    !data ||
+    typeof data.refreshToken !== "string" ||
+    typeof data.connectedAt !== "string"
+  ) {
+    throw new HttpsError(
+      "internal",
+      "Stored Google credential data is malformed.",
+    );
   }
 
   return {
     refreshToken: data.refreshToken,
     scope: typeof data.scope === "string" ? data.scope : null,
-    accountEmail: typeof data.accountEmail === "string" ? data.accountEmail : undefined,
+    accountEmail:
+      typeof data.accountEmail === "string" ? data.accountEmail : undefined,
     connectedAt: data.connectedAt,
   };
 }
 
-function buildGoogleAuthState(uid: string, credential: StoredGoogleCredential | null): GoogleAuthState {
+function buildGoogleAuthState(
+  uid: string,
+  credential: StoredGoogleCredential | null,
+): GoogleAuthState {
   if (!credential) {
     return {
       status: "signed_out",
@@ -178,12 +200,18 @@ function buildSignedState(uid: string) {
 
 function verifySignedState(rawState: unknown, uid: string): SignedStatePayload {
   if (typeof rawState !== "string") {
-    throw new HttpsError("invalid-argument", "Google authorization state is missing.");
+    throw new HttpsError(
+      "invalid-argument",
+      "Google authorization state is missing.",
+    );
   }
 
   const [encodedPayload, signature] = rawState.split(".");
   if (!encodedPayload || !signature) {
-    throw new HttpsError("invalid-argument", "Google authorization state is malformed.");
+    throw new HttpsError(
+      "invalid-argument",
+      "Google authorization state is malformed.",
+    );
   }
 
   const expectedSignature = signStatePayload(encodedPayload);
@@ -194,16 +222,27 @@ function verifySignedState(rawState: unknown, uid: string): SignedStatePayload {
     providedBuffer.length !== expectedBuffer.length ||
     !timingSafeEqual(providedBuffer, expectedBuffer)
   ) {
-    throw new HttpsError("permission-denied", "Google authorization state could not be verified.");
+    throw new HttpsError(
+      "permission-denied",
+      "Google authorization state could not be verified.",
+    );
   }
 
-  const payload = JSON.parse(decodeBase64Url(encodedPayload)) as SignedStatePayload;
+  const payload = JSON.parse(
+    decodeBase64Url(encodedPayload),
+  ) as SignedStatePayload;
   if (payload.uid !== uid) {
-    throw new HttpsError("permission-denied", "Google authorization state does not match the current Firebase user.");
+    throw new HttpsError(
+      "permission-denied",
+      "Google authorization state does not match the current Firebase user.",
+    );
   }
 
   if (Date.now() - payload.issuedAt > GOOGLE_AUTH_STATE_TTL_MS) {
-    throw new HttpsError("deadline-exceeded", "Google authorization state expired. Start the connection flow again.");
+    throw new HttpsError(
+      "deadline-exceeded",
+      "Google authorization state expired. Start the connection flow again.",
+    );
   }
 
   return payload;
@@ -222,7 +261,9 @@ async function exchangeGoogleTokens(params: URLSearchParams) {
   if (!response.ok || payload.error) {
     throw new HttpsError(
       "internal",
-      payload.error_description || payload.error || "Google token exchange failed."
+      payload.error_description ||
+        payload.error ||
+        "Google token exchange failed.",
     );
   }
 
@@ -240,7 +281,9 @@ function readEmailFromIdToken(idToken?: string) {
   }
 
   try {
-    const payload = JSON.parse(decodeBase64Url(segments[1])) as { email?: string };
+    const payload = JSON.parse(decodeBase64Url(segments[1])) as {
+      email?: string;
+    };
     return typeof payload.email === "string" ? payload.email : undefined;
   } catch {
     return undefined;
@@ -249,15 +292,21 @@ function readEmailFromIdToken(idToken?: string) {
 
 function coerceCompletionPayload(data: unknown) {
   if (typeof data !== "object" || data === null) {
-    throw new HttpsError("invalid-argument", "Google callback payload is missing.");
+    throw new HttpsError(
+      "invalid-argument",
+      "Google callback payload is missing.",
+    );
   }
 
-  const {code, state} = data as {code?: unknown; state?: unknown};
+  const { code, state } = data as { code?: unknown; state?: unknown };
   if (typeof code !== "string" || typeof state !== "string") {
-    throw new HttpsError("invalid-argument", "Google callback payload is malformed.");
+    throw new HttpsError(
+      "invalid-argument",
+      "Google callback payload is malformed.",
+    );
   }
 
-  return {code, state};
+  return { code, state };
 }
 
 async function revokeRefreshToken(refreshToken: string) {
@@ -294,7 +343,7 @@ export const beginGoogleContactsAuth = onCall(
     return {
       authUrl: authUrl.toString(),
     };
-  }
+  },
 );
 
 export const completeGoogleContactsAuth = onCall(
@@ -304,7 +353,7 @@ export const completeGoogleContactsAuth = onCall(
   async (request) => {
     const uid = assertAuthenticated(request.auth?.uid);
     const redirectUri = getRedirectUriForRequest(request);
-    const {code, state} = coerceCompletionPayload(request.data);
+    const { code, state } = coerceCompletionPayload(request.data);
     verifySignedState(state, uid);
 
     const existingCredential = await readStoredCredential(uid);
@@ -315,20 +364,24 @@ export const completeGoogleContactsAuth = onCall(
         code,
         grant_type: "authorization_code",
         redirect_uri: redirectUri,
-      })
+      }),
     );
 
-    const refreshToken = tokenPayload.refresh_token || existingCredential?.refreshToken;
+    const refreshToken =
+      tokenPayload.refresh_token || existingCredential?.refreshToken;
     if (!refreshToken) {
       throw new HttpsError(
         "failed-precondition",
-        "Google did not return a refresh token for this connection."
+        "Google did not return a refresh token for this connection.",
       );
     }
 
     const connectedAt = new Date().toISOString();
-    const scope = tokenPayload.scope || existingCredential?.scope || GOOGLE_CONTACTS_SCOPE;
-    const accountEmail = readEmailFromIdToken(tokenPayload.id_token) || existingCredential?.accountEmail;
+    const scope =
+      tokenPayload.scope || existingCredential?.scope || GOOGLE_CONTACTS_SCOPE;
+    const accountEmail =
+      readEmailFromIdToken(tokenPayload.id_token) ||
+      existingCredential?.accountEmail;
 
     await getCredentialDocument(uid).set({
       refreshToken,
@@ -346,7 +399,7 @@ export const completeGoogleContactsAuth = onCall(
         connectedAt,
       }),
     };
-  }
+  },
 );
 
 export const getGoogleAuthStatus = onCall(async (request) => {
@@ -367,7 +420,7 @@ export const getGoogleAccessToken = onCall(
     if (!credential) {
       throw new HttpsError(
         "failed-precondition",
-        "Google Contacts is not connected for the current Firebase session."
+        "Google Contacts is not connected for the current Firebase session.",
       );
     }
 
@@ -377,11 +430,14 @@ export const getGoogleAccessToken = onCall(
         client_secret: googleOauthClientSecret.value(),
         grant_type: "refresh_token",
         refresh_token: credential.refreshToken,
-      })
+      }),
     );
 
     if (!payload.access_token || typeof payload.expires_in !== "number") {
-      throw new HttpsError("internal", "Google refresh response did not include an access token.");
+      throw new HttpsError(
+        "internal",
+        "Google refresh response did not include an access token.",
+      );
     }
 
     return {
@@ -389,7 +445,7 @@ export const getGoogleAccessToken = onCall(
       expiresIn: payload.expires_in,
       scope: payload.scope || credential.scope || GOOGLE_CONTACTS_SCOPE,
     };
-  }
+  },
 );
 
 export const disconnectGoogleContacts = onCall(
@@ -408,5 +464,5 @@ export const disconnectGoogleContacts = onCall(
     return {
       success: true,
     };
-  }
+  },
 );

@@ -70,7 +70,7 @@ describe("ImageLightbox", () => {
 
   it("resets zoom and pan when the source image changes", () => {
     const { rerender } = renderLightbox();
-    const { image, viewport } = getImageElements();
+    const { viewport } = getImageElements();
 
     fireEvent.wheel(viewport, { deltaY: -100, clientX: 150, clientY: 25 });
 

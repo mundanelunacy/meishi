@@ -1,13 +1,16 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "../../test/renderWithIntl";
 import { usePwaLifecycle } from "./usePwaLifecycle";
 
 let setNeedRefreshState: ((value: boolean) => void) | null = null;
 let setOfflineReadyState: ((value: boolean) => void) | null = null;
-let updateServiceWorkerMock = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+let updateServiceWorkerMock = vi
+  .fn<() => Promise<void>>()
+  .mockResolvedValue(undefined);
 
 vi.mock("virtual:pwa-register/react", async () => {
   const React = await import("react");
@@ -39,10 +42,16 @@ function mockMatchMedia(initialMatches = false) {
     matches,
     media: "(display-mode: standalone)",
     onchange: null,
-    addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
+    addEventListener: (
+      _type: string,
+      listener: (event: MediaQueryListEvent) => void,
+    ) => {
       listeners.add(listener);
     },
-    removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
+    removeEventListener: (
+      _type: string,
+      listener: (event: MediaQueryListEvent) => void,
+    ) => {
       listeners.delete(listener);
     },
     addListener: vi.fn(),
@@ -69,8 +78,12 @@ function HookHarness() {
       <div data-testid="can-install">{String(lifecycle.canInstall)}</div>
       <div data-testid="is-installed">{String(lifecycle.isInstalled)}</div>
       <button onClick={() => void lifecycle.applyUpdate()}>apply-update</button>
-      <button onClick={() => void lifecycle.promptInstall()}>prompt-install</button>
-      <button onClick={lifecycle.dismissOfflineReady}>dismiss-offline-ready</button>
+      <button onClick={() => void lifecycle.promptInstall()}>
+        prompt-install
+      </button>
+      <button onClick={lifecycle.dismissOfflineReady}>
+        dismiss-offline-ready
+      </button>
     </div>
   );
 }
@@ -82,14 +95,16 @@ describe("usePwaLifecycle", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
-    updateServiceWorkerMock = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    updateServiceWorkerMock = vi
+      .fn<() => Promise<void>>()
+      .mockResolvedValue(undefined);
     setNeedRefreshState = null;
     setOfflineReadyState = null;
     mockMatchMedia(false);
   });
 
   it("maps refresh and offline-ready state from useRegisterSW", async () => {
-    render(<HookHarness />);
+    renderWithIntl(<HookHarness />);
 
     expect(screen.getByTestId("need-refresh")).toHaveTextContent("false");
     expect(screen.getByTestId("offline-ready")).toHaveTextContent("false");
@@ -107,15 +122,20 @@ describe("usePwaLifecycle", () => {
   });
 
   it("captures beforeinstallprompt and forwards install prompting", async () => {
-    render(<HookHarness />);
+    renderWithIntl(<HookHarness />);
 
     const prompt = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
-    const installEvent = new Event("beforeinstallprompt", { cancelable: true }) as Event & {
+    const installEvent = new Event("beforeinstallprompt", {
+      cancelable: true,
+    }) as Event & {
       prompt: () => Promise<void>;
       userChoice: Promise<{ outcome: "accepted"; platform: string }>;
     };
     installEvent.prompt = prompt;
-    installEvent.userChoice = Promise.resolve({ outcome: "accepted", platform: "web" });
+    installEvent.userChoice = Promise.resolve({
+      outcome: "accepted",
+      platform: "web",
+    });
 
     fireEvent(window, installEvent);
     expect(screen.getByTestId("can-install")).toHaveTextContent("true");
@@ -130,7 +150,7 @@ describe("usePwaLifecycle", () => {
 
   it("marks the app installed after the browser install event and applies updates", async () => {
     const mediaQuery = mockMatchMedia(true);
-    render(<HookHarness />);
+    renderWithIntl(<HookHarness />);
 
     expect(screen.getByTestId("is-installed")).toHaveTextContent("true");
 

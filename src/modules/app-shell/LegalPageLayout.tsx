@@ -1,5 +1,26 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { defineMessages, useIntl } from "react-intl";
+
+const messages = defineMessages({
+  eyebrow: {
+    id: "legal.layout.eyebrow",
+    defaultMessage: "Legal",
+  },
+  effectiveDate: {
+    id: "legal.layout.effectiveDate",
+    defaultMessage: "Effective {date}",
+  },
+  footerText: {
+    id: "legal.layout.footerText",
+    defaultMessage:
+      "Questions about these terms can be directed through the project repository.",
+  },
+  backToLanding: {
+    id: "legal.layout.backToLanding",
+    defaultMessage: "Back to landing",
+  },
+});
 
 export function LegalPageLayout({
   title,
@@ -12,11 +33,13 @@ export function LegalPageLayout({
   effectiveDate: string;
   children: ReactNode;
 }) {
+  const intl = useIntl();
+
   return (
     <div className="mx-auto max-w-3xl space-y-8 py-6 md:py-10">
       <header className="overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-6 py-10 text-white shadow-card sm:px-8">
         <div className="mb-4 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-white/75">
-          Legal
+          {intl.formatMessage(messages.eyebrow)}
         </div>
         <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
           {title}
@@ -25,7 +48,7 @@ export function LegalPageLayout({
           {summary}
         </p>
         <p className="mt-5 text-xs uppercase tracking-[0.18em] text-white/55">
-          Effective {effectiveDate}
+          {intl.formatMessage(messages.effectiveDate, { date: effectiveDate })}
         </p>
       </header>
 
@@ -34,15 +57,12 @@ export function LegalPageLayout({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-5 py-4 text-sm text-muted-foreground">
-        <span>
-          Questions about these terms can be directed through the project
-          repository.
-        </span>
+        <span>{intl.formatMessage(messages.footerText)}</span>
         <Link
           to="/landing"
           className="font-medium text-foreground transition-colors hover:text-primary"
         >
-          Back to landing
+          {intl.formatMessage(messages.backToLanding)}
         </Link>
       </div>
     </div>

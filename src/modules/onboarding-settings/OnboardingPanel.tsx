@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { KeyRound, ShieldAlert } from "lucide-react";
+import { useIntl } from "react-intl";
 import { Spinner } from "../../shared/ui/spinner";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { hasFirebaseConfiguration } from "../../app/env";
@@ -34,8 +35,14 @@ import {
   getGoogleScope,
 } from "../google-auth/googleIdentity";
 import { getSupportedModelOptions } from "./modelOptions";
+import {
+  getOnboardingPanelContent,
+  getProviderFieldLabels,
+  getProviderOptionLabels,
+} from "./onboardingContent";
 
 export function OnboardingPanel() {
+  const intl = useIntl();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const settings = useAppSelector(selectSettings);
@@ -56,6 +63,9 @@ export function OnboardingPanel() {
     selectedProvider,
     providerModel,
   );
+  const content = getOnboardingPanelContent(intl, getGoogleScope());
+  const providerLabels = getProviderFieldLabels(intl, selectedProvider);
+  const providerOptionLabels = getProviderOptionLabels(intl);
 
   const canContinue = readiness.hasLlmConfiguration;
 
@@ -72,7 +82,7 @@ export function OnboardingPanel() {
       );
       const nextAuthState = await connectGoogleContacts();
       dispatch(setGoogleAuthState(nextAuthState));
-      pushToast("Google Contacts access granted.");
+      pushToast(content.toasts.accessGranted);
     } catch (error) {
       dispatch(
         setGoogleAuthState({
@@ -81,9 +91,7 @@ export function OnboardingPanel() {
         }),
       );
       const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to authorize Google Contacts.";
+        error instanceof Error ? error.message : content.toasts.connectError;
       setErrorMessage(message);
     } finally {
       setIsAuthorizing(false);
@@ -92,7 +100,7 @@ export function OnboardingPanel() {
 
   function handleFinish() {
     dispatch(completeOnboarding());
-    pushToast("Onboarding complete. You can start capturing cards.");
+    pushToast(content.toasts.complete);
     navigate({ to: "/capture" });
   }
 
@@ -100,34 +108,27 @@ export function OnboardingPanel() {
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>First-run setup</CardTitle>
-          <CardDescription>
-            Meishi runs entirely in the browser. It stores your LLM key locally,
-            which is acceptable for trusted prototype use only.
-          </CardDescription>
+          <CardTitle>{content.title}</CardTitle>
+          <CardDescription>{content.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <section className="space-y-4">
             <div className="flex items-start gap-3">
               <ShieldAlert className="mt-1 h-5 w-5 text-accent" />
               <div className="space-y-1 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Security note</p>
-                <p>
-                  This scaffold uses a browser-only BYOK model. Do not treat
-                  client-side API key storage as production-safe.
+                <p className="font-medium text-foreground">
+                  {content.securityTitle}
                 </p>
+                <p>{content.securityBody}</p>
               </div>
             </div>
             {!hasFirebaseConfiguration() ? (
-              <Alert>
-                Set the required <code>VITE_FIREBASE_*</code> values before
-                Google sign-in will work.
-              </Alert>
+              <Alert>{content.firebaseAlert}</Alert>
             ) : null}
           </section>
 
           <section className="space-y-3">
-            <Label htmlFor="provider">LLM provider</Label>
+            <Label htmlFor="provider">{providerLabels.provider}</Label>
             <Select
               id="provider"
               value={settings.llmProvider}
@@ -139,21 +140,19 @@ export function OnboardingPanel() {
                 )
               }
             >
-              <option value="openai">OpenAI</option>
-              <option value="anthropic">Anthropic</option>
+              <option value="openai">{providerOptionLabels.openai}</option>
+              <option value="anthropic">
+                {providerOptionLabels.anthropic}
+              </option>
               <option value="gemini" disabled>
-                Gemini (planned)
+                {providerOptionLabels.gemini}
               </option>
             </Select>
           </section>
 
           <section className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-3 sm:col-span-2">
-              <Label htmlFor="api-key">
-                {selectedProvider === "anthropic"
-                  ? "Anthropic API key"
-                  : "OpenAI API key"}
-              </Label>
+              <Label htmlFor="api-key">{providerLabels.apiKey}</Label>
               <Input
                 id="api-key"
                 type="password"
@@ -174,11 +173,7 @@ export function OnboardingPanel() {
               />
             </div>
             <div className="space-y-3 sm:col-span-2">
-              <Label htmlFor="model">
-                {selectedProvider === "anthropic"
-                  ? "Anthropic model"
-                  : "OpenAI model"}
-              </Label>
+              <Label htmlFor="model">{providerLabels.model}</Label>
               <Select
                 id="model"
                 value={providerModel}
@@ -202,38 +197,36 @@ export function OnboardingPanel() {
           </section>
 
           <section className="rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">Structured extraction</p>
-            <p className="mt-1">
-              Meishi enforces structured output for extraction. The shared
-              prompt is adjustable later in Settings, but the schema contract
-              stays fixed.
+            <p className="font-medium text-foreground">
+              {content.structuredTitle}
             </p>
+            <p className="mt-1">{content.structuredBody}</p>
           </section>
 
           <section className="rounded-xl bg-muted/60 p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium">
               <KeyRound className="h-4 w-4" />
-              Google Contacts access
+              {content.googleTitle}
             </div>
             <p className="mb-4 text-sm text-muted-foreground">
-              Meishi creates new Google contacts and can upload one contact
-              photo after save. Google currently requires the{" "}
-              <code>{getGoogleScope()}</code> scope for that flow, so the
-              consent screen may mention broader contact access than the app
-              uses. Short-lived access tokens are re-acquired only when needed.
+              {content.googleBody}
             </p>
             <div className="mb-4 flex flex-wrap gap-2 text-xs">
               <span className="rounded-full bg-background px-3 py-1 font-medium text-foreground">
-                Firebase session:{" "}
-                {googleAuth.firebaseUid ? "Ready" : "Starting"}
+                {content.firebaseSessionLabel(
+                  googleAuth.firebaseUid
+                    ? content.firebaseReady
+                    : content.firebaseStarting,
+                )}
               </span>
               <span className="rounded-full bg-background px-3 py-1 text-muted-foreground">
-                Status:{" "}
-                {googleAuth.status === "connected"
-                  ? "Connected"
-                  : googleAuth.status === "connecting"
-                    ? "Connecting"
-                    : "Not connected"}
+                {content.statusLabel(
+                  googleAuth.status === "connected"
+                    ? content.connected
+                    : googleAuth.status === "connecting"
+                      ? content.connecting
+                      : content.notConnected,
+                )}
               </span>
             </div>
             <Button
@@ -242,10 +235,10 @@ export function OnboardingPanel() {
             >
               {isAuthorizing ? <Spinner /> : null}
               {isAuthorizing
-                ? "Connecting..."
+                ? content.connectingButton
                 : readiness.hasGoogleAuthorization
-                  ? "Reconnect Google account"
-                  : "Connect Google account"}
+                  ? content.reconnectButton
+                  : content.connectButton}
             </Button>
           </section>
 
@@ -257,11 +250,10 @@ export function OnboardingPanel() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={handleFinish} disabled={!canContinue}>
-              Continue to capture
+              {content.continueLabel}
             </Button>
             <span className="text-sm text-muted-foreground">
-              Ready when the selected provider is configured. Google access is
-              only needed when you save to Google Contacts.
+              {content.continueHelp}
             </span>
           </div>
         </CardContent>
@@ -269,35 +261,16 @@ export function OnboardingPanel() {
 
       <Card className="bg-card/90">
         <CardHeader>
-          <CardTitle>What happens next</CardTitle>
-          <CardDescription>
-            The app keeps images and drafts locally until you verify them, then
-            syncs verified contact data to Google Contacts.
-          </CardDescription>
+          <CardTitle>{content.nextTitle}</CardTitle>
+          <CardDescription>{content.nextDescription}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm text-muted-foreground">
-          <div>
-            <p className="font-medium text-foreground">1. Capture</p>
-            <p>
-              Use the phone camera or photo picker to add one or more
-              business-card images.
-            </p>
-          </div>
-          <div>
-            <p className="font-medium text-foreground">2. Extract</p>
-            <p>
-              Meishi sends those images to the selected provider and validates
-              the returned structured schema locally before the draft reaches
-              review.
-            </p>
-          </div>
-          <div>
-            <p className="font-medium text-foreground">3. Review and sync</p>
-            <p>
-              One selected image becomes the Google contact photo. Additional
-              images stay local in the PWA history.
-            </p>
-          </div>
+          {content.nextSteps.map((step) => (
+            <div key={step.title}>
+              <p className="font-medium text-foreground">{step.title}</p>
+              <p>{step.body}</p>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

@@ -1,0 +1,1385 @@
+{
+  "capture.debug.clearLog": {
+    "defaultMessage": "Clear debug log"
+  },
+  "capture.debug.description": {
+    "defaultMessage": "Tracks page lifetime and capture events across reloads. Use ?{panelKey}=1 to show this panel, and use ?{maxEdgeKey}=1600 or localStorage to enable temporary downscaling."
+  },
+  "capture.debug.downscale": {
+    "defaultMessage": "Downscale max edge: {value}"
+  },
+  "capture.debug.noEvents": {
+    "defaultMessage": "No capture debug events recorded yet."
+  },
+  "capture.debug.pageSession": {
+    "defaultMessage": "Page session: {value}"
+  },
+  "capture.debug.title": {
+    "defaultMessage": "Capture debug"
+  },
+  "capture.dialog.captureAnother": {
+    "defaultMessage": "Capture another"
+  },
+  "capture.dialog.close": {
+    "defaultMessage": "Close camera"
+  },
+  "capture.dialog.description": {
+    "defaultMessage": "Use the larger webcam preview to frame the business card before capturing."
+  },
+  "capture.dialog.permission": {
+    "defaultMessage": "Camera permission is required. If the preview does not appear, check the browser permission prompt and your system camera settings."
+  },
+  "capture.dialog.starting": {
+    "defaultMessage": "Capturing..."
+  },
+  "capture.dialog.takePhoto": {
+    "defaultMessage": "Take photo"
+  },
+  "capture.dialog.title": {
+    "defaultMessage": "Camera capture"
+  },
+  "capture.error.captureBeforeExtraction": {
+    "defaultMessage": "Capture at least one image before extraction."
+  },
+  "capture.error.extractionFailed": {
+    "defaultMessage": "Extraction failed."
+  },
+  "capture.error.previewNotReady": {
+    "defaultMessage": "Camera preview is not ready yet."
+  },
+  "capture.error.unableCapturePhoto": {
+    "defaultMessage": "Unable to capture a photo."
+  },
+  "capture.error.unableOpenCamera": {
+    "defaultMessage": "Unable to open the camera."
+  },
+  "capture.error.unableProcessImages": {
+    "defaultMessage": "Unable to process images."
+  },
+  "capture.photoroll.clear": {
+    "defaultMessage": "Clear photoroll"
+  },
+  "capture.photoroll.delete": {
+    "defaultMessage": "Delete"
+  },
+  "capture.photoroll.deleteImage": {
+    "defaultMessage": "Delete {fileName}"
+  },
+  "capture.photoroll.title": {
+    "defaultMessage": "Photoroll"
+  },
+  "capture.toast.extractionFinished": {
+    "defaultMessage": "Extraction finished. Review the draft before syncing."
+  },
+  "capture.toast.imageRemoved": {
+    "defaultMessage": "Image removed from the active capture session."
+  },
+  "capture.toast.imagesAdded": {
+    "defaultMessage": "{count, plural, one {# image added to the active capture session.} other {# images added to the active capture session.}}"
+  },
+  "capture.toast.photorollCleared": {
+    "defaultMessage": "Photoroll cleared."
+  },
+  "capture.workspace.addFromLibrary": {
+    "defaultMessage": "Add images from library"
+  },
+  "capture.workspace.extractDraft": {
+    "defaultMessage": "Extract contact draft"
+  },
+  "capture.workspace.extracting": {
+    "defaultMessage": "Extracting..."
+  },
+  "capture.workspace.openCamera": {
+    "defaultMessage": "Open camera"
+  },
+  "capture.workspace.openingCamera": {
+    "defaultMessage": "Opening camera..."
+  },
+  "capture.workspace.title": {
+    "defaultMessage": "Capture business cards"
+  },
+  "docs.afterScanning.asVCard.body": {
+    "defaultMessage": "Use the Save vCard action to download a `.vcf` file to your device. You can then open that file in your preferred contacts app."
+  },
+  "docs.afterScanning.asVCard.title": {
+    "defaultMessage": "As a vCard"
+  },
+  "docs.afterScanning.description": {
+    "defaultMessage": "Meishi lets you check and edit the contact before you save it anywhere else."
+  },
+  "docs.afterScanning.eyebrow": {
+    "defaultMessage": "After scanning"
+  },
+  "docs.afterScanning.inGoogleContacts.body": {
+    "defaultMessage": "Use Sync to Google from <reviewLink>Review</reviewLink>. After a successful sync, open Google Contacts to see the created contact and the uploaded primary photo."
+  },
+  "docs.afterScanning.inGoogleContacts.title": {
+    "defaultMessage": "In Google Contacts"
+  },
+  "docs.afterScanning.insideMeishi.body": {
+    "defaultMessage": "Open <reviewLink>Review</reviewLink> to inspect the current draft, see the captured images, and edit the structured contact fields before saving anything externally."
+  },
+  "docs.afterScanning.insideMeishi.title": {
+    "defaultMessage": "Inside Meishi"
+  },
+  "docs.apiKeys.anthropic.description": {
+    "defaultMessage": "Choose this if you want Meishi to read cards using Claude."
+  },
+  "docs.apiKeys.anthropic.linkLabel": {
+    "defaultMessage": "Anthropic API keys"
+  },
+  "docs.apiKeys.anthropic.step1": {
+    "defaultMessage": "Go to the Anthropic Console."
+  },
+  "docs.apiKeys.anthropic.step2": {
+    "defaultMessage": "Sign in or create an Anthropic account."
+  },
+  "docs.apiKeys.anthropic.step3": {
+    "defaultMessage": "Create a new API key from the console."
+  },
+  "docs.apiKeys.anthropic.step4": {
+    "defaultMessage": "Copy the key and paste it into Meishi during setup or later on the <settingsLink>Settings</settingsLink> page."
+  },
+  "docs.apiKeys.anthropic.step5": {
+    "defaultMessage": "Confirm that your Anthropic account has billing or usage access if your plan requires it."
+  },
+  "docs.apiKeys.description": {
+    "defaultMessage": "Meishi asks you to use your own API key. During setup, or later on the settings page, choose either OpenAI or Anthropic and paste your key into the app."
+  },
+  "docs.apiKeys.eyebrow": {
+    "defaultMessage": "Setup"
+  },
+  "docs.apiKeys.openai.description": {
+    "defaultMessage": "Choose this if you want Meishi to read cards using OpenAI."
+  },
+  "docs.apiKeys.openai.linkLabel": {
+    "defaultMessage": "OpenAI API keys"
+  },
+  "docs.apiKeys.openai.step1": {
+    "defaultMessage": "Go to the OpenAI platform API keys page."
+  },
+  "docs.apiKeys.openai.step2": {
+    "defaultMessage": "Sign in or create an OpenAI account."
+  },
+  "docs.apiKeys.openai.step3": {
+    "defaultMessage": "Create a new secret key in your API key dashboard."
+  },
+  "docs.apiKeys.openai.step4": {
+    "defaultMessage": "Copy the key immediately and paste it into Meishi on the <settingsLink>Settings</settingsLink> page."
+  },
+  "docs.apiKeys.openai.step5": {
+    "defaultMessage": "Meishi keeps this key in your browser on this device so it can use it again later."
+  },
+  "docs.apiKeys.providerAriaLabel": {
+    "defaultMessage": "API provider"
+  },
+  "docs.apiKeys.providers.anthropic": {
+    "defaultMessage": "Anthropic"
+  },
+  "docs.apiKeys.providers.openai": {
+    "defaultMessage": "OpenAI"
+  },
+  "docs.hero.description": {
+    "defaultMessage": "Meishi is a browser-based app for scanning business cards, turning them into organized contact details with AI, reviewing the results on your device, exporting a vCard, and optionally sending the finished contact to Google Contacts."
+  },
+  "docs.hero.eyebrow": {
+    "defaultMessage": "Documentation"
+  },
+  "docs.hero.title": {
+    "defaultMessage": "How to use Meishi"
+  },
+  "docs.lightbox.openScreenshot": {
+    "defaultMessage": "Open screenshot: {alt}"
+  },
+  "docs.lightbox.subtitle": {
+    "defaultMessage": "Step {stepNumber} of {totalSteps}"
+  },
+  "docs.overview.description": {
+    "defaultMessage": "Meishi helps you turn a photo of a business card into a digital contact you can actually use. Your images and in-progress edits stay in your browser, the app uses your own OpenAI or Anthropic key to read the card, and you can export the final result as a vCard or send it to Google Contacts after checking it."
+  },
+  "docs.overview.eyebrow": {
+    "defaultMessage": "Overview"
+  },
+  "docs.overview.goodToKnow.item1": {
+    "defaultMessage": "Meishi runs in your browser and keeps your AI key on this device."
+  },
+  "docs.overview.goodToKnow.item2": {
+    "defaultMessage": "Google sign-in access is refreshed when needed instead of being permanently saved in the browser."
+  },
+  "docs.overview.goodToKnow.item3": {
+    "defaultMessage": "Extra business-card images remain local even if one photo is uploaded to Google Contacts."
+  },
+  "docs.overview.goodToKnow.item4": {
+    "defaultMessage": "Extraction and Google sync both require a network connection."
+  },
+  "docs.overview.goodToKnow.title": {
+    "defaultMessage": "Good to know"
+  },
+  "docs.overview.whatAppDoes.item1": {
+    "defaultMessage": "Captures card images from your camera or image library."
+  },
+  "docs.overview.whatAppDoes.item2": {
+    "defaultMessage": "Pulls contact details from the card with OpenAI or Anthropic."
+  },
+  "docs.overview.whatAppDoes.item3": {
+    "defaultMessage": "Lets you verify and edit the extracted data before saving."
+  },
+  "docs.overview.whatAppDoes.item4": {
+    "defaultMessage": "Exports a `.vcf` file or syncs the verified contact to Google Contacts."
+  },
+  "docs.overview.whatAppDoes.title": {
+    "defaultMessage": "What the app does"
+  },
+  "docs.schema.faq.apiKeys.answer": {
+    "defaultMessage": "Choose OpenAI or Anthropic in Meishi, then create an API key in that provider's dashboard and paste it into Meishi during setup or later on the Settings page."
+  },
+  "docs.schema.faq.howToUse.answer": {
+    "defaultMessage": "Set up your AI provider, capture one or more business-card images, run extraction, review and correct the contact draft, then export a vCard or sync to Google Contacts."
+  },
+  "docs.schema.faq.support.answer": {
+    "defaultMessage": "You can support Meishi by using it with real card samples, reporting gaps, starring or sharing the GitHub repository, and supporting the project directly through Buy Me a Coffee."
+  },
+  "docs.schema.faq.viewContacts.answer": {
+    "defaultMessage": "Use the Review page to inspect and edit the current draft, save a vCard to your device, or sync the verified contact to Google Contacts and view it there after sync succeeds."
+  },
+  "docs.schema.howTo.description": {
+    "defaultMessage": "Set up your AI provider, capture business-card images, run extraction, review the draft, and export or sync the finished contact."
+  },
+  "docs.schema.howTo.supplyApiKey": {
+    "defaultMessage": "An OpenAI or Anthropic API key"
+  },
+  "docs.schema.howTo.supplyImages": {
+    "defaultMessage": "One or more business-card images"
+  },
+  "docs.schema.page.description": {
+    "defaultMessage": "Documentation for setting up Meishi, capturing business card images, running extraction, reviewing contacts, exporting vCards, and syncing to Google Contacts."
+  },
+  "docs.schema.page.keyword1": {
+    "defaultMessage": "how to use Meishi"
+  },
+  "docs.schema.page.keyword2": {
+    "defaultMessage": "business card scanner tutorial"
+  },
+  "docs.schema.page.keyword3": {
+    "defaultMessage": "OpenAI API key setup"
+  },
+  "docs.schema.page.keyword4": {
+    "defaultMessage": "Anthropic API key setup"
+  },
+  "docs.schema.page.keyword5": {
+    "defaultMessage": "Google Contacts sync help"
+  },
+  "docs.schema.software.browserRequirements": {
+    "defaultMessage": "Requires JavaScript and a modern browser with camera or image upload support."
+  },
+  "docs.schema.software.description": {
+    "defaultMessage": "Meishi helps you turn business cards into contacts you can review, edit, export as a vCard, and sync to Google Contacts."
+  },
+  "docs.schema.software.feature1": {
+    "defaultMessage": "Scan business cards from your camera or photo library."
+  },
+  "docs.schema.software.feature2": {
+    "defaultMessage": "Extract structured contact details with OpenAI or Anthropic."
+  },
+  "docs.schema.software.feature3": {
+    "defaultMessage": "Review and edit the extracted contact data in your browser."
+  },
+  "docs.schema.software.feature4": {
+    "defaultMessage": "Export a vCard or sync the verified contact to Google Contacts."
+  },
+  "docs.schema.software.feature5": {
+    "defaultMessage": "Keep captured images and draft edits on-device while you work."
+  },
+  "docs.sections.apiKeys": {
+    "defaultMessage": "How do I obtain an API key?"
+  },
+  "docs.sections.howToUse": {
+    "defaultMessage": "How do I use Meishi?"
+  },
+  "docs.sections.support": {
+    "defaultMessage": "How do I support Meishi?"
+  },
+  "docs.sections.viewContacts": {
+    "defaultMessage": "How do I view contacts once they are scanned?"
+  },
+  "docs.sections.whatIsMeishi": {
+    "defaultMessage": "What is Meishi?"
+  },
+  "docs.support.coffee.body": {
+    "defaultMessage": "If you want to support ongoing work directly, use the Buy Me a Coffee link from the menu or here."
+  },
+  "docs.support.coffee.imageAlt": {
+    "defaultMessage": "Buy Me a Coffee"
+  },
+  "docs.support.coffee.title": {
+    "defaultMessage": "Buy Me a Coffee"
+  },
+  "docs.support.description": {
+    "defaultMessage": "If you want to help Meishi grow, the easiest options are sharing feedback, sharing the project, and supporting the work directly."
+  },
+  "docs.support.eyebrow": {
+    "defaultMessage": "GIVE BACK"
+  },
+  "docs.support.share.body": {
+    "defaultMessage": "Follow the repository and share it with people who need an easier way to turn business cards into digital contacts."
+  },
+  "docs.support.share.linkLabel": {
+    "defaultMessage": "GitHub repository"
+  },
+  "docs.support.share.title": {
+    "defaultMessage": "Star or share the project"
+  },
+  "docs.support.useIt.body": {
+    "defaultMessage": "Real card samples and bug reports help improve scan quality, editing flow, and sync reliability."
+  },
+  "docs.support.useIt.title": {
+    "defaultMessage": "Use it and report gaps"
+  },
+  "docs.toc.description": {
+    "defaultMessage": "Jump directly to the section you need."
+  },
+  "docs.toc.title": {
+    "defaultMessage": "Table of contents"
+  },
+  "docs.tutorial.description": {
+    "defaultMessage": "Follow this step-by-step flow from first setup through export or Google sync."
+  },
+  "docs.tutorial.eyebrow": {
+    "defaultMessage": "Tutorial"
+  },
+  "docs.tutorial.step1.bodyPlain": {
+    "defaultMessage": "Open Settings, choose OpenAI or Anthropic, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync."
+  },
+  "docs.tutorial.step1.bodyRich": {
+    "defaultMessage": "Open <settingsLink>Settings</settingsLink>, choose OpenAI or Anthropic, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync."
+  },
+  "docs.tutorial.step1.imageAlt": {
+    "defaultMessage": "Cropped Meishi settings screen focused on the LLM Provider section with the provider picker, API key field, and model selection."
+  },
+  "docs.tutorial.step1.title": {
+    "defaultMessage": "Open Meishi and complete first-run setup"
+  },
+  "docs.tutorial.step2.bodyPlain": {
+    "defaultMessage": "Open the Capture page, use the camera or image library, and make sure both sides of the card are included if the back contains useful details. Meishi keeps the card images on your device while you work."
+  },
+  "docs.tutorial.step2.bodyRich": {
+    "defaultMessage": "Open the <captureLink>Capture page</captureLink>, use the camera or image library, and make sure both sides of the card are included if the back contains useful details. Meishi keeps the card images on your device while you work."
+  },
+  "docs.tutorial.step2.imageAlt": {
+    "defaultMessage": "Meishi capture screen cropped to the Photoroll section with uploaded business-card images."
+  },
+  "docs.tutorial.step2.title": {
+    "defaultMessage": "Capture one or more business-card images"
+  },
+  "docs.tutorial.step3.bodyPlain": {
+    "defaultMessage": "Start the scan after your images are loaded. Meishi sends the images to your chosen AI service, checks the response, and fills in the review form with the contact details it found."
+  },
+  "docs.tutorial.step3.imageAlt": {
+    "defaultMessage": "Close-up of the Extract contact draft button on the Meishi capture screen."
+  },
+  "docs.tutorial.step3.title": {
+    "defaultMessage": "Run extraction"
+  },
+  "docs.tutorial.step4.bodyPlain": {
+    "defaultMessage": "Open Review to verify the extracted fields in the Verify contact section. The form supports richer Google-Contacts-style data, including multiple emails, phone numbers, addresses, websites, related people, significant dates, notes, and custom fields. Edits autosave locally."
+  },
+  "docs.tutorial.step4.bodyRich": {
+    "defaultMessage": "Open <reviewLink>Review</reviewLink> to verify the extracted fields in the Verify contact section. The form supports richer Google-Contacts-style data, including multiple emails, phone numbers, addresses, websites, related people, significant dates, notes, and custom fields. Edits autosave locally."
+  },
+  "docs.tutorial.step4.imageAlt": {
+    "defaultMessage": "Cropped Meishi review screen focused on the Verify contact section with extraction notes and editable contact fields."
+  },
+  "docs.tutorial.step4.title": {
+    "defaultMessage": "Review and correct the extracted contact"
+  },
+  "docs.tutorial.step5.bodyPlain": {
+    "defaultMessage": "From Review, either save a local `.vcf` file or sync the verified contact to Google Contacts. If you are not connected to Google yet, Meishi can prompt for Google authorization at sync time."
+  },
+  "docs.tutorial.step5.imageAlt": {
+    "defaultMessage": "Close-up of the Save vCard and Save to Google Contacts buttons on the Meishi review screen."
+  },
+  "docs.tutorial.step5.title": {
+    "defaultMessage": "Export or sync"
+  },
+  "docs.tutorial.stepCardTitle": {
+    "defaultMessage": "Step {stepNumber}: {title}"
+  },
+  "googleAuth.callback.eyebrow": {
+    "defaultMessage": "Google Contacts"
+  },
+  "googleAuth.callback.headingError": {
+    "defaultMessage": "Connection failed"
+  },
+  "googleAuth.callback.headingSuccess": {
+    "defaultMessage": "Connected"
+  },
+  "googleAuth.callback.headingWorking": {
+    "defaultMessage": "Connecting..."
+  },
+  "googleAuth.callback.missingParams": {
+    "defaultMessage": "Google authorization returned without the required callback parameters."
+  },
+  "googleAuth.callback.successMessage": {
+    "defaultMessage": "Google Contacts is connected. This window can close now."
+  },
+  "googleAuth.callback.unableComplete": {
+    "defaultMessage": "Unable to complete Google authorization."
+  },
+  "googleAuth.callback.workingMessage": {
+    "defaultMessage": "Finishing Google authorization..."
+  },
+  "landing.accuracy.llm": {
+    "defaultMessage": "Frontier LLM"
+  },
+  "landing.accuracy.note": {
+    "defaultMessage": "Estimates based on publicly available benchmarks and real-world testing across 200+ cards in multiple languages and layouts. Individual results vary by model, image quality, and card complexity."
+  },
+  "landing.accuracy.ocr": {
+    "defaultMessage": "Legacy OCR"
+  },
+  "landing.accuracy.stat1": {
+    "defaultMessage": "Structured fields correct"
+  },
+  "landing.accuracy.stat2": {
+    "defaultMessage": "Multi-language cards"
+  },
+  "landing.accuracy.stat3": {
+    "defaultMessage": "Creative and non-standard layouts"
+  },
+  "landing.accuracy.stat4": {
+    "defaultMessage": "Low-quality photos"
+  },
+  "landing.accuracy.title": {
+    "defaultMessage": "Field-level accuracy"
+  },
+  "landing.ai.description": {
+    "defaultMessage": "Traditional card scanners use decade-old OCR pipelines that choke on creative layouts, mixed scripts, and low-light photos. Frontier LLMs like ChatGPT and Claude understand context; they read a card the way you do."
+  },
+  "landing.ai.eyebrow": {
+    "defaultMessage": "Frontier AI vs. legacy OCR"
+  },
+  "landing.ai.title": {
+    "defaultMessage": "Stop wasting time fixing bad scans."
+  },
+  "landing.breakdown.badgeLlm": {
+    "defaultMessage": "LLM"
+  },
+  "landing.breakdown.badgeOcr": {
+    "defaultMessage": "OCR"
+  },
+  "landing.breakdown.description": {
+    "defaultMessage": "Real scenarios from conference floors, coffee meetings, and international trade shows."
+  },
+  "landing.breakdown.scenario1.llm": {
+    "defaultMessage": "Full name with reading, correct title, and all contact fields placed accurately"
+  },
+  "landing.breakdown.scenario1.ocr": {
+    "defaultMessage": "Garbled kanji, missed furigana, phone parsed as fax"
+  },
+  "landing.breakdown.scenario1.title": {
+    "defaultMessage": "Vertical Japanese card with mixed scripts"
+  },
+  "landing.breakdown.scenario2.llm": {
+    "defaultMessage": "Every field captured, even the Instagram handle beside the camera icon"
+  },
+  "landing.breakdown.scenario2.ocr": {
+    "defaultMessage": "Fragments; email split across two fields, URL lost entirely"
+  },
+  "landing.breakdown.scenario2.title": {
+    "defaultMessage": "Creative agency card with angled text and icons"
+  },
+  "landing.breakdown.scenario3.llm": {
+    "defaultMessage": "Compensates for noise and infers missing characters from context and formatting cues"
+  },
+  "landing.breakdown.scenario3.ocr": {
+    "defaultMessage": "40% of characters unrecognized, falls back to manual entry"
+  },
+  "landing.breakdown.scenario3.title": {
+    "defaultMessage": "Faded card photographed under warm cafe lighting"
+  },
+  "landing.breakdown.scenario4.llm": {
+    "defaultMessage": "Both languages extracted correctly and deduplicated into a single contact"
+  },
+  "landing.breakdown.scenario4.ocr": {
+    "defaultMessage": "RTL text reversed, name and title swapped between languages"
+  },
+  "landing.breakdown.scenario4.title": {
+    "defaultMessage": "Bilingual English and Arabic card with RTL layout"
+  },
+  "landing.breakdown.title": {
+    "defaultMessage": "Where legacy OCR breaks down"
+  },
+  "landing.comparison.ads": {
+    "defaultMessage": "Ads"
+  },
+  "landing.comparison.meishi.free": {
+    "defaultMessage": "Free forever"
+  },
+  "landing.comparison.meishi.none": {
+    "defaultMessage": "None"
+  },
+  "landing.comparison.meishi.onDevice": {
+    "defaultMessage": "On-device"
+  },
+  "landing.comparison.meishi.open": {
+    "defaultMessage": "Open"
+  },
+  "landing.comparison.meishi.yourChoice": {
+    "defaultMessage": "Your choice"
+  },
+  "landing.comparison.model": {
+    "defaultMessage": "AI model"
+  },
+  "landing.comparison.others.builtIn": {
+    "defaultMessage": "Built-in"
+  },
+  "landing.comparison.others.closed": {
+    "defaultMessage": "Closed"
+  },
+  "landing.comparison.others.cloud": {
+    "defaultMessage": "Cloud-stored"
+  },
+  "landing.comparison.others.frequent": {
+    "defaultMessage": "Frequent"
+  },
+  "landing.comparison.others.locked": {
+    "defaultMessage": "Vendor-locked"
+  },
+  "landing.comparison.others.subscription": {
+    "defaultMessage": "Subscription"
+  },
+  "landing.comparison.pricing": {
+    "defaultMessage": "Pricing"
+  },
+  "landing.comparison.privacy": {
+    "defaultMessage": "Data privacy"
+  },
+  "landing.comparison.social": {
+    "defaultMessage": "Social and SNS"
+  },
+  "landing.comparison.source": {
+    "defaultMessage": "Source code"
+  },
+  "landing.cost.label": {
+    "defaultMessage": "Cost per card with BYOK; a stack of 100 costs under a dollar"
+  },
+  "landing.cost.value": {
+    "defaultMessage": "< $0.01"
+  },
+  "landing.feature1.description": {
+    "defaultMessage": "Bring your own API key and use the latest models from OpenAI or Anthropic. No vendor lock-in; switch providers any time."
+  },
+  "landing.feature1.title": {
+    "defaultMessage": "Your AI, your choice"
+  },
+  "landing.feature2.description": {
+    "defaultMessage": "Runs entirely in your browser. Images and drafts stay on your device. Only extraction calls leave the browser, and only to the LLM you choose."
+  },
+  "landing.feature2.title": {
+    "defaultMessage": "Privacy first"
+  },
+  "landing.feature3.description": {
+    "defaultMessage": "No ads. No social features. No unnecessary contact organizer. Just scan, extract, review, and sync to Google Contacts."
+  },
+  "landing.feature3.title": {
+    "defaultMessage": "Zero bloat"
+  },
+  "landing.footer.license": {
+    "defaultMessage": "Meishi — AGPL-3.0 License"
+  },
+  "landing.footer.privacy": {
+    "defaultMessage": "Privacy Policy"
+  },
+  "landing.footer.terms": {
+    "defaultMessage": "Terms of Service"
+  },
+  "landing.hero.addApp": {
+    "defaultMessage": "Add app"
+  },
+  "landing.hero.description": {
+    "defaultMessage": "Meishi is the open-source card scanner that puts you in control. Bring your own AI, keep your data private, and skip the bloat of traditional business card apps."
+  },
+  "landing.hero.eyebrow": {
+    "defaultMessage": "Open-source · AI-powered · Privacy-first"
+  },
+  "landing.hero.getStarted": {
+    "defaultMessage": "Get started"
+  },
+  "landing.hero.title": {
+    "defaultMessage": "Business cards to contacts, instantly."
+  },
+  "landing.ocrTime.label": {
+    "defaultMessage": "Average time fixing OCR errors and manually re-entering fields"
+  },
+  "landing.ocrTime.value": {
+    "defaultMessage": "3–5 min"
+  },
+  "landing.openSource.description": {
+    "defaultMessage": "Most card scanner apps lock your contacts behind paid tiers, inject ads into your workflow, and bolt on social features you never asked for. Meishi is AGPL-3.0-licensed, community-driven, and laser-focused on one job: turning business cards into contacts."
+  },
+  "landing.openSource.eyebrow": {
+    "defaultMessage": "Open source"
+  },
+  "landing.openSource.title": {
+    "defaultMessage": "No black boxes. No subscription traps."
+  },
+  "landing.schema.browserRequirements": {
+    "defaultMessage": "Requires JavaScript and a modern browser with camera or image upload support."
+  },
+  "landing.schema.feature1": {
+    "defaultMessage": "Scan business cards from your camera or photo library."
+  },
+  "landing.schema.feature2": {
+    "defaultMessage": "Extract structured contact details with OpenAI or Anthropic."
+  },
+  "landing.schema.feature3": {
+    "defaultMessage": "Review and edit the extracted contact data in your browser."
+  },
+  "landing.schema.feature4": {
+    "defaultMessage": "Export a vCard or sync the verified contact to Google Contacts."
+  },
+  "landing.schema.feature5": {
+    "defaultMessage": "Keep captured images and draft edits on-device while you work."
+  },
+  "landing.schema.keyword1": {
+    "defaultMessage": "business card scanner"
+  },
+  "landing.schema.keyword2": {
+    "defaultMessage": "AI contact extraction"
+  },
+  "landing.schema.keyword3": {
+    "defaultMessage": "Google Contacts sync"
+  },
+  "landing.schema.keyword4": {
+    "defaultMessage": "vCard export"
+  },
+  "landing.schema.keyword5": {
+    "defaultMessage": "OpenAI business card OCR"
+  },
+  "landing.schema.keyword6": {
+    "defaultMessage": "Anthropic business card scanner"
+  },
+  "landing.schema.pageDescription": {
+    "defaultMessage": "Open-source AI business card scanner for private, browser-based capture, review, vCard export, and optional Google Contacts sync."
+  },
+  "landing.schema.pageName": {
+    "defaultMessage": "Meishi | AI business card scanner"
+  },
+  "landing.schema.softwareDescription": {
+    "defaultMessage": "Meishi turns business cards into contacts you can review, edit, export as a vCard, and sync to Google Contacts."
+  },
+  "landing.setup.continue": {
+    "defaultMessage": "Continue to capture"
+  },
+  "landing.setup.continueHelp": {
+    "defaultMessage": "Ready when the selected provider is configured. Google authorization is optional until you save to Google Contacts."
+  },
+  "landing.setup.description": {
+    "defaultMessage": "One thing needed: an LLM API key. Google sign-in only happens later if you choose Google Contacts sync."
+  },
+  "landing.setup.securityBody": {
+    "defaultMessage": "Meishi stores your API key in the browser only, which is acceptable for personal use on a trusted device."
+  },
+  "landing.setup.title": {
+    "defaultMessage": "Quick setup"
+  },
+  "landing.time.label": {
+    "defaultMessage": "Average time from photo to verified contact with an LLM"
+  },
+  "landing.time.value": {
+    "defaultMessage": "~45 s"
+  },
+  "landing.toast.setupComplete": {
+    "defaultMessage": "Setup complete. Start capturing cards."
+  },
+  "landing.why.description": {
+    "defaultMessage": "An alternative built for people who want control, not clutter."
+  },
+  "landing.why.title": {
+    "defaultMessage": "Why Meishi?"
+  },
+  "legal.layout.backToLanding": {
+    "defaultMessage": "Back to landing"
+  },
+  "legal.layout.effectiveDate": {
+    "defaultMessage": "Effective {date}"
+  },
+  "legal.layout.eyebrow": {
+    "defaultMessage": "Legal"
+  },
+  "legal.layout.footerText": {
+    "defaultMessage": "Questions about these terms can be directed through the project repository."
+  },
+  "legal.privacy.choices.body": {
+    "defaultMessage": "You can stop using Meishi at any time, clear browser storage, remove the app, revoke Google access from your Google account, and delete generated contacts from Google Contacts if you no longer want them stored there."
+  },
+  "legal.privacy.choices.title": {
+    "defaultMessage": "Your choices"
+  },
+  "legal.privacy.firebase.body1": {
+    "defaultMessage": "Google authorization is handled through Firebase-backed browser flows and Firebase Functions. Functions act as a token broker for OAuth code exchange, refresh-token storage, short-lived access-token refresh, and disconnection or retention cleanup tasks."
+  },
+  "legal.privacy.firebase.body2": {
+    "defaultMessage": "Meishi does not store durable Google bearer tokens in browser storage. The browser may store lightweight metadata such as connected account email, granted scope, and connection timestamps."
+  },
+  "legal.privacy.firebase.title": {
+    "defaultMessage": "Firebase and Google authorization"
+  },
+  "legal.privacy.overview.body1": {
+    "defaultMessage": "Meishi is a browser-only progressive web app for capturing business card images, extracting structured contact details with a user-chosen LLM provider, reviewing the result, exporting a vCard, and optionally syncing the verified contact to Google Contacts."
+  },
+  "legal.privacy.overview.body2": {
+    "defaultMessage": "The app is open source and follows a bring-your-own-key model for LLM extraction. That means the app does not provide its own hosted model service for routine card extraction."
+  },
+  "legal.privacy.overview.title": {
+    "defaultMessage": "Overview"
+  },
+  "legal.privacy.retention.body1": {
+    "defaultMessage": "Local data remains in your browser until you remove it. Server-side Google credential records used for token brokering are currently subject to a retention cleanup job that deletes stored records after about 90 days from connection time."
+  },
+  "legal.privacy.retention.body2": {
+    "defaultMessage": "If those backend records are deleted, you may need to reconnect your Google account before syncing again."
+  },
+  "legal.privacy.retention.title": {
+    "defaultMessage": "Retention"
+  },
+  "legal.privacy.security.body1": {
+    "defaultMessage": "Meishi is privacy-oriented, but it is still a prototype-oriented browser app. Provider API keys are stored client-side for convenience, which is acceptable for personal use on a trusted device but is not a production-grade secret-management model."
+  },
+  "legal.privacy.security.body2": {
+    "defaultMessage": "You are responsible for deciding whether the information on a card is appropriate to process with your selected LLM provider or Google account."
+  },
+  "legal.privacy.security.title": {
+    "defaultMessage": "Security limitations"
+  },
+  "legal.privacy.stored.body": {
+    "defaultMessage": "This local data is stored using browser storage such as localStorage and IndexedDB. It remains on the device and browser profile you use, unless you clear it yourself or reset the app."
+  },
+  "legal.privacy.stored.intro": {
+    "defaultMessage": "Meishi stores the following information locally in your browser so the app can work across refreshes and offline sessions:"
+  },
+  "legal.privacy.stored.item1": {
+    "defaultMessage": "Selected LLM provider and preferred model"
+  },
+  "legal.privacy.stored.item2": {
+    "defaultMessage": "Provider API keys entered by you"
+  },
+  "legal.privacy.stored.item3": {
+    "defaultMessage": "Appearance settings and extraction prompt preferences"
+  },
+  "legal.privacy.stored.item4": {
+    "defaultMessage": "Captured card images, draft contact data, and extraction snapshots"
+  },
+  "legal.privacy.stored.item5": {
+    "defaultMessage": "Append-only local sync history and lightweight Google connection metadata"
+  },
+  "legal.privacy.stored.title": {
+    "defaultMessage": "Data stored on your device"
+  },
+  "legal.privacy.summary": {
+    "defaultMessage": "Meishi is designed to keep business-card data local to your device whenever possible. This page explains what stays in the browser, what is sent to third parties, and when Firebase Functions are involved."
+  },
+  "legal.privacy.thirdParty.body1": {
+    "defaultMessage": "When you run extraction, the captured card image data and the fixed extraction prompt are sent directly from your browser to the LLM provider you selected, using the API key you supplied."
+  },
+  "legal.privacy.thirdParty.body2": {
+    "defaultMessage": "When you choose Google Contacts sync, Meishi sends the reviewed contact data and one selected image to Google APIs so the contact can be created and the contact photo uploaded."
+  },
+  "legal.privacy.thirdParty.body3": {
+    "defaultMessage": "Those external providers operate under their own terms and privacy policies. Meishi does not control how OpenAI, Anthropic, Google, or other providers process data once you send it to them."
+  },
+  "legal.privacy.thirdParty.title": {
+    "defaultMessage": "Data sent to third parties"
+  },
+  "legal.privacy.title": {
+    "defaultMessage": "Privacy Policy"
+  },
+  "legal.terms.changes.body": {
+    "defaultMessage": "The app and these terms may change over time as the project evolves. Continued use after a published update means you accept the revised terms for future use."
+  },
+  "legal.terms.changes.title": {
+    "defaultMessage": "Changes"
+  },
+  "legal.terms.contact.body": {
+    "defaultMessage": "For project issues, feature requests, or questions about these terms, use the public repository linked from the landing page and app shell."
+  },
+  "legal.terms.contact.title": {
+    "defaultMessage": "Contact"
+  },
+  "legal.terms.liability.body": {
+    "defaultMessage": "To the maximum extent permitted by law, the project maintainers and contributors are not liable for any indirect, incidental, special, consequential, or exemplary damages arising from your use of Meishi, including data loss, inaccurate contact data, service interruptions, or third-party account issues."
+  },
+  "legal.terms.liability.title": {
+    "defaultMessage": "Limitation of liability"
+  },
+  "legal.terms.license.body": {
+    "defaultMessage": "The Meishi project is distributed under the AGPL-3.0-or-later license. These terms do not replace or narrow the rights and obligations that arise under that license for the source code itself."
+  },
+  "legal.terms.license.title": {
+    "defaultMessage": "Open-source license"
+  },
+  "legal.terms.responsibilities.body1": {
+    "defaultMessage": "You are responsible for the data you upload or process, the API keys and connected accounts you use, and the accuracy of any contact data you decide to export or sync."
+  },
+  "legal.terms.responsibilities.body2": {
+    "defaultMessage": "Meishi can assist with extraction, but you remain responsible for reviewing the output before saving, sharing, or syncing it to another service."
+  },
+  "legal.terms.responsibilities.title": {
+    "defaultMessage": "Your responsibilities"
+  },
+  "legal.terms.summary": {
+    "defaultMessage": "These terms govern use of the Meishi web app and related open-source project materials. They focus on the current browser-only product shape, third-party integrations, and prototype limitations."
+  },
+  "legal.terms.thirdParty.body1": {
+    "defaultMessage": "Meishi depends on third-party services including LLM providers, Firebase, and Google APIs. Your use of those services is governed by their own terms, privacy policies, quotas, and availability."
+  },
+  "legal.terms.thirdParty.body2": {
+    "defaultMessage": "The app may stop working in whole or in part if a third-party service changes its APIs, pricing, quotas, or acceptable-use rules."
+  },
+  "legal.terms.thirdParty.title": {
+    "defaultMessage": "Third-party services"
+  },
+  "legal.terms.title": {
+    "defaultMessage": "Terms of Service"
+  },
+  "legal.terms.use.body1": {
+    "defaultMessage": "Meishi is provided as a browser-based tool for scanning business cards, extracting structured contact information, reviewing results, exporting vCards, and optionally syncing contacts to Google Contacts."
+  },
+  "legal.terms.use.body2": {
+    "defaultMessage": "You may use the app only in compliance with applicable law, the rights of the people whose information you process, and the terms of any third-party provider you connect to through the app."
+  },
+  "legal.terms.use.title": {
+    "defaultMessage": "Use of the app"
+  },
+  "legal.terms.warranty.body": {
+    "defaultMessage": "Meishi is provided on an as-is and as-available basis, without warranties of any kind, whether express or implied. This includes no warranty that extraction results will be complete, accurate, or fit for a particular purpose."
+  },
+  "legal.terms.warranty.title": {
+    "defaultMessage": "No warranties"
+  },
+  "onboarding.anthropicApiKey": {
+    "defaultMessage": "Anthropic API key"
+  },
+  "onboarding.anthropicModel": {
+    "defaultMessage": "Anthropic model"
+  },
+  "onboarding.continue": {
+    "defaultMessage": "Continue to capture"
+  },
+  "onboarding.continueHelp": {
+    "defaultMessage": "Ready when the selected provider is configured. Google access is only needed when you save to Google Contacts."
+  },
+  "onboarding.description": {
+    "defaultMessage": "Meishi runs entirely in the browser. It stores your LLM key locally, which is acceptable for trusted prototype use only."
+  },
+  "onboarding.error.connectGoogle": {
+    "defaultMessage": "Unable to authorize Google Contacts."
+  },
+  "onboarding.firebaseAlert": {
+    "defaultMessage": "Set the required VITE_FIREBASE_* values before Google sign-in will work."
+  },
+  "onboarding.google.body": {
+    "defaultMessage": "Meishi creates new Google contacts and can upload one contact photo after save. Google currently requires the {scope} scope for that flow, so the consent screen may mention broader contact access than the app uses. Short-lived access tokens are re-acquired only when needed."
+  },
+  "onboarding.google.connectButton": {
+    "defaultMessage": "Connect Google account"
+  },
+  "onboarding.google.connected": {
+    "defaultMessage": "Connected"
+  },
+  "onboarding.google.connecting": {
+    "defaultMessage": "Connecting"
+  },
+  "onboarding.google.connectingButton": {
+    "defaultMessage": "Connecting..."
+  },
+  "onboarding.google.firebaseReady": {
+    "defaultMessage": "Ready"
+  },
+  "onboarding.google.firebaseSession": {
+    "defaultMessage": "Firebase session: {status}"
+  },
+  "onboarding.google.firebaseStarting": {
+    "defaultMessage": "Starting"
+  },
+  "onboarding.google.notConnected": {
+    "defaultMessage": "Not connected"
+  },
+  "onboarding.google.reconnectButton": {
+    "defaultMessage": "Reconnect Google account"
+  },
+  "onboarding.google.status": {
+    "defaultMessage": "Status: {status}"
+  },
+  "onboarding.google.title": {
+    "defaultMessage": "Google Contacts access"
+  },
+  "onboarding.next.description": {
+    "defaultMessage": "The app keeps images and drafts locally until you verify them, then syncs verified contact data to Google Contacts."
+  },
+  "onboarding.next.step1.body": {
+    "defaultMessage": "Use the phone camera or photo picker to add one or more business-card images."
+  },
+  "onboarding.next.step1.title": {
+    "defaultMessage": "1. Capture"
+  },
+  "onboarding.next.step2.body": {
+    "defaultMessage": "Meishi sends those images to the selected provider and validates the returned structured schema locally before the draft reaches review."
+  },
+  "onboarding.next.step2.title": {
+    "defaultMessage": "2. Extract"
+  },
+  "onboarding.next.step3.body": {
+    "defaultMessage": "One selected image becomes the Google contact photo. Additional images stay local in the PWA history."
+  },
+  "onboarding.next.step3.title": {
+    "defaultMessage": "3. Review and sync"
+  },
+  "onboarding.next.title": {
+    "defaultMessage": "What happens next"
+  },
+  "onboarding.openAiApiKey": {
+    "defaultMessage": "OpenAI API key"
+  },
+  "onboarding.openAiModel": {
+    "defaultMessage": "OpenAI model"
+  },
+  "onboarding.provider.anthropic": {
+    "defaultMessage": "Anthropic"
+  },
+  "onboarding.provider.geminiPlanned": {
+    "defaultMessage": "Gemini (planned)"
+  },
+  "onboarding.provider.label": {
+    "defaultMessage": "LLM provider"
+  },
+  "onboarding.provider.openai": {
+    "defaultMessage": "OpenAI"
+  },
+  "onboarding.securityBody": {
+    "defaultMessage": "This scaffold uses a browser-only BYOK model. Do not treat client-side API key storage as production-safe."
+  },
+  "onboarding.securityNote.title": {
+    "defaultMessage": "Security note"
+  },
+  "onboarding.structured.body": {
+    "defaultMessage": "Meishi enforces structured output for extraction. The shared prompt is adjustable later in Settings, but the schema contract stays fixed."
+  },
+  "onboarding.structured.title": {
+    "defaultMessage": "Structured extraction"
+  },
+  "onboarding.title": {
+    "defaultMessage": "First-run setup"
+  },
+  "onboarding.toast.accessGranted": {
+    "defaultMessage": "Google Contacts access granted."
+  },
+  "onboarding.toast.complete": {
+    "defaultMessage": "Onboarding complete. You can start capturing cards."
+  },
+  "pwa.toast.canInstall": {
+    "defaultMessage": "Meishi can be installed on this device."
+  },
+  "pwa.toast.installed": {
+    "defaultMessage": "Meishi was installed on this device."
+  },
+  "pwa.toast.offlineReady": {
+    "defaultMessage": "Meishi can reopen its shell and saved local data offline. Extraction and Google sync still require a network connection."
+  },
+  "pwa.toast.updateAvailable": {
+    "defaultMessage": "A Meishi update is available. Refresh the app to apply it."
+  },
+  "review.action.connectingGoogle": {
+    "defaultMessage": "Connecting Google..."
+  },
+  "review.action.saveToGoogle": {
+    "defaultMessage": "Save to Google Contacts"
+  },
+  "review.action.saveVcard": {
+    "defaultMessage": "Save vCard"
+  },
+  "review.action.syncing": {
+    "defaultMessage": "Syncing..."
+  },
+  "review.add.address": {
+    "defaultMessage": "Add address"
+  },
+  "review.add.customField": {
+    "defaultMessage": "Add custom field"
+  },
+  "review.add.date": {
+    "defaultMessage": "Add significant date"
+  },
+  "review.add.email": {
+    "defaultMessage": "Add email"
+  },
+  "review.add.person": {
+    "defaultMessage": "Add related person"
+  },
+  "review.add.phone": {
+    "defaultMessage": "Add phone"
+  },
+  "review.add.website": {
+    "defaultMessage": "Add website"
+  },
+  "review.debug.noPhoto": {
+    "defaultMessage": "No image is currently selected."
+  },
+  "review.debug.payload": {
+    "defaultMessage": "Derived Google createContact payload"
+  },
+  "review.debug.photo": {
+    "defaultMessage": "Selected photo metadata"
+  },
+  "review.debug.raw": {
+    "defaultMessage": "Raw extraction snapshot"
+  },
+  "review.debug.rawMissing": {
+    "defaultMessage": "No extraction snapshot is available for this draft."
+  },
+  "review.debug.title": {
+    "defaultMessage": "Developer debug preview"
+  },
+  "review.debug.vcard": {
+    "defaultMessage": "Derived vCard"
+  },
+  "review.empty.description": {
+    "defaultMessage": "Capture at least one business-card image and run extraction before opening the review screen."
+  },
+  "review.empty.goToCapture": {
+    "defaultMessage": "Go to capture"
+  },
+  "review.empty.title": {
+    "defaultMessage": "No draft available"
+  },
+  "review.error.unableCreateGoogle": {
+    "defaultMessage": "Unable to create Google contact."
+  },
+  "review.error.unableSaveVcard": {
+    "defaultMessage": "Unable to save vCard."
+  },
+  "review.field.label": {
+    "defaultMessage": "Label"
+  },
+  "review.field.remove": {
+    "defaultMessage": "Remove"
+  },
+  "review.field.removeItem": {
+    "defaultMessage": "Remove {legend} {index}"
+  },
+  "review.field.type": {
+    "defaultMessage": "Type"
+  },
+  "review.label.company": {
+    "defaultMessage": "Company"
+  },
+  "review.label.department": {
+    "defaultMessage": "Department"
+  },
+  "review.label.displayName": {
+    "defaultMessage": "Display name"
+  },
+  "review.label.fileAs": {
+    "defaultMessage": "File as"
+  },
+  "review.label.firstName": {
+    "defaultMessage": "First name"
+  },
+  "review.label.jobTitle": {
+    "defaultMessage": "Job title"
+  },
+  "review.label.lastName": {
+    "defaultMessage": "Last name"
+  },
+  "review.label.nickname": {
+    "defaultMessage": "Nickname"
+  },
+  "review.label.notes": {
+    "defaultMessage": "Notes"
+  },
+  "review.label.phoneticFirst": {
+    "defaultMessage": "Phonetic first"
+  },
+  "review.label.phoneticLast": {
+    "defaultMessage": "Phonetic last"
+  },
+  "review.label.phoneticMiddle": {
+    "defaultMessage": "Phonetic middle"
+  },
+  "review.label.prefix": {
+    "defaultMessage": "Prefix"
+  },
+  "review.legend.address": {
+    "defaultMessage": "Address"
+  },
+  "review.legend.customField": {
+    "defaultMessage": "Custom field"
+  },
+  "review.legend.date": {
+    "defaultMessage": "Significant date"
+  },
+  "review.legend.email": {
+    "defaultMessage": "Email"
+  },
+  "review.legend.person": {
+    "defaultMessage": "Related person"
+  },
+  "review.legend.phone": {
+    "defaultMessage": "Phone"
+  },
+  "review.legend.website": {
+    "defaultMessage": "Website"
+  },
+  "review.photoroll.clear": {
+    "defaultMessage": "Clear photoroll"
+  },
+  "review.photoroll.title": {
+    "defaultMessage": "Photoroll"
+  },
+  "review.photoroll.upload": {
+    "defaultMessage": "Upload"
+  },
+  "review.photoroll.uploadImage": {
+    "defaultMessage": "Upload {fileName}"
+  },
+  "review.section.addresses": {
+    "defaultMessage": "Addresses"
+  },
+  "review.section.company": {
+    "defaultMessage": "Company"
+  },
+  "review.section.custom": {
+    "defaultMessage": "Custom fields"
+  },
+  "review.section.dates": {
+    "defaultMessage": "Significant dates"
+  },
+  "review.section.emails": {
+    "defaultMessage": "Email addresses"
+  },
+  "review.section.name": {
+    "defaultMessage": "Name"
+  },
+  "review.section.notes": {
+    "defaultMessage": "Notes"
+  },
+  "review.section.people": {
+    "defaultMessage": "Related people"
+  },
+  "review.section.phones": {
+    "defaultMessage": "Phone numbers"
+  },
+  "review.section.websites": {
+    "defaultMessage": "Websites"
+  },
+  "review.toast.photorollCleared": {
+    "defaultMessage": "Photoroll cleared."
+  },
+  "review.toast.syncedToGoogle": {
+    "defaultMessage": "Verified contact synced to Google Contacts."
+  },
+  "review.toast.vcardDownloaded": {
+    "defaultMessage": "vCard downloaded to your device."
+  },
+  "review.toast.vcardShared": {
+    "defaultMessage": "vCard opened in the share sheet."
+  },
+  "review.workspace.clearReviewedData": {
+    "defaultMessage": "Clear reviewed contact data"
+  },
+  "review.workspace.showFewerFields": {
+    "defaultMessage": "Show fewer name fields"
+  },
+  "review.workspace.showLess": {
+    "defaultMessage": "Show less"
+  },
+  "review.workspace.showMore": {
+    "defaultMessage": "Show more"
+  },
+  "review.workspace.showMoreFields": {
+    "defaultMessage": "Show more name fields"
+  },
+  "review.workspace.title": {
+    "defaultMessage": "Verify contact"
+  },
+  "settings.advanced.clearButton": {
+    "defaultMessage": "Clear local settings"
+  },
+  "settings.advanced.clearHelp": {
+    "defaultMessage": "Clears saved API keys, preferred models, extraction prompt, Google connection metadata, appearance preference, and onboarding progress from this browser."
+  },
+  "settings.advanced.promptHelp": {
+    "defaultMessage": "This guidance is shared by OpenAI and Anthropic and is appended to the fixed structured-output and fidelity rules. Prompt edits cannot disable schema enforcement."
+  },
+  "settings.advanced.promptLabel": {
+    "defaultMessage": "Advanced extraction prompt"
+  },
+  "settings.advanced.title": {
+    "defaultMessage": "Advanced settings"
+  },
+  "settings.appearance.dark": {
+    "defaultMessage": "Dark"
+  },
+  "settings.appearance.help": {
+    "defaultMessage": "System follows your device appearance automatically. Light and dark stay pinned until you change them here."
+  },
+  "settings.appearance.light": {
+    "defaultMessage": "Light"
+  },
+  "settings.appearance.system": {
+    "defaultMessage": "System"
+  },
+  "settings.appearance.themeLabel": {
+    "defaultMessage": "Color theme"
+  },
+  "settings.appearance.title": {
+    "defaultMessage": "Appearance"
+  },
+  "settings.error.reconnectGoogle": {
+    "defaultMessage": "Unable to reconnect Google."
+  },
+  "settings.error.signOutGoogle": {
+    "defaultMessage": "Unable to sign out Google."
+  },
+  "settings.google.alert": {
+    "defaultMessage": "Set the required VITE_FIREBASE_* values before changing Google connection status."
+  },
+  "settings.google.connected": {
+    "defaultMessage": "Connected"
+  },
+  "settings.google.disconnected": {
+    "defaultMessage": "Disconnected"
+  },
+  "settings.google.signedInAs": {
+    "defaultMessage": "Signed in as {email}"
+  },
+  "settings.google.title": {
+    "defaultMessage": "Google status"
+  },
+  "settings.llm.title": {
+    "defaultMessage": "LLM provider"
+  },
+  "settings.locale.help": {
+    "defaultMessage": "Choose the language for app routes, legal pages, navigation, and docs."
+  },
+  "settings.locale.label": {
+    "defaultMessage": "App language"
+  },
+  "settings.security.body": {
+    "defaultMessage": "Meishi stores your API key in the browser only, which is acceptable for personal use on a trusted device."
+  },
+  "settings.toast.refreshed": {
+    "defaultMessage": "Google authorization refreshed."
+  },
+  "shell.banner.dismiss": {
+    "defaultMessage": "Dismiss"
+  },
+  "shell.banner.install": {
+    "defaultMessage": "Install Meishi for faster access."
+  },
+  "shell.banner.installButton": {
+    "defaultMessage": "Install"
+  },
+  "shell.banner.offlineReady": {
+    "defaultMessage": "Offline shell cached. Extraction and sync still need a connection."
+  },
+  "shell.banner.updateAvailable": {
+    "defaultMessage": "A new version is available."
+  },
+  "shell.banner.updateButton": {
+    "defaultMessage": "Update"
+  },
+  "shell.languageOption.english": {
+    "defaultMessage": "English"
+  },
+  "shell.languageOption.japanese": {
+    "defaultMessage": "Japanese"
+  },
+  "shell.languagePicker.desktop": {
+    "defaultMessage": "Select language (desktop)"
+  },
+  "shell.languagePicker.mobile": {
+    "defaultMessage": "Select language (mobile)"
+  },
+  "shell.menu.moreNavigation": {
+    "defaultMessage": "More navigation"
+  },
+  "shell.menu.openNavigation": {
+    "defaultMessage": "Open navigation menu"
+  },
+  "shell.nav.capture": {
+    "defaultMessage": "Capture"
+  },
+  "shell.nav.coffee": {
+    "defaultMessage": "Buy Me a Coffee"
+  },
+  "shell.nav.docs": {
+    "defaultMessage": "Docs"
+  },
+  "shell.nav.github": {
+    "defaultMessage": "GitHub"
+  },
+  "shell.nav.googleContacts": {
+    "defaultMessage": "Google Contacts"
+  },
+  "shell.nav.review": {
+    "defaultMessage": "Review"
+  },
+  "shell.nav.settings": {
+    "defaultMessage": "Settings"
+  },
+  "shell.nav.share": {
+    "defaultMessage": "Share"
+  },
+  "shell.navigation.primary": {
+    "defaultMessage": "Primary navigation"
+  },
+  "shell.navigation.primaryToggle": {
+    "defaultMessage": "Primary navigation toggle"
+  },
+  "shell.share.email": {
+    "defaultMessage": "Email"
+  },
+  "shell.share.facebook": {
+    "defaultMessage": "Facebook"
+  },
+  "shell.share.linkedIn": {
+    "defaultMessage": "LinkedIn"
+  },
+  "shell.share.text": {
+    "defaultMessage": "Scan business cards and keep contact details organized with Meishi."
+  },
+  "shell.share.title": {
+    "defaultMessage": "Meishi"
+  },
+  "shell.share.x": {
+    "defaultMessage": "X"
+  },
+  "shell.shareDialog.appUrlLabel": {
+    "defaultMessage": "App URL"
+  },
+  "shell.shareDialog.close": {
+    "defaultMessage": "Close"
+  },
+  "shell.shareDialog.copyLink": {
+    "defaultMessage": "Copy link"
+  },
+  "shell.shareDialog.description": {
+    "defaultMessage": "Share the app link with a social app or copy it directly."
+  },
+  "shell.shareDialog.done": {
+    "defaultMessage": "Done"
+  },
+  "shell.shareDialog.title": {
+    "defaultMessage": "Share Meishi"
+  },
+  "shell.toast.copiedLink": {
+    "defaultMessage": "Link copied to clipboard."
+  },
+  "shell.toast.unableCopyLink": {
+    "defaultMessage": "Unable to copy the link."
+  },
+  "shell.toast.unableNativeShare": {
+    "defaultMessage": "Unable to open the native share sheet."
+  }
+}
