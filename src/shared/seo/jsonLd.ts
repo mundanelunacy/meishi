@@ -7,11 +7,45 @@ const CREATOR_URL = "https://github.com/mundanelunacy";
 
 type JsonLdNode = Record<string, unknown>;
 
+interface DocsSchemaContent {
+  locale: "en-US" | "ja";
+  softwareDescription: string;
+  browserRequirements: string;
+  featureList: string[];
+  pageName: string;
+  pageDescription: string;
+  pageKeywords: string[];
+  howToDescription: string;
+  howToSupplies: string[];
+  howToSteps: Array<{
+    name: string;
+    text: string;
+    url: string;
+    image: string;
+  }>;
+  faq: Array<{
+    name: string;
+    answer: string;
+  }>;
+}
+
 function absoluteUrl(path: string) {
   return new URL(path, SITE_ORIGIN).toString();
 }
 
-function getBaseGraph() {
+function getBaseGraph(
+  language = "en-US",
+  softwareDescription = SITE_DESCRIPTION,
+  browserRequirements = "Requires JavaScript and a modern browser with camera or image upload support.",
+  featureList = [
+    "Scan business cards from your camera or photo library.",
+    "Extract structured contact details with OpenAI or Anthropic.",
+    "Review and edit the extracted contact data in your browser.",
+    "Export a vCard or sync the verified contact to Google Contacts.",
+    "Keep captured images and draft edits on-device while you work.",
+  ],
+  softwareHelpName = "Meishi documentation",
+) {
   const websiteId = `${SITE_ORIGIN}/#website`;
   const creatorId = `${SITE_ORIGIN}/#creator`;
   const softwareId = `${SITE_ORIGIN}/landing#software`;
@@ -25,7 +59,7 @@ function getBaseGraph() {
       url: SITE_ORIGIN,
       name: SITE_NAME,
       description: SITE_DESCRIPTION,
-      inLanguage: "en",
+      inLanguage: language,
     },
     creator: {
       "@id": creatorId,
@@ -41,17 +75,10 @@ function getBaseGraph() {
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web browser",
       url: absoluteUrl("/landing"),
-      description: SITE_DESCRIPTION,
+      description: softwareDescription,
       isAccessibleForFree: true,
-      browserRequirements:
-        "Requires JavaScript and a modern browser with camera or image upload support.",
-      featureList: [
-        "Scan business cards from your camera or photo library.",
-        "Extract structured contact details with OpenAI or Anthropic.",
-        "Review and edit the extracted contact data in your browser.",
-        "Export a vCard or sync the verified contact to Google Contacts.",
-        "Keep captured images and draft edits on-device while you work.",
-      ],
+      browserRequirements,
+      featureList,
       screenshot: [
         absoluteUrl("/landing/networking_scene.jpg"),
         absoluteUrl("/docs/screenshots/review-verify-contact.png"),
@@ -69,7 +96,7 @@ function getBaseGraph() {
       softwareHelp: {
         "@type": "CreativeWork",
         url: absoluteUrl("/docs"),
-        name: "Meishi documentation",
+        name: softwareHelpName,
       },
     },
     websiteId,
@@ -109,8 +136,14 @@ export function getLandingPageSchema(): JsonLdNode[] {
   ];
 }
 
-export function getDocsPageSchema(): JsonLdNode[] {
-  const base = getBaseGraph();
+export function getDocsPageSchema(content: DocsSchemaContent): JsonLdNode[] {
+  const base = getBaseGraph(
+    content.locale,
+    content.softwareDescription,
+    content.browserRequirements,
+    content.featureList,
+    content.pageName,
+  );
   const docsUrl = absoluteUrl("/docs");
   const howToId = `${docsUrl}#howto`;
   const faqId = `${docsUrl}#faq`;
@@ -123,127 +156,46 @@ export function getDocsPageSchema(): JsonLdNode[] {
       "@id": `${docsUrl}#webpage`,
       "@type": "WebPage",
       url: docsUrl,
-      name: "How to use Meishi",
-      description:
-        "Documentation for setting up Meishi, capturing business card images, running extraction, reviewing contacts, exporting vCards, and syncing to Google Contacts.",
+      name: content.pageName,
+      description: content.pageDescription,
       isPartOf: { "@id": base.websiteId },
       about: { "@id": base.softwareId },
       mainEntity: [{ "@id": howToId }, { "@id": faqId }],
-      keywords: [
-        "how to use Meishi",
-        "business card scanner tutorial",
-        "OpenAI API key setup",
-        "Anthropic API key setup",
-        "Google Contacts sync help",
-      ],
+      keywords: content.pageKeywords,
+      inLanguage: content.locale,
     },
     {
       "@id": howToId,
       "@type": "HowTo",
-      name: "How to use Meishi",
-      description:
-        "Set up your AI provider, capture business-card images, run extraction, review the draft, and export or sync the finished contact.",
+      name: content.pageName,
+      description: content.howToDescription,
       totalTime: "PT5M",
-      supply: [
-        {
-          "@type": "HowToSupply",
-          name: "An OpenAI or Anthropic API key",
-        },
-        {
-          "@type": "HowToSupply",
-          name: "One or more business-card images",
-        },
-      ],
-      step: [
-        {
-          "@type": "HowToStep",
-          position: 1,
-          name: "Open Meishi and complete first-run setup",
-          text: "Open Settings, choose OpenAI or Anthropic, paste your API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage.",
-          url: absoluteUrl("/settings"),
-          image: absoluteUrl(
-            "/docs/screenshots/setup-settings-llm-provider.png",
-          ),
-        },
-        {
-          "@type": "HowToStep",
-          position: 2,
-          name: "Capture one or more business-card images",
-          text: "Open Capture, use the camera or image library, and include both sides of the card if the back contains useful details.",
-          url: absoluteUrl("/capture"),
-          image: absoluteUrl("/docs/screenshots/capture-photoroll.png"),
-        },
-        {
-          "@type": "HowToStep",
-          position: 3,
-          name: "Run extraction",
-          text: "Start the scan after your images are loaded so Meishi can send them to your chosen AI service, validate the response, and fill in the review form.",
-          url: `${docsUrl}#how-to-use`,
-          image: absoluteUrl("/docs/screenshots/capture-extract-button.png"),
-        },
-        {
-          "@type": "HowToStep",
-          position: 4,
-          name: "Review and correct the extracted contact",
-          text: "Open Review to verify the extracted fields, edit richer Google-Contacts-style data, and let edits autosave locally.",
-          url: absoluteUrl("/review"),
-          image: absoluteUrl("/docs/screenshots/review-verify-contact.png"),
-        },
-        {
-          "@type": "HowToStep",
-          position: 5,
-          name: "Export or sync",
-          text: "From Review, either save a local vCard file or sync the verified contact to Google Contacts.",
-          url: absoluteUrl("/review"),
-          image: absoluteUrl("/docs/screenshots/review-save-buttons.png"),
-        },
-      ],
+      supply: content.howToSupplies.map((name) => ({
+        "@type": "HowToSupply",
+        name,
+      })),
+      step: content.howToSteps.map((step, index) => ({
+        "@type": "HowToStep",
+        position: index + 1,
+        name: step.name,
+        text: step.text,
+        url: absoluteUrl(step.url),
+        image: absoluteUrl(step.image),
+      })),
+      inLanguage: content.locale,
     },
     {
       "@id": faqId,
       "@type": "FAQPage",
-      mainEntity: [
-        {
-          "@type": "Question",
-          name: "What is Meishi?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Meishi is a browser-based app for scanning business cards, turning them into organized contact details with AI, reviewing the results on your device, exporting a vCard, and optionally sending the finished contact to Google Contacts.",
-          },
+      mainEntity: content.faq.map((item) => ({
+        "@type": "Question",
+        name: item.name,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.answer,
         },
-        {
-          "@type": "Question",
-          name: "How do I obtain an API key?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Choose OpenAI or Anthropic in Meishi, then create an API key in that provider's dashboard and paste it into Meishi during setup or later on the Settings page.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How do I use Meishi?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Set up your AI provider, capture one or more business-card images, run extraction, review and correct the contact draft, then export a vCard or sync to Google Contacts.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How do I view contacts once they are scanned?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "Use the Review page to inspect and edit the current draft, save a vCard to your device, or sync the verified contact to Google Contacts and view it there after sync succeeds.",
-          },
-        },
-        {
-          "@type": "Question",
-          name: "How do I support Meishi?",
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: "You can support Meishi by using it with real card samples, reporting gaps, starring or sharing the GitHub repository, and supporting the project directly through Buy Me a Coffee.",
-          },
-        },
-      ],
+      })),
+      inLanguage: content.locale,
     },
   ];
 }

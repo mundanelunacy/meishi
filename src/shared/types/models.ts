@@ -15,6 +15,7 @@ export type {
 export type SupportedLlmProvider = "openai" | "anthropic" | "gemini";
 export type GoogleAuthStatus = "signed_out" | "connecting" | "connected";
 export type ThemeMode = "system" | "light" | "dark";
+export type AppLocale = "en-US" | "ja";
 
 export interface AppSettings {
   llmProvider: SupportedLlmProvider;
@@ -24,6 +25,7 @@ export interface AppSettings {
   preferredAnthropicModel: string;
   extractionPrompt: string;
   themeMode: ThemeMode;
+  locale: AppLocale;
   onboardingCompletedAt?: string;
 }
 

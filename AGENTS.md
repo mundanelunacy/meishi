@@ -95,6 +95,11 @@
 - Use Playwright when the issue spans multiple routes, storage layers, or browser capabilities.
 - Use Chrome DevTools when you need to observe actual browser runtime behavior instead of simulated test behavior.
 
+## Localization workflow
+
+- When `react-intl` message descriptors change, use [skills/formatjs-extract-workflow.md](skills/formatjs-extract-workflow.md) for the extraction workflow.
+- Keep the FormatJS extract command documented in that skill file rather than adding package scripts for it by default.
+
 ## Documentation loop
 
 - Every browser module keeps a `README.md` describing:

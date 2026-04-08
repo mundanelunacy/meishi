@@ -17,9 +17,14 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import { useAppSelector } from "../../app/hooks";
+import { LOCALE_LABELS } from "../../app/intl";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { pushToast } from "../../shared/ui/toastBus";
-import { selectAppReadiness } from "../onboarding-settings/onboardingSlice";
+import {
+  selectAppReadiness,
+  selectLocale,
+  setLocale,
+} from "../onboarding-settings/onboardingSlice";
 import { Button } from "../../shared/ui/button";
 import { usePwaLifecycle } from "../pwa-runtime";
 import { getPrimarySwipeDestination } from "./navigation";
@@ -63,11 +68,13 @@ const overflowNavItems = [
 ] as const;
 
 export function AppShell() {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
   const readiness = useAppSelector(selectAppReadiness);
+  const locale = useAppSelector(selectLocale);
   const {
     applyUpdate,
     canInstall,
@@ -290,6 +297,34 @@ export function AppShell() {
     );
   };
 
+  const renderLanguagePicker = (placement: "desktop" | "mobile") => (
+    <label className="relative block">
+      <span className="sr-only">
+        {placement === "desktop"
+          ? "Select language (desktop)"
+          : "Select language (mobile)"}
+      </span>
+      <select
+        aria-label={
+          placement === "desktop"
+            ? "Select language (desktop)"
+            : "Select language (mobile)"
+        }
+        value={locale}
+        onChange={(event) =>
+          dispatch(setLocale(event.target.value as typeof locale))
+        }
+        className="appearance-none rounded-full border border-border bg-background py-1 px-2.5 pr-2.5 text-xs text-foreground shadow-sm transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {Object.keys(LOCALE_LABELS).map((value) => (
+          <option key={value} value={value}>
+            {value === "en-US" ? "English" : "日本語"}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
   function handlePrimaryNavTouchStart(event: TouchEvent<HTMLElement>) {
     const touch = event.changedTouches[0];
     if (!touch || !canSwipeBetweenPrimaryRoutes) {
@@ -350,8 +385,14 @@ export function AppShell() {
         </nav>
 
         <div className="flex items-center justify-end self-stretch">
-          <div className="md:hidden">{renderOverflowMenu("mobile")}</div>
-          <div className="hidden md:flex">{renderOverflowMenu("desktop")}</div>
+          <div className="flex items-center gap-2 md:hidden">
+            {renderLanguagePicker("mobile")}
+            {renderOverflowMenu("mobile")}
+          </div>
+          <div className="hidden items-center gap-2 md:flex">
+            {renderLanguagePicker("desktop")}
+            {renderOverflowMenu("desktop")}
+          </div>
         </div>
       </header>
 

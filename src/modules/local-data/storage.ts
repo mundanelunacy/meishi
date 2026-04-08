@@ -1,4 +1,5 @@
 import type {
+  AppLocale,
   AppSettings,
   GoogleAuthState,
   ThemeMode,
@@ -7,6 +8,7 @@ import { DEFAULT_EXTRACTION_PROMPT } from "../../shared/lib/extractionPrompt";
 
 const SETTINGS_KEY = "meishi.settings";
 const VALID_THEME_MODES = new Set<ThemeMode>(["system", "light", "dark"]);
+const VALID_LOCALES = new Set<AppLocale>(["en-US", "ja"]);
 
 export interface PersistedOnboardingState {
   settings: AppSettings;
@@ -21,6 +23,7 @@ const defaultSettings: AppSettings = {
   preferredAnthropicModel: "claude-sonnet-4-6",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
   themeMode: "system",
+  locale: "en-US",
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -39,6 +42,7 @@ function sanitizeSettings(settings: unknown): AppSettings {
   const candidate = isRecord(settings) ? settings : {};
   const llmProvider = candidate.llmProvider;
   const themeMode = candidate.themeMode;
+  const locale = candidate.locale;
   const legacyApiKey =
     typeof candidate.llmApiKey === "string" ? candidate.llmApiKey : "";
 
@@ -75,6 +79,10 @@ function sanitizeSettings(settings: unknown): AppSettings {
       VALID_THEME_MODES.has(themeMode as ThemeMode)
         ? (themeMode as ThemeMode)
         : defaultSettings.themeMode,
+    locale:
+      typeof locale === "string" && VALID_LOCALES.has(locale as AppLocale)
+        ? (locale as AppLocale)
+        : defaultSettings.locale,
     onboardingCompletedAt:
       typeof candidate.onboardingCompletedAt === "string"
         ? candidate.onboardingCompletedAt

@@ -1,0 +1,410 @@
+{
+  "docs.afterScanning.asVCard.body": {
+    "id": "docs.afterScanning.asVCard.body",
+    "defaultMessage": "Use the Save vCard action to download a `.vcf` file to your device. You can then open that file in your preferred contacts app."
+  },
+  "docs.afterScanning.asVCard.title": {
+    "id": "docs.afterScanning.asVCard.title",
+    "defaultMessage": "As a vCard"
+  },
+  "docs.afterScanning.description": {
+    "id": "docs.afterScanning.description",
+    "defaultMessage": "Meishi lets you check and edit the contact before you save it anywhere else."
+  },
+  "docs.afterScanning.eyebrow": {
+    "id": "docs.afterScanning.eyebrow",
+    "defaultMessage": "After scanning"
+  },
+  "docs.afterScanning.inGoogleContacts.body": {
+    "id": "docs.afterScanning.inGoogleContacts.body",
+    "defaultMessage": "Use Sync to Google from <reviewLink>Review</reviewLink>. After a successful sync, open Google Contacts to see the created contact and the uploaded primary photo."
+  },
+  "docs.afterScanning.inGoogleContacts.title": {
+    "id": "docs.afterScanning.inGoogleContacts.title",
+    "defaultMessage": "In Google Contacts"
+  },
+  "docs.afterScanning.insideMeishi.body": {
+    "id": "docs.afterScanning.insideMeishi.body",
+    "defaultMessage": "Open <reviewLink>Review</reviewLink> to inspect the current draft, see the captured images, and edit the structured contact fields before saving anything externally."
+  },
+  "docs.afterScanning.insideMeishi.title": {
+    "id": "docs.afterScanning.insideMeishi.title",
+    "defaultMessage": "Inside Meishi"
+  },
+  "docs.apiKeys.anthropic.description": {
+    "id": "docs.apiKeys.anthropic.description",
+    "defaultMessage": "Choose this if you want Meishi to read cards using Claude."
+  },
+  "docs.apiKeys.anthropic.linkLabel": {
+    "id": "docs.apiKeys.anthropic.linkLabel",
+    "defaultMessage": "Anthropic API keys"
+  },
+  "docs.apiKeys.anthropic.step1": {
+    "id": "docs.apiKeys.anthropic.step1",
+    "defaultMessage": "Go to the Anthropic Console."
+  },
+  "docs.apiKeys.anthropic.step2": {
+    "id": "docs.apiKeys.anthropic.step2",
+    "defaultMessage": "Sign in or create an Anthropic account."
+  },
+  "docs.apiKeys.anthropic.step3": {
+    "id": "docs.apiKeys.anthropic.step3",
+    "defaultMessage": "Create a new API key from the console."
+  },
+  "docs.apiKeys.anthropic.step4": {
+    "id": "docs.apiKeys.anthropic.step4",
+    "defaultMessage": "Copy the key and paste it into Meishi during setup or later on the <settingsLink>Settings</settingsLink> page."
+  },
+  "docs.apiKeys.anthropic.step5": {
+    "id": "docs.apiKeys.anthropic.step5",
+    "defaultMessage": "Confirm that your Anthropic account has billing or usage access if your plan requires it."
+  },
+  "docs.apiKeys.description": {
+    "id": "docs.apiKeys.description",
+    "defaultMessage": "Meishi asks you to use your own API key. During setup, or later on the settings page, choose either OpenAI or Anthropic and paste your key into the app."
+  },
+  "docs.apiKeys.eyebrow": {
+    "id": "docs.apiKeys.eyebrow",
+    "defaultMessage": "Setup"
+  },
+  "docs.apiKeys.openai.description": {
+    "id": "docs.apiKeys.openai.description",
+    "defaultMessage": "Choose this if you want Meishi to read cards using OpenAI."
+  },
+  "docs.apiKeys.openai.linkLabel": {
+    "id": "docs.apiKeys.openai.linkLabel",
+    "defaultMessage": "OpenAI API keys"
+  },
+  "docs.apiKeys.openai.step1": {
+    "id": "docs.apiKeys.openai.step1",
+    "defaultMessage": "Go to the OpenAI platform API keys page."
+  },
+  "docs.apiKeys.openai.step2": {
+    "id": "docs.apiKeys.openai.step2",
+    "defaultMessage": "Sign in or create an OpenAI account."
+  },
+  "docs.apiKeys.openai.step3": {
+    "id": "docs.apiKeys.openai.step3",
+    "defaultMessage": "Create a new secret key in your API key dashboard."
+  },
+  "docs.apiKeys.openai.step4": {
+    "id": "docs.apiKeys.openai.step4",
+    "defaultMessage": "Copy the key immediately and paste it into Meishi on the <settingsLink>Settings</settingsLink> page."
+  },
+  "docs.apiKeys.openai.step5": {
+    "id": "docs.apiKeys.openai.step5",
+    "defaultMessage": "Meishi keeps this key in your browser on this device so it can use it again later."
+  },
+  "docs.apiKeys.providerAriaLabel": {
+    "id": "docs.apiKeys.providerAriaLabel",
+    "defaultMessage": "API provider"
+  },
+  "docs.apiKeys.providers.anthropic": {
+    "id": "docs.apiKeys.providers.anthropic",
+    "defaultMessage": "Anthropic"
+  },
+  "docs.apiKeys.providers.openai": {
+    "id": "docs.apiKeys.providers.openai",
+    "defaultMessage": "OpenAI"
+  },
+  "docs.hero.description": {
+    "id": "docs.hero.description",
+    "defaultMessage": "Meishi is a browser-based app for scanning business cards, turning them into organized contact details with AI, reviewing the results on your device, exporting a vCard, and optionally sending the finished contact to Google Contacts."
+  },
+  "docs.hero.eyebrow": {
+    "id": "docs.hero.eyebrow",
+    "defaultMessage": "Documentation"
+  },
+  "docs.hero.title": {
+    "id": "docs.hero.title",
+    "defaultMessage": "How to use Meishi"
+  },
+  "docs.lightbox.openScreenshot": {
+    "id": "docs.lightbox.openScreenshot",
+    "defaultMessage": "Open screenshot: {alt}"
+  },
+  "docs.lightbox.subtitle": {
+    "id": "docs.lightbox.subtitle",
+    "defaultMessage": "Step {stepNumber} of {totalSteps}"
+  },
+  "docs.overview.description": {
+    "id": "docs.overview.description",
+    "defaultMessage": "Meishi helps you turn a photo of a business card into a digital contact you can actually use. Your images and in-progress edits stay in your browser, the app uses your own OpenAI or Anthropic key to read the card, and you can export the final result as a vCard or send it to Google Contacts after checking it."
+  },
+  "docs.overview.eyebrow": {
+    "id": "docs.overview.eyebrow",
+    "defaultMessage": "Overview"
+  },
+  "docs.overview.goodToKnow.item1": {
+    "id": "docs.overview.goodToKnow.item1",
+    "defaultMessage": "Meishi runs in your browser and keeps your AI key on this device."
+  },
+  "docs.overview.goodToKnow.item2": {
+    "id": "docs.overview.goodToKnow.item2",
+    "defaultMessage": "Google sign-in access is refreshed when needed instead of being permanently saved in the browser."
+  },
+  "docs.overview.goodToKnow.item3": {
+    "id": "docs.overview.goodToKnow.item3",
+    "defaultMessage": "Extra business-card images remain local even if one photo is uploaded to Google Contacts."
+  },
+  "docs.overview.goodToKnow.item4": {
+    "id": "docs.overview.goodToKnow.item4",
+    "defaultMessage": "Extraction and Google sync both require a network connection."
+  },
+  "docs.overview.goodToKnow.title": {
+    "id": "docs.overview.goodToKnow.title",
+    "defaultMessage": "Good to know"
+  },
+  "docs.overview.whatAppDoes.item1": {
+    "id": "docs.overview.whatAppDoes.item1",
+    "defaultMessage": "Captures card images from your camera or image library."
+  },
+  "docs.overview.whatAppDoes.item2": {
+    "id": "docs.overview.whatAppDoes.item2",
+    "defaultMessage": "Pulls contact details from the card with OpenAI or Anthropic."
+  },
+  "docs.overview.whatAppDoes.item3": {
+    "id": "docs.overview.whatAppDoes.item3",
+    "defaultMessage": "Lets you verify and edit the extracted data before saving."
+  },
+  "docs.overview.whatAppDoes.item4": {
+    "id": "docs.overview.whatAppDoes.item4",
+    "defaultMessage": "Exports a `.vcf` file or syncs the verified contact to Google Contacts."
+  },
+  "docs.overview.whatAppDoes.title": {
+    "id": "docs.overview.whatAppDoes.title",
+    "defaultMessage": "What the app does"
+  },
+  "docs.schema.faq.apiKeys.answer": {
+    "id": "docs.schema.faq.apiKeys.answer",
+    "defaultMessage": "Choose OpenAI or Anthropic in Meishi, then create an API key in that provider's dashboard and paste it into Meishi during setup or later on the Settings page."
+  },
+  "docs.schema.faq.howToUse.answer": {
+    "id": "docs.schema.faq.howToUse.answer",
+    "defaultMessage": "Set up your AI provider, capture one or more business-card images, run extraction, review and correct the contact draft, then export a vCard or sync to Google Contacts."
+  },
+  "docs.schema.faq.support.answer": {
+    "id": "docs.schema.faq.support.answer",
+    "defaultMessage": "You can support Meishi by using it with real card samples, reporting gaps, starring or sharing the GitHub repository, and supporting the project directly through Buy Me a Coffee."
+  },
+  "docs.schema.faq.viewContacts.answer": {
+    "id": "docs.schema.faq.viewContacts.answer",
+    "defaultMessage": "Use the Review page to inspect and edit the current draft, save a vCard to your device, or sync the verified contact to Google Contacts and view it there after sync succeeds."
+  },
+  "docs.schema.howTo.description": {
+    "id": "docs.schema.howTo.description",
+    "defaultMessage": "Set up your AI provider, capture business-card images, run extraction, review the draft, and export or sync the finished contact."
+  },
+  "docs.schema.howTo.supplyApiKey": {
+    "id": "docs.schema.howTo.supplyApiKey",
+    "defaultMessage": "An OpenAI or Anthropic API key"
+  },
+  "docs.schema.howTo.supplyImages": {
+    "id": "docs.schema.howTo.supplyImages",
+    "defaultMessage": "One or more business-card images"
+  },
+  "docs.schema.page.description": {
+    "id": "docs.schema.page.description",
+    "defaultMessage": "Documentation for setting up Meishi, capturing business card images, running extraction, reviewing contacts, exporting vCards, and syncing to Google Contacts."
+  },
+  "docs.schema.page.keyword1": {
+    "id": "docs.schema.page.keyword1",
+    "defaultMessage": "how to use Meishi"
+  },
+  "docs.schema.page.keyword2": {
+    "id": "docs.schema.page.keyword2",
+    "defaultMessage": "business card scanner tutorial"
+  },
+  "docs.schema.page.keyword3": {
+    "id": "docs.schema.page.keyword3",
+    "defaultMessage": "OpenAI API key setup"
+  },
+  "docs.schema.page.keyword4": {
+    "id": "docs.schema.page.keyword4",
+    "defaultMessage": "Anthropic API key setup"
+  },
+  "docs.schema.page.keyword5": {
+    "id": "docs.schema.page.keyword5",
+    "defaultMessage": "Google Contacts sync help"
+  },
+  "docs.schema.software.browserRequirements": {
+    "id": "docs.schema.software.browserRequirements",
+    "defaultMessage": "Requires JavaScript and a modern browser with camera or image upload support."
+  },
+  "docs.schema.software.description": {
+    "id": "docs.schema.software.description",
+    "defaultMessage": "Meishi helps you turn business cards into contacts you can review, edit, export as a vCard, and sync to Google Contacts."
+  },
+  "docs.schema.software.feature1": {
+    "id": "docs.schema.software.feature1",
+    "defaultMessage": "Scan business cards from your camera or photo library."
+  },
+  "docs.schema.software.feature2": {
+    "id": "docs.schema.software.feature2",
+    "defaultMessage": "Extract structured contact details with OpenAI or Anthropic."
+  },
+  "docs.schema.software.feature3": {
+    "id": "docs.schema.software.feature3",
+    "defaultMessage": "Review and edit the extracted contact data in your browser."
+  },
+  "docs.schema.software.feature4": {
+    "id": "docs.schema.software.feature4",
+    "defaultMessage": "Export a vCard or sync the verified contact to Google Contacts."
+  },
+  "docs.schema.software.feature5": {
+    "id": "docs.schema.software.feature5",
+    "defaultMessage": "Keep captured images and draft edits on-device while you work."
+  },
+  "docs.sections.apiKeys": {
+    "id": "docs.sections.apiKeys",
+    "defaultMessage": "How do I obtain an API key?"
+  },
+  "docs.sections.howToUse": {
+    "id": "docs.sections.howToUse",
+    "defaultMessage": "How do I use Meishi?"
+  },
+  "docs.sections.support": {
+    "id": "docs.sections.support",
+    "defaultMessage": "How do I support Meishi?"
+  },
+  "docs.sections.viewContacts": {
+    "id": "docs.sections.viewContacts",
+    "defaultMessage": "How do I view contacts once they are scanned?"
+  },
+  "docs.sections.whatIsMeishi": {
+    "id": "docs.sections.whatIsMeishi",
+    "defaultMessage": "What is Meishi?"
+  },
+  "docs.support.coffee.body": {
+    "id": "docs.support.coffee.body",
+    "defaultMessage": "If you want to support ongoing work directly, use the Buy Me a Coffee link from the menu or here."
+  },
+  "docs.support.coffee.imageAlt": {
+    "id": "docs.support.coffee.imageAlt",
+    "defaultMessage": "Buy Me a Coffee"
+  },
+  "docs.support.coffee.title": {
+    "id": "docs.support.coffee.title",
+    "defaultMessage": "Buy Me a Coffee"
+  },
+  "docs.support.description": {
+    "id": "docs.support.description",
+    "defaultMessage": "If you want to help Meishi grow, the easiest options are sharing feedback, sharing the project, and supporting the work directly."
+  },
+  "docs.support.eyebrow": {
+    "id": "docs.support.eyebrow",
+    "defaultMessage": "GIVE BACK"
+  },
+  "docs.support.share.body": {
+    "id": "docs.support.share.body",
+    "defaultMessage": "Follow the repository and share it with people who need an easier way to turn business cards into digital contacts."
+  },
+  "docs.support.share.linkLabel": {
+    "id": "docs.support.share.linkLabel",
+    "defaultMessage": "GitHub repository"
+  },
+  "docs.support.share.title": {
+    "id": "docs.support.share.title",
+    "defaultMessage": "Star or share the project"
+  },
+  "docs.support.useIt.body": {
+    "id": "docs.support.useIt.body",
+    "defaultMessage": "Real card samples and bug reports help improve scan quality, editing flow, and sync reliability."
+  },
+  "docs.support.useIt.title": {
+    "id": "docs.support.useIt.title",
+    "defaultMessage": "Use it and report gaps"
+  },
+  "docs.toc.description": {
+    "id": "docs.toc.description",
+    "defaultMessage": "Jump directly to the section you need."
+  },
+  "docs.toc.title": {
+    "id": "docs.toc.title",
+    "defaultMessage": "Table of contents"
+  },
+  "docs.tutorial.description": {
+    "id": "docs.tutorial.description",
+    "defaultMessage": "Follow this step-by-step flow from first setup through export or Google sync."
+  },
+  "docs.tutorial.eyebrow": {
+    "id": "docs.tutorial.eyebrow",
+    "defaultMessage": "Tutorial"
+  },
+  "docs.tutorial.step1.bodyPlain": {
+    "id": "docs.tutorial.step1.bodyPlain",
+    "defaultMessage": "Open Settings, choose OpenAI or Anthropic, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync."
+  },
+  "docs.tutorial.step1.bodyRich": {
+    "id": "docs.tutorial.step1.bodyRich",
+    "defaultMessage": "Open <settingsLink>Settings</settingsLink>, choose OpenAI or Anthropic, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync."
+  },
+  "docs.tutorial.step1.imageAlt": {
+    "id": "docs.tutorial.step1.imageAlt",
+    "defaultMessage": "Cropped Meishi settings screen focused on the LLM Provider section with the provider picker, API key field, and model selection."
+  },
+  "docs.tutorial.step1.title": {
+    "id": "docs.tutorial.step1.title",
+    "defaultMessage": "Open Meishi and complete first-run setup"
+  },
+  "docs.tutorial.step2.bodyPlain": {
+    "id": "docs.tutorial.step2.bodyPlain",
+    "defaultMessage": "Open the Capture page, use the camera or image library, and make sure both sides of the card are included if the back contains useful details. Meishi keeps the card images on your device while you work."
+  },
+  "docs.tutorial.step2.bodyRich": {
+    "id": "docs.tutorial.step2.bodyRich",
+    "defaultMessage": "Open the <captureLink>Capture page</captureLink>, use the camera or image library, and make sure both sides of the card are included if the back contains useful details. Meishi keeps the card images on your device while you work."
+  },
+  "docs.tutorial.step2.imageAlt": {
+    "id": "docs.tutorial.step2.imageAlt",
+    "defaultMessage": "Meishi capture screen cropped to the Photoroll section with uploaded business-card images."
+  },
+  "docs.tutorial.step2.title": {
+    "id": "docs.tutorial.step2.title",
+    "defaultMessage": "Capture one or more business-card images"
+  },
+  "docs.tutorial.step3.bodyPlain": {
+    "id": "docs.tutorial.step3.bodyPlain",
+    "defaultMessage": "Start the scan after your images are loaded. Meishi sends the images to your chosen AI service, checks the response, and fills in the review form with the contact details it found."
+  },
+  "docs.tutorial.step3.imageAlt": {
+    "id": "docs.tutorial.step3.imageAlt",
+    "defaultMessage": "Close-up of the Extract contact draft button on the Meishi capture screen."
+  },
+  "docs.tutorial.step3.title": {
+    "id": "docs.tutorial.step3.title",
+    "defaultMessage": "Run extraction"
+  },
+  "docs.tutorial.step4.bodyPlain": {
+    "id": "docs.tutorial.step4.bodyPlain",
+    "defaultMessage": "Open Review to verify the extracted fields in the Verify contact section. The form supports richer Google-Contacts-style data, including multiple emails, phone numbers, addresses, websites, related people, significant dates, notes, and custom fields. Edits autosave locally."
+  },
+  "docs.tutorial.step4.bodyRich": {
+    "id": "docs.tutorial.step4.bodyRich",
+    "defaultMessage": "Open <reviewLink>Review</reviewLink> to verify the extracted fields in the Verify contact section. The form supports richer Google-Contacts-style data, including multiple emails, phone numbers, addresses, websites, related people, significant dates, notes, and custom fields. Edits autosave locally."
+  },
+  "docs.tutorial.step4.imageAlt": {
+    "id": "docs.tutorial.step4.imageAlt",
+    "defaultMessage": "Cropped Meishi review screen focused on the Verify contact section with extraction notes and editable contact fields."
+  },
+  "docs.tutorial.step4.title": {
+    "id": "docs.tutorial.step4.title",
+    "defaultMessage": "Review and correct the extracted contact"
+  },
+  "docs.tutorial.step5.bodyPlain": {
+    "id": "docs.tutorial.step5.bodyPlain",
+    "defaultMessage": "From Review, either save a local `.vcf` file or sync the verified contact to Google Contacts. If you are not connected to Google yet, Meishi can prompt for Google authorization at sync time."
+  },
+  "docs.tutorial.step5.imageAlt": {
+    "id": "docs.tutorial.step5.imageAlt",
+    "defaultMessage": "Close-up of the Save vCard and Save to Google Contacts buttons on the Meishi review screen."
+  },
+  "docs.tutorial.step5.title": {
+    "id": "docs.tutorial.step5.title",
+    "defaultMessage": "Export or sync"
+  },
+  "docs.tutorial.stepCardTitle": {
+    "id": "docs.tutorial.stepCardTitle",
+    "defaultMessage": "Step {stepNumber}: {title}"
+  }
+}

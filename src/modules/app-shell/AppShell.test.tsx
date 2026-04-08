@@ -1,14 +1,15 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   completeOnboarding,
   onboardingReducer,
+  setLocale,
 } from "../onboarding-settings/onboardingSlice";
 import { AppShell } from "./AppShell";
 import { getPrimarySwipeDestination } from "./navigation";
@@ -60,6 +61,8 @@ function renderShell() {
       <AppShell />
     </Provider>,
   );
+
+  return { store };
 }
 
 async function openOverflowMenu(user: ReturnType<typeof userEvent.setup>) {
@@ -108,6 +111,10 @@ function setWindowMatchMedia(matches = false) {
 }
 
 describe("AppShell", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     window.history.replaceState({}, "", "/landing");
     setNavigatorShare(undefined);
@@ -124,6 +131,7 @@ describe("AppShell", () => {
     expect(screen.getAllByText("Capture").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Review").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByLabelText("Open navigation menu")).toHaveLength(2);
+    expect(screen.getAllByLabelText(/select language/i)).toHaveLength(2);
     expect(screen.getByTestId("route-outlet")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Meishi" })).toHaveAttribute(
       "href",
@@ -166,6 +174,45 @@ describe("AppShell", () => {
     expect(items[5]).toHaveAttribute(
       "href",
       "https://github.com/mundanelunacy/meishi",
+    );
+  });
+
+  it("updates the stored locale from the header picker", async () => {
+    const user = userEvent.setup();
+    mockPathname = "/landing";
+    navigateMock.mockReset();
+
+    const { store } = renderShell();
+
+    await user.selectOptions(
+      screen.getAllByLabelText("Select language (desktop)")[0],
+      "ja",
+    );
+
+    expect(store.getState().onboarding.settings.locale).toBe("ja");
+  });
+
+  it("renders the stored locale in both header pickers", () => {
+    const store = configureStore({
+      reducer: {
+        onboarding: onboardingReducer,
+      },
+      preloadedState: {
+        onboarding: onboardingReducer(undefined, setLocale("ja")),
+      },
+    });
+
+    render(
+      <Provider store={store}>
+        <AppShell />
+      </Provider>,
+    );
+
+    expect(
+      screen.getAllByLabelText("Select language (desktop)")[0],
+    ).toHaveValue("ja");
+    expect(screen.getAllByLabelText("Select language (mobile)")[0]).toHaveValue(
+      "ja",
     );
   });
 

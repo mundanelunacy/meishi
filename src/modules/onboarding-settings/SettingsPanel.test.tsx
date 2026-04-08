@@ -40,6 +40,10 @@ vi.mock("../google-auth/googleIdentity", () => ({
     disconnectGoogleContactsMock(...args),
 }));
 
+vi.mock("../google-auth/useGoogleAuthStateSync", () => ({
+  useGoogleAuthStateSync: () => {},
+}));
+
 function renderPanel(
   googleAuthOverride?: Partial<
     ReturnType<typeof onboardingReducer>["googleAuth"]
@@ -168,6 +172,15 @@ describe("SettingsPanel", () => {
     expect(store.getState().onboarding.settings.themeMode).toBe("dark");
   });
 
+  it("updates the docs locale preference", async () => {
+    const { store } = renderPanel();
+    const user = userEvent.setup();
+
+    await user.selectOptions(screen.getByLabelText(/docs language/i), "ja");
+
+    expect(store.getState().onboarding.settings.locale).toBe("ja");
+  });
+
   it("uses the landing-style provider form", async () => {
     renderPanel();
 
@@ -201,5 +214,6 @@ describe("SettingsPanel", () => {
     );
 
     expect(screen.getByLabelText(/color theme/i)).toHaveValue("dark");
+    expect(screen.getByLabelText(/docs language/i)).toHaveValue("en-US");
   });
 });

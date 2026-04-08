@@ -1,4 +1,5 @@
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { LOCALE_LABELS } from "../../app/intl";
 import { hasFirebaseConfiguration } from "../../app/env";
 import { Button } from "../../shared/ui/button";
 import { Select } from "../../shared/ui/select";
@@ -19,6 +20,7 @@ import {
   setOpenAiApiKey,
   setPreferredAnthropicModel,
   setPreferredOpenAiModel,
+  setLocale,
   setThemeMode,
   signOutGoogle,
 } from "./onboardingSlice";
@@ -36,7 +38,8 @@ export function SettingsPanel() {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectSettings);
   const googleAuth = useAppSelector(selectGoogleAuth);
-  const selectedProvider = settings.llmProvider;
+  const selectedProvider =
+    settings.llmProvider === "anthropic" ? "anthropic" : "openai";
   const providerApiKey =
     selectedProvider === "anthropic"
       ? settings.anthropicApiKey
@@ -258,25 +261,50 @@ export function SettingsPanel() {
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <Label htmlFor="settings-theme">Color theme</Label>
-          <Select
-            id="settings-theme"
-            value={settings.themeMode}
-            onChange={(event) =>
-              dispatch(
-                setThemeMode(event.target.value as typeof settings.themeMode),
-              )
-            }
-          >
-            <option value="system">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            System follows your device appearance automatically. Light and dark
-            stay pinned until you change them here.
-          </p>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-3">
+            <Label htmlFor="settings-theme">Color theme</Label>
+            <Select
+              id="settings-theme"
+              value={settings.themeMode}
+              onChange={(event) =>
+                dispatch(
+                  setThemeMode(event.target.value as typeof settings.themeMode),
+                )
+              }
+            >
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              System follows your device appearance automatically. Light and
+              dark stay pinned until you change them here.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Label htmlFor="settings-locale">Docs language</Label>
+            <Select
+              id="settings-locale"
+              value={settings.locale}
+              onChange={(event) =>
+                dispatch(
+                  setLocale(event.target.value as typeof settings.locale),
+                )
+              }
+            >
+              {Object.entries(LOCALE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              This first rollout only localizes the Docs page. The rest of the
+              app stays in English for now.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

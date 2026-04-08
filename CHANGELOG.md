@@ -2,23 +2,6 @@
 
 ## 2026-04-07
 
-### Route-based bundle splitting and startup deferral
-
-- Split non-root TanStack Router route components into `.lazy.tsx` files so `/landing`, `/capture`, `/review`, `/settings`, docs, legal pages, and the Google callback route can load by entry path instead of being pulled into the initial route bundle.
-- Reduced router eagerness in `src/app/AppRoot.tsx` by disabling default hover-intent preloading, so entering through one route no longer speculatively fetches the others up front.
-- Removed the app-wide Google auth bootstrap from startup and moved auth-state refresh to route-local surfaces used by settings and review flows via `src/modules/google-auth/useGoogleAuthStateSync.ts`.
-- Extracted initial Google auth state creation into a lightweight `src/modules/google-auth/googleAuthState.ts` helper so onboarding state no longer pulls the Firebase-backed auth client into the root chunk.
-- Deferred heavier extraction and Google Contacts runtime dependencies inside `src/modules/card-extraction/extractionApi.ts` and `src/modules/google-contacts/googlePeopleApi.ts` with on-demand `import()` calls from the mutation path.
-- Reduced the main production bundle from roughly 702 kB to 469 kB after minification, while keeping `npm run build` and `npm run typecheck` green.
-
-### App site sharing from the shell overflow menu
-
-- Added a new `Share` action to the app-shell overflow menu so users can share the Meishi site directly from the burger/context menu.
-- Wired the share action to use the browser or operating system native share sheet when the Web Share API is available.
-- Added an in-app fallback share dialog for environments without native share support, with direct Facebook, X, LinkedIn, and email share targets plus copy-to-clipboard.
-- Positioned `Share` in the overflow menu below `Settings`, `Google Contacts`, and `Docs`.
-- Expanded `src/modules/app-shell/AppShell.test.tsx` to cover menu ordering, native-share behavior, fallback dialog rendering, and copy-link interaction.
-
 ### Documentation page, shared image lightbox, and review UX hardening
 
 - Added a dedicated `/docs` route and `DocsPage` experience in `src/modules/app-shell` so the app now ships with an in-product usage guide, setup notes, screenshots, and support links.

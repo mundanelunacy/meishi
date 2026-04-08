@@ -1,12 +1,17 @@
 import { useEffect } from "react";
+import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { store } from "./store";
 import { routeTree } from "../routeTree.gen";
 import { Toaster } from "../shared/ui/toaster";
 import { useAppSelector } from "./hooks";
+import { DEFAULT_LOCALE, getLocaleMessages } from "./intl";
 import { applyThemeMode, SYSTEM_THEME_QUERY } from "./theme";
-import { selectThemeMode } from "../modules/onboarding-settings/onboardingSlice";
+import {
+  selectLocale,
+  selectThemeMode,
+} from "../modules/onboarding-settings/onboardingSlice";
 
 declare global {
   interface Window {
@@ -37,9 +42,24 @@ export function AppRoot() {
   return (
     <Provider store={store}>
       <ThemeBootstrap />
+      <IntlBootstrap />
+    </Provider>
+  );
+}
+
+function IntlBootstrap() {
+  const locale = useAppSelector(selectLocale);
+
+  return (
+    <IntlProvider
+      locale={locale}
+      defaultLocale={DEFAULT_LOCALE}
+      messages={getLocaleMessages(locale)}
+      wrapRichTextChunksInFragment
+    >
       <RouterProvider router={router} />
       <Toaster />
-    </Provider>
+    </IntlProvider>
   );
 }
 
