@@ -2,6 +2,7 @@ import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig, loadEnv, type Plugin } from "vite";
+import { APP_CHROME_THEME_COLORS } from "./src/app/chromeColors";
 
 const DEFAULT_SITE_ORIGIN = "https://meishi-492400.web.app";
 const SITEMAP_PATHS = [
@@ -95,8 +96,8 @@ export default defineConfig(({ mode }) => {
           short_name: "Meishi",
           description:
             "Capture business cards, verify extracted data, and sync contacts to Google Contacts.",
-          theme_color: "#FAFAF9",
-          background_color: "#FAFAF9",
+          theme_color: APP_CHROME_THEME_COLORS.light,
+          background_color: APP_CHROME_THEME_COLORS.light,
           display: "standalone",
           start_url: "/",
           icons: [

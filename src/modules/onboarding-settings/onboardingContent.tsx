@@ -293,7 +293,7 @@ const messages = defineMessages({
   },
   landingComparisonMeishiFree: {
     id: "landing.comparison.meishi.free",
-    defaultMessage: "Free forever",
+    defaultMessage: "Free",
   },
   landingComparisonMeishiOpen: {
     id: "landing.comparison.meishi.open",

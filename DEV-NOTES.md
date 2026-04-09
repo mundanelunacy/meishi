@@ -273,6 +273,9 @@ Vite loads env files from the repo root automatically. Meishi now assumes this l
 - `npm run dev` is not the authoritative way to test PWA behavior in this repo because `vite-plugin-pwa` development service worker support is not enabled in [vite.config.ts](./vite.config.ts).
 - When testing through the Vite dev server with `npm run dev`, mobile native-camera capture on `/capture` can still trigger page refreshes after returning from the camera flow. Treat that as an open issue to address in future capture/runtime work, and prefer `npm run build && npm run preview` when validating mobile capture behavior.
 - Use `npm run build && npm run preview` when testing service worker registration, install prompts, offline shell behavior, or update prompts.
+- The app now updates `meta[name="theme-color"]` whenever the effective light/dark theme changes so Chromium-based installed PWAs can keep their top chrome aligned with the app shell background.
+- iOS home-screen installs still only support Apple status-bar styles such as `default` and `black`; expect best-effort contrast matching there rather than exact arbitrary color control.
+- macOS and Windows installed PWAs may keep native title-bar or window-frame colors under OS control even when the page top area matches the app shell.
 - If temporary dev-server PWA testing is needed, enable `devOptions: { enabled: true }` in the `VitePWA(...)` config, but treat previewing the production build as the final verification path.
 - If an older PWA build is still showing stale behavior, clear site data or unregister the service worker before re-testing.
 - For Android capture refresh debugging, `/capture?debug=1` shows the capture debug panel, and `/capture?debug=1&captureDebugMaxEdge=1600` additionally enables temporary image downscaling in development.
