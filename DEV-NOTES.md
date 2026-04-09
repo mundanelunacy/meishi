@@ -135,7 +135,7 @@ This repo can be deployed with Firebase Hosting for the Vite-built SPA and Cloud
 
 - Hosting serves the built app from `dist`
 - Functions are built from `functions/src` into `functions/lib`
-- `firebase deploy` runs both the functions predeploy checks and the hosting deploy defined in [firebase.json](./firebase.json)
+- `firebase deploy` runs the Functions predeploy build and the Hosting deploy defined in [firebase.json](./firebase.json)
 
 ### Project files
 
@@ -217,7 +217,8 @@ The sitemap intentionally includes only destination pages: `/landing`, `/capture
 ### Functions behavior
 
 - Functions use their own Node/TypeScript workspace under `functions/`
-- Predeploy runs the functions workspace `lint` and `build` scripts before any deploy proceeds
+- Predeploy runs the functions workspace `build` script before any deploy proceeds
+- Functions lint remains available as a manual verification step via `npm --prefix functions run lint`
 - Firestore is a server-only credential store in the current app shape: browser clients do not use the Firestore Web SDK, and [firestore.rules](./firestore.rules) intentionally deny all client reads and writes
 - Functions now own the Google Contacts token broker:
   - `beginGoogleContactsAuth`
@@ -233,8 +234,8 @@ The sitemap intentionally includes only destination pages: `/landing`, `/capture
 
 ### Troubleshooting
 
-- If `firebase deploy` fails during `functions predeploy`, run `npm --prefix functions run lint` and `npm --prefix functions run build` directly first
-- If ESLint reports that `--ext` is invalid while deploying functions, the functions lint command is being interpreted with flat config instead of the local legacy config. The functions lint script should keep `ESLINT_USE_FLAT_CONFIG=false`
+- If `firebase deploy` fails during `functions predeploy`, run `npm --prefix functions run build` directly first
+- If manual Functions lint reports that `--ext` is invalid, the functions lint command is being interpreted with flat config instead of the local legacy config. The functions lint script should keep `ESLINT_USE_FLAT_CONFIG=false`
 - If Hosting deploy succeeds but routing is broken on refresh, confirm the SPA rewrite in [firebase.json](./firebase.json)
 - If browser code cannot see an env var after deploy, confirm it starts with `VITE_` and that the app was rebuilt before deploying Hosting
 

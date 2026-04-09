@@ -6,7 +6,8 @@ This workspace contains the Firebase Cloud Functions code for Meishi.
 
 - Holds server-side TypeScript entrypoints under `src/`
 - Builds deployable output into `lib/`
-- Runs its own lint and TypeScript checks before deploy
+- Runs its own TypeScript build before deploy and keeps lint available for
+  manual verification
 - Provides the place for secrets-backed or privileged integrations that should
   not live in the browser bundle
 - Brokers Google OAuth code exchange, refresh-token storage, access-token minting,
@@ -92,12 +93,12 @@ When you run `firebase deploy` from the repo root, Firebase reads the functions
 target from [firebase.json](../firebase.json)
 and then executes:
 
-1. `npm --prefix "$RESOURCE_DIR" run lint`
-2. `npm --prefix "$RESOURCE_DIR" run build`
-3. the actual functions deploy
+1. `npm --prefix "$RESOURCE_DIR" run build`
+2. the actual functions deploy
 
-This means a broken lint or TypeScript build in this workspace blocks both the
-functions deploy and a combined `firebase deploy`.
+This means a TypeScript build failure in this workspace blocks both the
+functions deploy and a combined `firebase deploy`. Lint remains available as a
+manual check but is no longer a Firebase predeploy gate.
 
 ## ESLint note
 
@@ -114,7 +115,7 @@ ESLINT_USE_FLAT_CONFIG=false
 ```
 
 That forces ESLint to use the functions-local legacy config during Firebase
-predeploy. If that environment variable is removed, Firebase deploy may fail
+lint runs. If that environment variable is removed, manual lint may fail
 with an error like `Invalid option '--ext'` because the legacy CLI flags would
 be interpreted in flat-config mode.
 
