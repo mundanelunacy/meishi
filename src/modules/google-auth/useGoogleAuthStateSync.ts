@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { hasFirebaseConfiguration } from "../../app/env";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import {
@@ -7,10 +7,25 @@ import {
 } from "../onboarding-settings/onboardingSlice";
 import { initializeGoogleAuth } from "./googleIdentity";
 
+function matchesGoogleAuthSnapshot(
+  left: ReturnType<typeof selectGoogleAuth>,
+  right: ReturnType<typeof selectGoogleAuth>,
+) {
+  return (
+    left.status === right.status &&
+    left.firebaseUid === right.firebaseUid &&
+    left.scope === right.scope &&
+    left.accountEmail === right.accountEmail &&
+    left.connectedAt === right.connectedAt
+  );
+}
+
 export function useGoogleAuthStateSync(enabled = true) {
   const dispatch = useAppDispatch();
   const googleAuth = useAppSelector(selectGoogleAuth);
-  const { accountEmail, connectedAt, firebaseUid, scope, status } = googleAuth;
+  const googleAuthRef = useRef(googleAuth);
+
+  googleAuthRef.current = googleAuth;
 
   useEffect(() => {
     if (!enabled || !hasFirebaseConfiguration()) {
@@ -18,26 +33,37 @@ export function useGoogleAuthStateSync(enabled = true) {
     }
 
     let active = true;
+    const initialGoogleAuth = googleAuthRef.current;
 
     void initializeGoogleAuth()
       .then((nextGoogleAuth) => {
-        if (!active) {
+        if (
+          !active ||
+          !matchesGoogleAuthSnapshot(googleAuthRef.current, initialGoogleAuth)
+        ) {
           return;
         }
 
         dispatch(setGoogleAuthState(nextGoogleAuth));
       })
       .catch(() => {
-        if (!active || connectedAt) {
+        if (
+          !active ||
+          !matchesGoogleAuthSnapshot(
+            googleAuthRef.current,
+            initialGoogleAuth,
+          ) ||
+          initialGoogleAuth.connectedAt
+        ) {
           return;
         }
 
         dispatch(
           setGoogleAuthState({
-            accountEmail,
-            connectedAt,
-            firebaseUid,
-            scope,
+            accountEmail: initialGoogleAuth.accountEmail,
+            connectedAt: initialGoogleAuth.connectedAt,
+            firebaseUid: initialGoogleAuth.firebaseUid,
+            scope: initialGoogleAuth.scope,
             status: "signed_out",
           }),
         );
@@ -46,13 +72,5 @@ export function useGoogleAuthStateSync(enabled = true) {
     return () => {
       active = false;
     };
-  }, [
-    accountEmail,
-    connectedAt,
-    dispatch,
-    enabled,
-    firebaseUid,
-    scope,
-    status,
-  ]);
+  }, [dispatch, enabled]);
 }

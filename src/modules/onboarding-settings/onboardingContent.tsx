@@ -534,6 +534,10 @@ const messages = defineMessages({
     id: "settings.google.signedInAs",
     defaultMessage: "Signed in as {email}",
   },
+  settingsConnectedOn: {
+    id: "settings.google.connectedOn",
+    defaultMessage: "Connected on {dateTime}",
+  },
   settingsAppearanceTitle: {
     id: "settings.appearance.title",
     defaultMessage: "Appearance",
@@ -917,6 +921,20 @@ export function getSettingsContent(intl: IntlShape) {
     disconnected: intl.formatMessage(messages.settingsGoogleDisconnected),
     signedInAs: (email: string) =>
       intl.formatMessage(messages.settingsSignedInAs, { email }),
+    connectedOn: (value: string) => {
+      const connectedAt = new Date(value);
+      const dateTime = Number.isNaN(connectedAt.getTime())
+        ? value
+        : intl.formatDate(connectedAt, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          });
+
+      return intl.formatMessage(messages.settingsConnectedOn, { dateTime });
+    },
     appearanceTitle: intl.formatMessage(messages.settingsAppearanceTitle),
     themeLabel: intl.formatMessage(messages.settingsThemeLabel),
     themeSystem: intl.formatMessage(messages.settingsThemeSystem),

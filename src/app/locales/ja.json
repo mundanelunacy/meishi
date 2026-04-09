@@ -329,6 +329,7 @@
   "settings.google.alert": "Google 接続状態を変更する前に必要な VITE_FIREBASE_* の値を設定してください。",
   "settings.google.connected": "接続済み",
   "settings.google.disconnected": "未接続",
+  "settings.google.connectedOn": "接続日時: {dateTime}",
   "settings.google.signedInAs": "{email} でサインイン中",
   "settings.google.title": "Google の状態",
   "settings.llm.title": "LLM プロバイダー",

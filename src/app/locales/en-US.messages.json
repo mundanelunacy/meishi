@@ -1259,6 +1259,9 @@
   "settings.google.connected": {
     "defaultMessage": "Connected"
   },
+  "settings.google.connectedOn": {
+    "defaultMessage": "Connected on {dateTime}"
+  },
   "settings.google.disconnected": {
     "defaultMessage": "Disconnected"
   },

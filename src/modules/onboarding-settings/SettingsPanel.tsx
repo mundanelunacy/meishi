@@ -60,6 +60,9 @@ export function SettingsPanel() {
     providerModel,
   );
   const content = getSettingsContent(intl);
+  const connectedOnLabel = googleAuth.connectedAt
+    ? content.connectedOn(googleAuth.connectedAt)
+    : null;
   const providerLabels = getProviderFieldLabels(intl, selectedProvider);
   const providerOptionLabels = getProviderOptionLabels(intl);
 
@@ -67,7 +70,11 @@ export function SettingsPanel() {
     nextValue: "connected" | "signed_out",
   ) {
     if (nextValue === "connected") {
-      if (!hasFirebaseConfiguration() || googleAuth.status === "connecting") {
+      if (
+        !hasFirebaseConfiguration() ||
+        googleAuth.status === "connecting" ||
+        googleAuth.status === "disconnecting"
+      ) {
         return;
       }
 
@@ -98,10 +105,29 @@ export function SettingsPanel() {
       return;
     }
 
+    if (
+      googleAuth.status === "signed_out" ||
+      googleAuth.status === "disconnecting"
+    ) {
+      return;
+    }
+
     try {
+      dispatch(
+        setGoogleAuthState({
+          ...googleAuth,
+          status: "disconnecting",
+        }),
+      );
       await disconnectGoogleContacts();
       dispatch(signOutGoogle());
     } catch (error) {
+      dispatch(
+        setGoogleAuthState({
+          ...googleAuth,
+          status: googleAuth.connectedAt ? "connected" : "signed_out",
+        }),
+      );
       pushToast(
         error instanceof Error ? error.message : content.toasts.signOutError,
       );
@@ -215,9 +241,11 @@ export function SettingsPanel() {
                 const checked =
                   value === "connected"
                     ? googleAuth.status === "connected"
-                    : googleAuth.status === "signed_out";
+                    : googleAuth.status === "signed_out" ||
+                      googleAuth.status === "disconnecting";
                 const disabled =
                   googleAuth.status === "connecting" ||
+                  googleAuth.status === "disconnecting" ||
                   (!hasFirebaseConfiguration() && value === "connected");
 
                 return (
@@ -240,8 +268,10 @@ export function SettingsPanel() {
                       }}
                     />
                     {label}
-                    {googleAuth.status === "connecting" &&
-                    value === "connected" ? (
+                    {(googleAuth.status === "connecting" &&
+                      value === "connected") ||
+                    (googleAuth.status === "disconnecting" &&
+                      value === "signed_out") ? (
                       <Spinner />
                     ) : null}
                   </label>
@@ -249,10 +279,15 @@ export function SettingsPanel() {
               })}
             </div>
           </fieldset>
-          {googleAuth.status === "connected" && googleAuth.accountEmail ? (
-            <p className="text-sm text-muted-foreground">
-              {content.signedInAs(googleAuth.accountEmail)}
-            </p>
+          {(googleAuth.status === "connected" ||
+            googleAuth.status === "disconnecting") &&
+          (googleAuth.accountEmail || connectedOnLabel) ? (
+            <div className="space-y-1 text-sm text-muted-foreground">
+              {googleAuth.accountEmail ? (
+                <p>{content.signedInAs(googleAuth.accountEmail)}</p>
+              ) : null}
+              {connectedOnLabel ? <p>{connectedOnLabel}</p> : null}
+            </div>
           ) : null}
         </CardContent>
       </Card>

@@ -50,6 +50,7 @@
 
 - This module must continue to warn that client-side API key storage is prototype-only.
 - Google readiness is based on a renewable backend-backed connection, not the presence of a bearer token in Redux.
+- The settings screen may place Google auth in a transient `disconnecting` state so both connection toggles stay locked until backend disconnect finishes.
 - Onboarding copy should explain that Google consent text is broader than the app's current create-plus-photo-upload flow because the People API requires the full contacts scope.
 - Route readiness must be based on the currently selected provider’s configuration, not a generic API key flag.
 - Capture readiness should not require pre-authorized Google access because review can export a local vCard without Google.

@@ -15,9 +15,34 @@ import {
 } from "./onboardingSlice";
 import { SettingsPanel } from "./SettingsPanel";
 
+const connectedAt = "2026-04-06T12:34:00.000Z";
+const formattedConnectedAt = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+}).format(new Date(connectedAt));
+
 const navigateMock = vi.fn();
 const connectGoogleContactsMock = vi.fn();
 const disconnectGoogleContactsMock = vi.fn(() => Promise.resolve());
+
+function createDeferredPromise() {
+  let resolvePromise: () => void;
+  let rejectPromise: (reason?: unknown) => void;
+
+  const promise = new Promise<void>((resolve, reject) => {
+    resolvePromise = resolve;
+    rejectPromise = reject;
+  });
+
+  return {
+    promise,
+    resolve: resolvePromise!,
+    reject: rejectPromise!,
+  };
+}
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
@@ -62,7 +87,7 @@ function renderPanel(
           firebaseUid: "firebase-uid-1",
           scope: "https://www.googleapis.com/auth/contacts",
           accountEmail: "developer@example.com",
-          connectedAt: "2026-04-06T00:00:00.000Z",
+          connectedAt,
           ...googleAuthOverride,
         }),
       ),
@@ -95,7 +120,7 @@ describe("SettingsPanel", () => {
       firebaseUid: "firebase-uid-1",
       scope: "https://www.googleapis.com/auth/contacts",
       accountEmail: "developer@example.com",
-      connectedAt: "2026-04-06T00:00:00.000Z",
+      connectedAt,
     });
 
     const { store } = renderPanel({
@@ -122,6 +147,9 @@ describe("SettingsPanel", () => {
     expect(
       screen.getByText(/signed in as developer@example.com/i),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(`Connected on ${formattedConnectedAt}`),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("radio", { name: /^disconnected$/i }));
 
@@ -134,15 +162,83 @@ describe("SettingsPanel", () => {
       screen.queryByText(/signed in as developer@example.com/i),
     ).not.toBeInTheDocument();
     expect(
+      screen.queryByText(`Connected on ${formattedConnectedAt}`),
+    ).not.toBeInTheDocument();
+    expect(
       screen.queryByText(/no google account connected/i),
     ).not.toBeInTheDocument();
   });
 
-  it("shows the signed-in email when Google is connected", () => {
+  it("disables both Google status options and shows a spinner on Disconnected while disconnecting", async () => {
+    const deferred = createDeferredPromise();
+    disconnectGoogleContactsMock.mockImplementation(() => deferred.promise);
+
+    const { store } = renderPanel();
+    const user = userEvent.setup();
+    const connectedRadio = screen.getByRole("radio", { name: /^connected$/i });
+    const disconnectedRadio = screen.getByRole("radio", {
+      name: /^disconnected$/i,
+    });
+
+    await user.click(disconnectedRadio);
+
+    await waitFor(() => {
+      expect(disconnectGoogleContactsMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(store.getState().onboarding.googleAuth.status).toBe("disconnecting");
+    expect(connectedRadio).toBeDisabled();
+    expect(disconnectedRadio).toBeDisabled();
+    expect(disconnectedRadio).toBeChecked();
+    expect(
+      disconnectedRadio.closest("label")?.querySelector("svg.animate-spin"),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(/signed in as developer@example.com/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`Connected on ${formattedConnectedAt}`),
+    ).toBeInTheDocument();
+
+    deferred.resolve();
+
+    await waitFor(() => {
+      expect(store.getState().onboarding.googleAuth.status).toBe("signed_out");
+    });
+  });
+
+  it("restores the connected state if disconnect fails", async () => {
+    disconnectGoogleContactsMock.mockRejectedValueOnce(
+      new Error("Network error"),
+    );
+
+    const { store } = renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("radio", { name: /^disconnected$/i }));
+
+    await waitFor(() => {
+      expect(disconnectGoogleContactsMock).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(store.getState().onboarding.googleAuth.status).toBe("connected");
+    });
+
+    expect(screen.getByRole("radio", { name: /^connected$/i })).toBeChecked();
+    expect(
+      screen.getByText(/signed in as developer@example.com/i),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the signed-in email and connection time when Google is connected", () => {
     renderPanel();
 
     expect(
       screen.getByText(/signed in as developer@example.com/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`Connected on ${formattedConnectedAt}`),
     ).toBeInTheDocument();
   });
 

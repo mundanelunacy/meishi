@@ -13,7 +13,11 @@ export type {
 } from "./contact";
 
 export type SupportedLlmProvider = "openai" | "anthropic" | "gemini";
-export type GoogleAuthStatus = "signed_out" | "connecting" | "connected";
+export type GoogleAuthStatus =
+  | "signed_out"
+  | "connecting"
+  | "disconnecting"
+  | "connected";
 export type ThemeMode = "system" | "light" | "dark";
 export type AppLocale = "en-US" | "ja";
 
