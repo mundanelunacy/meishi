@@ -79,6 +79,25 @@ const messages = defineMessages({
     defaultMessage:
       "Those external providers operate under their own terms and privacy policies. Meishi does not control how OpenAI, Anthropic, Google, or other providers process data once you send it to them.",
   },
+  privacyDisclosureTitle: {
+    id: "legal.privacy.disclosure.title",
+    defaultMessage: "How Meishi shares, transfers, or discloses Google user data",
+  },
+  privacyDisclosureBody1: {
+    id: "legal.privacy.disclosure.body1",
+    defaultMessage:
+      "Meishi uses Google user data only to let you connect your Google account, create or update Google Contacts that you explicitly choose to sync, upload an optional contact photo for that contact, maintain your connection status, and support token refresh, disconnect, and account-reconnection flows.",
+  },
+  privacyDisclosureBody2: {
+    id: "legal.privacy.disclosure.body2",
+    defaultMessage:
+      "Meishi does not sell Google user data or share it with advertisers, data brokers, or other unrelated third parties. Google user data is disclosed only to Google for the Google Contacts features you request and to the Firebase and Google Cloud services used to exchange OAuth codes, store refresh tokens server-side, mint short-lived access tokens, and run disconnect or retention-cleanup tasks.",
+  },
+  privacyDisclosureBody3: {
+    id: "legal.privacy.disclosure.body3",
+    defaultMessage:
+      "Meishi does not use Google user data for advertising, resale, unrelated profiling, or training generalized AI models. Limited disclosure may occur only if required to comply with applicable law, enforce the app's terms, protect against fraud or security issues, or complete a merger, acquisition, or asset transfer.",
+  },
   privacyFirebaseTitle: {
     id: "legal.privacy.firebase.title",
     defaultMessage: "Firebase and Google authorization",
@@ -245,7 +264,7 @@ export function getPrivacyPolicyContent(intl: IntlShape): LegalPageContent {
   return {
     title: intl.formatMessage(messages.privacyTitle),
     summary: intl.formatMessage(messages.privacySummary),
-    effectiveDate: "April 7, 2026",
+    effectiveDate: "April 13, 2026",
     sections: [
       {
         title: intl.formatMessage(messages.privacyOverviewTitle),
@@ -274,6 +293,14 @@ export function getPrivacyPolicyContent(intl: IntlShape): LegalPageContent {
           intl.formatMessage(messages.privacyThirdPartyBody1),
           intl.formatMessage(messages.privacyThirdPartyBody2),
           intl.formatMessage(messages.privacyThirdPartyBody3),
+        ],
+      },
+      {
+        title: intl.formatMessage(messages.privacyDisclosureTitle),
+        paragraphs: [
+          intl.formatMessage(messages.privacyDisclosureBody1),
+          intl.formatMessage(messages.privacyDisclosureBody2),
+          intl.formatMessage(messages.privacyDisclosureBody3),
         ],
       },
       {

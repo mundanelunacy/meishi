@@ -716,6 +716,18 @@
   "legal.privacy.choices.title": {
     "defaultMessage": "Your choices"
   },
+  "legal.privacy.disclosure.body1": {
+    "defaultMessage": "Meishi uses Google user data only to let you connect your Google account, create or update Google Contacts that you explicitly choose to sync, upload an optional contact photo for that contact, maintain your connection status, and support token refresh, disconnect, and account-reconnection flows."
+  },
+  "legal.privacy.disclosure.body2": {
+    "defaultMessage": "Meishi does not sell Google user data or share it with advertisers, data brokers, or other unrelated third parties. Google user data is disclosed only to Google for the Google Contacts features you request and to the Firebase and Google Cloud services used to exchange OAuth codes, store refresh tokens server-side, mint short-lived access tokens, and run disconnect or retention-cleanup tasks."
+  },
+  "legal.privacy.disclosure.body3": {
+    "defaultMessage": "Meishi does not use Google user data for advertising, resale, unrelated profiling, or training generalized AI models. Limited disclosure may occur only if required to comply with applicable law, enforce the app's terms, protect against fraud or security issues, or complete a merger, acquisition, or asset transfer."
+  },
+  "legal.privacy.disclosure.title": {
+    "defaultMessage": "How Meishi shares, transfers, or discloses Google user data"
+  },
   "legal.privacy.firebase.body1": {
     "defaultMessage": "Google authorization is handled through Firebase-backed browser flows and Firebase Functions. Functions act as a token broker for OAuth code exchange, refresh-token storage, short-lived access-token refresh, and disconnection or retention cleanup tasks."
   },
