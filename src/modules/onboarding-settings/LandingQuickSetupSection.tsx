@@ -13,6 +13,7 @@ import { getSupportedModelOptions } from "./modelOptions";
 import {
   getCommonToastMessages,
   getLandingContent,
+  getLlmValidationContent,
   getProviderFieldLabels,
   getProviderOptionLabels,
 } from "./onboardingContent";
@@ -26,6 +27,7 @@ import {
   setPreferredAnthropicModel,
   setPreferredOpenAiModel,
 } from "./onboardingSlice";
+import { useLlmValidation } from "./useLlmValidation";
 
 type LandingQuickSetupSectionProps = {
   sectionId?: string;
@@ -43,6 +45,8 @@ export function LandingQuickSetupSection({
   const navigate = useNavigate();
   const settings = useAppSelector(selectSettings);
   const readiness = useAppSelector(selectAppReadiness);
+  const { currentConfiguration, validateCurrentConfiguration, validation } =
+    useLlmValidation();
 
   const selectedProvider = settings.llmProvider;
   const providerApiKey =
@@ -65,6 +69,7 @@ export function LandingQuickSetupSection({
   const content = getLandingContent(intl);
   const commonToasts = getCommonToastMessages(intl);
   const apiKeyLinks = getApiKeyLinkContent(intl);
+  const validationContent = getLlmValidationContent(intl);
 
   const canContinue = readiness.hasLlmConfiguration;
 
@@ -72,6 +77,10 @@ export function LandingQuickSetupSection({
     dispatch(completeOnboarding());
     pushToast(commonToasts.landingSetupComplete);
     navigate({ to: "/capture" });
+  }
+
+  async function handleValidate() {
+    await validateCurrentConfiguration();
   }
 
   return (
@@ -169,6 +178,44 @@ export function LandingQuickSetupSection({
                 ))}
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  void handleValidate();
+                }}
+                disabled={
+                  currentConfiguration === null ||
+                  validation.status === "validating"
+                }
+              >
+                {validation.status === "validating"
+                  ? validationContent.pending
+                  : validationContent.action}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {validationContent.help}
+              </span>
+            </div>
+            {validation.status === "valid" ? (
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                {validationContent.success}
+              </p>
+            ) : null}
+            {validation.status === "invalid" && validation.errorMessage ? (
+              <p className="text-sm text-destructive">
+                {validation.errorMessage}
+              </p>
+            ) : null}
+            {validation.status === "idle" && currentConfiguration ? (
+              <p className="text-sm text-muted-foreground">
+                {validationContent.required}
+              </p>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-center gap-4 border-t border-border pt-6">

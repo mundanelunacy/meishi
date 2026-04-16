@@ -6,7 +6,7 @@ If you want the quick product overview, public app link, install instructions, o
 
 ## Product flow
 
-1. On first load, the user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, can choose an appearance mode that defaults to the system setting, can set the docs locale (`en-US` by default, with `ja` and `ko` support), and can tune one shared advanced extraction prompt.
+1. On first load, the user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, validates that the selected key/model pair works, can choose an appearance mode that defaults to the system setting, can set the docs locale (`en-US` by default, with `ja` and `ko` support), and can tune one shared advanced extraction prompt.
 2. The user captures one or more business-card images from a mobile camera or image library.
 3. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
 4. The review screen shows source images in the top section and an editable contact form in the lower section. The form covers Google-Contacts-style name/company fields such as prefix, phonetic name parts, nickname, file-as, and department, and expands to repeatable collections such as multiple emails, phone numbers, addresses, websites, related people, significant dates, and custom fields. Draft edits autosave locally for recovery after refresh.
@@ -88,6 +88,7 @@ If you want the quick product overview, public app link, install instructions, o
   - LLM provider choice
   - provider-specific API keys
   - preferred OpenAI and Anthropic models
+  - last successful or failed validation result for the current provider/key/model pair
   - appearance mode preference (`system`, `light`, or `dark`)
   - docs locale preference (`en-US`, `ja`, or `ko`)
   - shared advanced extraction prompt

@@ -38,6 +38,28 @@ const messages = defineMessages({
     id: "onboarding.securityNote.title",
     defaultMessage: "Security note",
   },
+  validationAction: {
+    id: "onboarding.validation.action",
+    defaultMessage: "Validate API key",
+  },
+  validationPending: {
+    id: "onboarding.validation.pending",
+    defaultMessage: "Validating...",
+  },
+  validationHelp: {
+    id: "onboarding.validation.help",
+    defaultMessage:
+      "Meishi checks the selected provider key and model before enabling extraction screens.",
+  },
+  validationSuccess: {
+    id: "onboarding.validation.success",
+    defaultMessage: "This provider key and model are valid.",
+  },
+  validationRequired: {
+    id: "onboarding.validation.required",
+    defaultMessage:
+      "Validate the selected provider key before continuing to capture.",
+  },
   landingToastSetupComplete: {
     id: "landing.toast.setupComplete",
     defaultMessage: "Setup complete. Start capturing cards.",
@@ -345,7 +367,7 @@ const messages = defineMessages({
   landingContinueHelp: {
     id: "landing.setup.continueHelp",
     defaultMessage:
-      "Ready when the selected provider is configured. Google authorization is optional until you save to Google Contacts.",
+      "Ready when the selected provider is configured and validated. Google authorization is optional until you save to Google Contacts.",
   },
   landingFooterLicense: {
     id: "landing.footer.license",
@@ -455,7 +477,7 @@ const messages = defineMessages({
   onboardingContinueHelp: {
     id: "onboarding.continueHelp",
     defaultMessage:
-      "Ready when the selected provider is configured. Google access is only needed when you save to Google Contacts.",
+      "Ready when the selected provider is configured and validated. Google access is only needed when you save to Google Contacts.",
   },
   onboardingNextTitle: {
     id: "onboarding.next.title",
@@ -696,6 +718,16 @@ export function getProviderFieldLabels(
       provider === "anthropic"
         ? intl.formatMessage(messages.anthropicModel)
         : intl.formatMessage(messages.openAiModel),
+  };
+}
+
+export function getLlmValidationContent(intl: IntlShape) {
+  return {
+    action: intl.formatMessage(messages.validationAction),
+    pending: intl.formatMessage(messages.validationPending),
+    help: intl.formatMessage(messages.validationHelp),
+    success: intl.formatMessage(messages.validationSuccess),
+    required: intl.formatMessage(messages.validationRequired),
   };
 }
 

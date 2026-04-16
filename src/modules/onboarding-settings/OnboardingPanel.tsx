@@ -37,10 +37,12 @@ import {
 } from "../google-auth/googleIdentity";
 import { getSupportedModelOptions } from "./modelOptions";
 import {
+  getLlmValidationContent,
   getOnboardingPanelContent,
   getProviderFieldLabels,
   getProviderOptionLabels,
 } from "./onboardingContent";
+import { useLlmValidation } from "./useLlmValidation";
 
 export function OnboardingPanel() {
   const intl = useIntl();
@@ -49,6 +51,8 @@ export function OnboardingPanel() {
   const settings = useAppSelector(selectSettings);
   const googleAuth = useAppSelector(selectGoogleAuth);
   const readiness = useAppSelector(selectAppReadiness);
+  const { currentConfiguration, validateCurrentConfiguration, validation } =
+    useLlmValidation();
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const selectedProvider = settings.llmProvider;
@@ -65,6 +69,7 @@ export function OnboardingPanel() {
     providerModel,
   );
   const content = getOnboardingPanelContent(intl, getGoogleScope());
+  const validationContent = getLlmValidationContent(intl);
   const providerLabels = getProviderFieldLabels(intl, selectedProvider);
   const providerOptionLabels = getProviderOptionLabels(intl);
 
@@ -113,6 +118,10 @@ export function OnboardingPanel() {
     });
     pushToast(content.toasts.complete);
     navigate({ to: "/capture" });
+  }
+
+  async function handleValidate() {
+    await validateCurrentConfiguration();
   }
 
   return (
@@ -205,6 +214,44 @@ export function OnboardingPanel() {
                 ))}
               </Select>
             </div>
+          </section>
+
+          <section className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  void handleValidate();
+                }}
+                disabled={
+                  currentConfiguration === null ||
+                  validation.status === "validating"
+                }
+              >
+                {validation.status === "validating"
+                  ? validationContent.pending
+                  : validationContent.action}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {validationContent.help}
+              </span>
+            </div>
+            {validation.status === "valid" ? (
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                {validationContent.success}
+              </p>
+            ) : null}
+            {validation.status === "invalid" && validation.errorMessage ? (
+              <Alert className="border-destructive/40 text-destructive">
+                {validation.errorMessage}
+              </Alert>
+            ) : null}
+            {validation.status === "idle" && currentConfiguration ? (
+              <p className="text-sm text-muted-foreground">
+                {validationContent.required}
+              </p>
+            ) : null}
           </section>
 
           <section className="rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">

@@ -2,6 +2,7 @@ import type {
   AppLocale,
   AppSettings,
   GoogleAuthState,
+  LlmValidationResult,
   ThemeMode,
 } from "../../shared/types/models";
 import { DEFAULT_EXTRACTION_PROMPT } from "../../shared/lib/extractionPrompt";
@@ -13,6 +14,7 @@ const VALID_LOCALES = new Set<AppLocale>(["en-US", "ja", "ko"]);
 export interface PersistedOnboardingState {
   settings: AppSettings;
   googleAuth?: Pick<GoogleAuthState, "scope" | "accountEmail" | "connectedAt">;
+  llmValidation?: LlmValidationResult;
 }
 
 const defaultSettings: AppSettings = {
@@ -116,6 +118,40 @@ function sanitizeGoogleAuthMetadata(
   };
 }
 
+function sanitizeLlmValidation(
+  llmValidation: unknown,
+): PersistedOnboardingState["llmValidation"] | undefined {
+  if (!isRecord(llmValidation)) {
+    return undefined;
+  }
+
+  const provider = llmValidation.provider;
+  const apiKey = llmValidation.apiKey;
+  const model = llmValidation.model;
+  const checkedAt = llmValidation.checkedAt;
+  const isValid = llmValidation.isValid;
+  const errorMessage = llmValidation.errorMessage;
+
+  if (
+    (provider !== "openai" && provider !== "anthropic" && provider !== "gemini") ||
+    typeof apiKey !== "string" ||
+    typeof model !== "string" ||
+    typeof checkedAt !== "string" ||
+    typeof isValid !== "boolean"
+  ) {
+    return undefined;
+  }
+
+  return {
+    provider,
+    apiKey,
+    model,
+    checkedAt,
+    isValid,
+    errorMessage: typeof errorMessage === "string" ? errorMessage : undefined,
+  };
+}
+
 export function loadPersistedState(): PersistedOnboardingState {
   try {
     const storage = readLocalStorage();
@@ -128,6 +164,7 @@ export function loadPersistedState(): PersistedOnboardingState {
     return {
       settings: sanitizeSettings(parsed.settings),
       googleAuth: sanitizeGoogleAuthMetadata(parsed.googleAuth),
+      llmValidation: sanitizeLlmValidation(parsed.llmValidation),
     };
   } catch {
     return { settings: defaultSettings };
@@ -142,6 +179,7 @@ export function persistOnboardingState(state: PersistedOnboardingState) {
       JSON.stringify({
         settings: sanitizeSettings(state.settings),
         googleAuth: sanitizeGoogleAuthMetadata(state.googleAuth),
+        llmValidation: sanitizeLlmValidation(state.llmValidation),
       }),
     );
   } catch {

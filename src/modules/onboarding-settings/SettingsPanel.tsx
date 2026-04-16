@@ -34,10 +34,12 @@ import { useGoogleAuthStateSync } from "../google-auth/useGoogleAuthStateSync";
 import { pushToast } from "../../shared/ui/toastBus";
 import { getSupportedModelOptions } from "./modelOptions";
 import {
+  getLlmValidationContent,
   getProviderFieldLabels,
   getProviderOptionLabels,
   getSettingsContent,
 } from "./onboardingContent";
+import { useLlmValidation } from "./useLlmValidation";
 
 export function SettingsPanel() {
   useGoogleAuthStateSync();
@@ -47,6 +49,8 @@ export function SettingsPanel() {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectSettings);
   const googleAuth = useAppSelector(selectGoogleAuth);
+  const { currentConfiguration, validateCurrentConfiguration, validation } =
+    useLlmValidation();
   const selectedProvider =
     settings.llmProvider === "anthropic" ? "anthropic" : "openai";
   const providerApiKey =
@@ -62,6 +66,7 @@ export function SettingsPanel() {
     providerModel,
   );
   const content = getSettingsContent(intl);
+  const validationContent = getLlmValidationContent(intl);
   const connectedOnLabel = googleAuth.connectedAt
     ? content.connectedOn(googleAuth.connectedAt)
     : null;
@@ -135,6 +140,10 @@ export function SettingsPanel() {
         error instanceof Error ? error.message : content.toasts.signOutError,
       );
     }
+  }
+
+  async function handleValidate() {
+    await validateCurrentConfiguration();
   }
 
   return (
@@ -220,6 +229,44 @@ export function SettingsPanel() {
                 ))}
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  void handleValidate();
+                }}
+                disabled={
+                  currentConfiguration === null ||
+                  validation.status === "validating"
+                }
+              >
+                {validation.status === "validating"
+                  ? validationContent.pending
+                  : validationContent.action}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {validationContent.help}
+              </span>
+            </div>
+            {validation.status === "valid" ? (
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                {validationContent.success}
+              </p>
+            ) : null}
+            {validation.status === "invalid" && validation.errorMessage ? (
+              <Alert className="border-destructive/40 text-destructive">
+                {validation.errorMessage}
+              </Alert>
+            ) : null}
+            {validation.status === "idle" && currentConfiguration ? (
+              <p className="text-sm text-muted-foreground">
+                {validationContent.required}
+              </p>
+            ) : null}
           </div>
         </CardContent>
       </Card>

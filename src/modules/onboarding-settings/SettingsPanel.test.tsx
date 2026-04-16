@@ -8,6 +8,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "../../test/renderWithIntl";
 import {
+  completeLlmValidationSuccess,
   onboardingReducer,
   setGoogleAuthState,
   setOpenAiApiKey,
@@ -27,6 +28,7 @@ const formattedConnectedAt = new Intl.DateTimeFormat("en-US", {
 const navigateMock = vi.fn();
 const connectGoogleContactsMock = vi.fn();
 const disconnectGoogleContactsMock = vi.fn(() => Promise.resolve());
+const fetchMock = vi.fn();
 
 function createDeferredPromise() {
   let resolvePromise: () => void;
@@ -53,7 +55,8 @@ vi.mock("../../app/env", () => ({
 }));
 
 vi.mock("../google-auth/googleIdentity", () => ({
-  connectGoogleContacts: connectGoogleContactsMock,
+  connectGoogleContacts: (...args: unknown[]) =>
+    connectGoogleContactsMock(...args),
   createInitialGoogleAuthState: () => ({
     status: "signed_out",
     firebaseUid: null,
@@ -61,7 +64,8 @@ vi.mock("../google-auth/googleIdentity", () => ({
     accountEmail: undefined,
     connectedAt: null,
   }),
-  disconnectGoogleContacts: disconnectGoogleContactsMock,
+  disconnectGoogleContacts: (...args: unknown[]) =>
+    disconnectGoogleContactsMock(...args),
 }));
 
 vi.mock("../google-auth/useGoogleAuthStateSync", () => ({
@@ -73,13 +77,23 @@ function renderPanel(
     ReturnType<typeof onboardingReducer>["googleAuth"]
   >,
 ) {
+  const withApiKey = onboardingReducer(undefined, setOpenAiApiKey("sk-test"));
+  const validated = onboardingReducer(
+    withApiKey,
+    completeLlmValidationSuccess({
+      provider: "openai",
+      apiKey: "sk-test",
+      model: withApiKey.settings.preferredOpenAiModel,
+    }),
+  );
+
   const store = configureStore({
     reducer: {
       onboarding: onboardingReducer,
     },
     preloadedState: {
       onboarding: onboardingReducer(
-        onboardingReducer(undefined, setOpenAiApiKey("sk-test")),
+        validated,
         setGoogleAuthState({
           status: "connected",
           firebaseUid: "firebase-uid-1",
@@ -110,6 +124,8 @@ describe("SettingsPanel", () => {
     navigateMock.mockReset();
     connectGoogleContactsMock.mockReset();
     disconnectGoogleContactsMock.mockClear();
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
   });
 
   it("connects Google when the status toggle is switched to connected", async () => {
@@ -290,6 +306,24 @@ describe("SettingsPanel", () => {
     expect(
       screen.getByRole("option", { name: /claude sonnet 4\.6/i }),
     ).toBeInTheDocument();
+  });
+
+  it("validates the selected provider key from settings", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+    });
+
+    renderPanel();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /validate api key/i }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByText(/this provider key and model are valid/i),
+      ).toBeInTheDocument();
+    });
   });
 
   it("renders the stored color theme preference", () => {

@@ -12,6 +12,7 @@ import { OnboardingPanel } from "./OnboardingPanel";
 
 const navigateMock = vi.fn();
 const connectGoogleContactsMock = vi.fn();
+const fetchMock = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
@@ -58,6 +59,8 @@ describe("OnboardingPanel", () => {
   beforeEach(() => {
     navigateMock.mockReset();
     connectGoogleContactsMock.mockReset();
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
   });
 
   it("connects Google auth and enables finishing onboarding", async () => {
@@ -79,11 +82,16 @@ describe("OnboardingPanel", () => {
     expect(continueButton).toBeDisabled();
 
     await user.type(screen.getByLabelText(/api key/i), "sk-test");
+    fetchMock.mockResolvedValue({
+      ok: true,
+    });
+    await user.click(screen.getByRole("button", { name: /validate api key/i }));
     await user.click(
       screen.getByRole("button", { name: /connect google account/i }),
     );
 
     await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(connectGoogleContactsMock).toHaveBeenCalledTimes(1);
     });
 
@@ -96,7 +104,7 @@ describe("OnboardingPanel", () => {
     expect(navigateMock).toHaveBeenCalledWith({ to: "/capture" });
   });
 
-  it("enables finishing onboarding once an API key is present", async () => {
+  it("enables finishing onboarding once an API key is validated", async () => {
     renderPanel();
 
     const user = userEvent.setup();
@@ -107,10 +115,40 @@ describe("OnboardingPanel", () => {
     expect(continueButton).toBeDisabled();
 
     await user.type(screen.getByLabelText(/api key/i), "sk-test");
+    fetchMock.mockResolvedValue({
+      ok: true,
+    });
+    await user.click(screen.getByRole("button", { name: /validate api key/i }));
 
     await waitFor(() => {
       expect(continueButton).toBeEnabled();
     });
+  });
+
+  it("shows a validation error and keeps onboarding blocked when the key is rejected", async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      json: vi.fn().mockResolvedValue({
+        error: {
+          message: "Incorrect API key provided.",
+        },
+      }),
+    });
+
+    renderPanel();
+
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/api key/i), "sk-test");
+    await user.click(screen.getByRole("button", { name: /validate api key/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/incorrect api key provided/i),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole("button", { name: /continue to capture/i }),
+    ).toBeDisabled();
   });
 
   it("switches provider-specific fields when Anthropic is selected", async () => {
