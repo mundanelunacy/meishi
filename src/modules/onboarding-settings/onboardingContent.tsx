@@ -60,6 +60,35 @@ const messages = defineMessages({
     defaultMessage:
       "Validate the selected provider key before continuing to capture.",
   },
+  quickSetupValidationHelp: {
+    id: "landing.setup.validation.help",
+    defaultMessage:
+      "Meishi automatically checks the selected provider key and model before enabling capture.",
+  },
+  quickSetupValidationWaiting: {
+    id: "landing.setup.validation.waiting",
+    defaultMessage: "Checking this provider key shortly...",
+  },
+  quickSetupValidationMissingApiKey: {
+    id: "landing.setup.validation.missingApiKey",
+    defaultMessage: "Paste an API key to start validation.",
+  },
+  quickSetupValidationTooShort: {
+    id: "landing.setup.validation.tooShort",
+    defaultMessage: "This API key looks too short to validate yet.",
+  },
+  quickSetupValidationInvalidOpenAiFormat: {
+    id: "landing.setup.validation.invalidOpenAiFormat",
+    defaultMessage: "OpenAI keys should start with `sk-`.",
+  },
+  quickSetupValidationInvalidAnthropicFormat: {
+    id: "landing.setup.validation.invalidAnthropicFormat",
+    defaultMessage: "Anthropic keys should start with `sk-ant-`.",
+  },
+  quickSetupValidationMissingModel: {
+    id: "landing.setup.validation.missingModel",
+    defaultMessage: "Choose a model before validation can run.",
+  },
   landingToastSetupComplete: {
     id: "landing.toast.setupComplete",
     defaultMessage: "Setup complete. Start capturing cards.",
@@ -728,6 +757,24 @@ export function getLlmValidationContent(intl: IntlShape) {
     help: intl.formatMessage(messages.validationHelp),
     success: intl.formatMessage(messages.validationSuccess),
     required: intl.formatMessage(messages.validationRequired),
+  };
+}
+
+export function getQuickSetupValidationContent(intl: IntlShape) {
+  return {
+    help: intl.formatMessage(messages.quickSetupValidationHelp),
+    pending: intl.formatMessage(messages.validationPending),
+    success: intl.formatMessage(messages.validationSuccess),
+    waiting: intl.formatMessage(messages.quickSetupValidationWaiting),
+    missingApiKey: intl.formatMessage(messages.quickSetupValidationMissingApiKey),
+    tooShort: intl.formatMessage(messages.quickSetupValidationTooShort),
+    invalidOpenAiFormat: intl.formatMessage(
+      messages.quickSetupValidationInvalidOpenAiFormat,
+    ),
+    invalidAnthropicFormat: intl.formatMessage(
+      messages.quickSetupValidationInvalidAnthropicFormat,
+    ),
+    missingModel: intl.formatMessage(messages.quickSetupValidationMissingModel),
   };
 }
 

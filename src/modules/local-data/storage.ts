@@ -22,7 +22,7 @@ const defaultSettings: AppSettings = {
   openAiApiKey: "",
   anthropicApiKey: "",
   preferredOpenAiModel: "gpt-5.4-mini",
-  preferredAnthropicModel: "claude-sonnet-4-6",
+  preferredAnthropicModel: "claude-haiku-4-5-20251001",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
   themeMode: "system",
   locale: "en-US",

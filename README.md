@@ -4,7 +4,7 @@ Meishi turns business cards into structured contacts you can review, export, and
 
 [![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/mundanelunacy)
 
-[Open the public app](https://meishi-492400.web.app)  
+[Open the public app](https://meishi.dev)  
 [Read the technical notes](./DEV-NOTES.md)
 
 ![Meishi review screen](./public/docs/screenshots/capture-photoroll.png)
@@ -26,7 +26,7 @@ Typing contact details by hand is slow, inconsistent, and easy to abandon. Meish
 
 ### Use the public app
 
-Open [https://meishi-492400.web.app](https://meishi-492400.web.app).
+Open [https://meishi.dev](https://meishi.dev).
 
 You will be guided through:
 

@@ -13,7 +13,7 @@
 - First-run onboarding panel
 - Provider picker with OpenAI and Anthropic support
 - Provider-specific BYOK API key entry
-- Explicit provider key validation before setup can unlock extraction routes
+- Provider key validation before setup can unlock extraction routes, with automatic validation in the quick-setup flow
 - Provider-specific model selection from the app's current supported-model list
 - Standalone `/setup` page that reuses the landing-page quick setup section
 - `/capture`, `/review`, and `/settings` route entry now redirects through `/setup` until the selected provider key has been configured and validated
@@ -22,7 +22,9 @@
 - Docs language preference with `en-US`, `ja`, and `ko` options
 - Shared advanced extraction guidance setting appended to fixed structured-output and fidelity rules
 - Settings screen for later edits and local reset
-- Settings screen that reuses the landing-page provider form, exposes a simple Google connection toggle, and separates advanced controls
+- Settings reuses the same provider configuration form as quick setup, including debounced automatic validation and inline API-key feedback
+- Settings screen that exposes a simple Google connection toggle and separates advanced controls
+- Landing-page quick setup and the standalone `/setup` page auto-validate eligible provider key/model changes after a short debounce
 - Route readiness selectors
 - Firebase-backed Google connection status and reconnect/disconnect controls
 - Landing-page setup that treats Google Contacts authorization as optional until sync time

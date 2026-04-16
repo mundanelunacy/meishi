@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
@@ -115,9 +115,18 @@ function renderPanel(
   return { store };
 }
 
+async function flushDebounce(ms: number) {
+  await act(async () => {
+    vi.advanceTimersByTime(ms);
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
+
 describe("SettingsPanel", () => {
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
   });
 
   beforeEach(() => {
@@ -308,22 +317,33 @@ describe("SettingsPanel", () => {
     ).toBeInTheDocument();
   });
 
-  it("validates the selected provider key from settings", async () => {
+  it("reuses the quick-setup auto-validation flow in settings", async () => {
+    vi.useFakeTimers();
     fetchMock.mockResolvedValue({
       ok: true,
     });
 
     renderPanel();
+    expect(
+      screen.queryByRole("button", { name: /validate api key/i }),
+    ).not.toBeInTheDocument();
 
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /validate api key/i }));
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(
-        screen.getByText(/this provider key and model are valid/i),
-      ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/openai api key/i), {
+      target: { value: "sk-abcdefghijklmnopqrstuvwxyz" },
     });
+
+    expect(
+      screen.getByText(/checking this provider key shortly/i),
+    ).toBeInTheDocument();
+
+    await flushDebounce(700);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText(/this provider key and model are valid/i),
+    ).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 
   it("renders the stored color theme preference", () => {

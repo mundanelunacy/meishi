@@ -10,6 +10,17 @@ export interface LlmConfigurationIdentity {
   model: string;
 }
 
+export type LlmValidationPrecheckReason =
+  | "missing_api_key"
+  | "too_short"
+  | "invalid_format"
+  | "missing_model";
+
+export interface LlmValidationPrecheck {
+  eligible: boolean;
+  reason?: LlmValidationPrecheckReason;
+}
+
 type ValidationCompatibleSettings = Pick<
   AppSettings,
   | "llmProvider"
@@ -80,6 +91,47 @@ export function getValidationIdentity(
     provider: result.provider,
     apiKey: result.apiKey,
     model: result.model,
+  };
+}
+
+export function getLlmValidationPrecheck(
+  configuration: LlmConfigurationIdentity | null,
+): LlmValidationPrecheck {
+  if (!configuration) {
+    return {
+      eligible: false,
+      reason: "missing_api_key",
+    };
+  }
+
+  if (!configuration.model.trim()) {
+    return {
+      eligible: false,
+      reason: "missing_model",
+    };
+  }
+
+  if (configuration.apiKey.length < 20) {
+    return {
+      eligible: false,
+      reason: "too_short",
+    };
+  }
+
+  const pattern =
+    configuration.provider === "anthropic"
+      ? /^sk-ant-[A-Za-z0-9._-]+$/
+      : /^sk-[A-Za-z0-9._-]+$/;
+
+  if (!pattern.test(configuration.apiKey)) {
+    return {
+      eligible: false,
+      reason: "invalid_format",
+    };
+  }
+
+  return {
+    eligible: true,
   };
 }
 
