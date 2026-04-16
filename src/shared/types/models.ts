@@ -20,6 +20,7 @@ export type GoogleAuthStatus =
   | "connected";
 export type ThemeMode = "system" | "light" | "dark";
 export type AppLocale = "en-US" | "ja" | "ko";
+export type LlmValidationStatus = "idle" | "validating" | "valid" | "invalid";
 
 export interface AppSettings {
   llmProvider: SupportedLlmProvider;
@@ -31,6 +32,15 @@ export interface AppSettings {
   themeMode: ThemeMode;
   locale: AppLocale;
   onboardingCompletedAt?: string;
+}
+
+export interface LlmValidationResult {
+  provider: SupportedLlmProvider;
+  apiKey: string;
+  model: string;
+  isValid: boolean;
+  checkedAt: string;
+  errorMessage?: string;
 }
 
 export interface GoogleAuthState {

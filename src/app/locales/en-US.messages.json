@@ -672,7 +672,7 @@
     "defaultMessage": "Continue to capture"
   },
   "landing.setup.continueHelp": {
-    "defaultMessage": "Ready when the selected provider is configured. Google authorization is optional until you save to Google Contacts."
+    "defaultMessage": "Ready when the selected provider is configured and validated. Google authorization is optional until you save to Google Contacts."
   },
   "landing.setup.description": {
     "defaultMessage": "One thing needed: an LLM API key. Google sign-in only happens later if you choose Google Contacts sync."
@@ -879,7 +879,7 @@
     "defaultMessage": "Continue to capture"
   },
   "onboarding.continueHelp": {
-    "defaultMessage": "Ready when the selected provider is configured. Google access is only needed when you save to Google Contacts."
+    "defaultMessage": "Ready when the selected provider is configured and validated. Google access is only needed when you save to Google Contacts."
   },
   "onboarding.description": {
     "defaultMessage": "Meishi runs entirely in the browser. It stores your LLM key locally, which is acceptable for trusted prototype use only."
@@ -988,6 +988,21 @@
   },
   "onboarding.toast.complete": {
     "defaultMessage": "Onboarding complete. You can start capturing cards."
+  },
+  "onboarding.validation.action": {
+    "defaultMessage": "Validate API key"
+  },
+  "onboarding.validation.help": {
+    "defaultMessage": "Meishi checks the selected provider key and model before enabling extraction screens."
+  },
+  "onboarding.validation.pending": {
+    "defaultMessage": "Validating..."
+  },
+  "onboarding.validation.required": {
+    "defaultMessage": "Validate the selected provider key before continuing to capture."
+  },
+  "onboarding.validation.success": {
+    "defaultMessage": "This provider key and model are valid."
   },
   "pwa.toast.canInstall": {
     "defaultMessage": "Meishi can be installed on this device."

@@ -37,10 +37,12 @@ import {
 } from "../google-auth/googleIdentity";
 import { getSupportedModelOptions } from "./modelOptions";
 import {
+  getLlmValidationContent,
   getOnboardingPanelContent,
   getProviderFieldLabels,
   getProviderOptionLabels,
 } from "./onboardingContent";
+import { useLlmValidation } from "./useLlmValidation";
 
 export function OnboardingPanel() {
   const intl = useIntl();
@@ -49,23 +51,28 @@ export function OnboardingPanel() {
   const settings = useAppSelector(selectSettings);
   const googleAuth = useAppSelector(selectGoogleAuth);
   const readiness = useAppSelector(selectAppReadiness);
+  const { currentConfiguration, validateCurrentConfiguration, validation } =
+    useLlmValidation();
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const selectedProvider = settings.llmProvider;
+  const effectiveProvider =
+    selectedProvider === "anthropic" ? "anthropic" : "openai";
   const providerApiKey =
-    selectedProvider === "anthropic"
+    effectiveProvider === "anthropic"
       ? settings.anthropicApiKey
       : settings.openAiApiKey;
   const providerModel =
-    selectedProvider === "anthropic"
+    effectiveProvider === "anthropic"
       ? settings.preferredAnthropicModel
       : settings.preferredOpenAiModel;
   const providerModelOptions = getSupportedModelOptions(
-    selectedProvider,
+    effectiveProvider,
     providerModel,
   );
   const content = getOnboardingPanelContent(intl, getGoogleScope());
-  const providerLabels = getProviderFieldLabels(intl, selectedProvider);
+  const validationContent = getLlmValidationContent(intl);
+  const providerLabels = getProviderFieldLabels(intl, effectiveProvider);
   const providerOptionLabels = getProviderOptionLabels(intl);
 
   const posthog = usePostHog();
@@ -115,6 +122,10 @@ export function OnboardingPanel() {
     navigate({ to: "/capture" });
   }
 
+  async function handleValidate() {
+    await validateCurrentConfiguration();
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>
@@ -142,7 +153,7 @@ export function OnboardingPanel() {
             <Label htmlFor="provider">{providerLabels.provider}</Label>
             <Select
               id="provider"
-              value={settings.llmProvider}
+              value={effectiveProvider}
               onChange={(event) =>
                 dispatch(
                   setLlmProvider(
@@ -169,12 +180,12 @@ export function OnboardingPanel() {
                 type="password"
                 autoComplete="off"
                 placeholder={
-                  selectedProvider === "anthropic" ? "sk-ant-..." : "sk-..."
+                  effectiveProvider === "anthropic" ? "sk-ant-..." : "sk-..."
                 }
                 value={providerApiKey}
                 onChange={(event) => {
                   const nextValue = event.target.value;
-                  if (selectedProvider === "anthropic") {
+                  if (effectiveProvider === "anthropic") {
                     dispatch(setAnthropicApiKey(nextValue));
                     return;
                   }
@@ -190,7 +201,7 @@ export function OnboardingPanel() {
                 value={providerModel}
                 onChange={(event) => {
                   const nextValue = event.target.value;
-                  if (selectedProvider === "anthropic") {
+                  if (effectiveProvider === "anthropic") {
                     dispatch(setPreferredAnthropicModel(nextValue));
                     return;
                   }
@@ -205,6 +216,44 @@ export function OnboardingPanel() {
                 ))}
               </Select>
             </div>
+          </section>
+
+          <section className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  void handleValidate();
+                }}
+                disabled={
+                  currentConfiguration === null ||
+                  validation.status === "validating"
+                }
+              >
+                {validation.status === "validating"
+                  ? validationContent.pending
+                  : validationContent.action}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {validationContent.help}
+              </span>
+            </div>
+            {validation.status === "valid" ? (
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                {validationContent.success}
+              </p>
+            ) : null}
+            {validation.status === "invalid" && validation.errorMessage ? (
+              <Alert className="border-destructive/40 text-destructive">
+                {validation.errorMessage}
+              </Alert>
+            ) : null}
+            {validation.status === "idle" && currentConfiguration ? (
+              <p className="text-sm text-muted-foreground">
+                {validationContent.required}
+              </p>
+            ) : null}
           </section>
 
           <section className="rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">

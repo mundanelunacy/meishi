@@ -8,6 +8,7 @@
 ## Features
 
 - `localStorage` helpers for onboarding/settings persistence
+- `localStorage` persistence for the last validated LLM provider/key/model result
 - Dexie-based IndexedDB for images, sessions, drafts, and sync history
 - Recovery helpers for active capture and the latest autosaved draft
 - Append-only sync outcome recording for create-plus-photo flows
@@ -31,6 +32,7 @@
   - settings
   - docs locale preference
   - light Google auth metadata only
+  - last LLM provider validation result for the active key/model pair
 - IndexedDB
   - card images
   - active session

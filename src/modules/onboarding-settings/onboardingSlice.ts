@@ -8,6 +8,8 @@ import type {
   AppLocale,
   AppSettings,
   GoogleAuthState,
+  LlmValidationResult,
+  LlmValidationStatus,
   SupportedLlmProvider,
   ThemeMode,
 } from "../../shared/types/models";
@@ -18,6 +20,12 @@ import {
   persistOnboardingState,
 } from "../local-data";
 import { createInitialGoogleAuthState } from "../google-auth/googleAuthState";
+import {
+  getCurrentLlmConfiguration,
+  getValidationIdentity,
+  matchesLlmConfiguration,
+  type LlmConfigurationIdentity,
+} from "./llmKeyValidation";
 
 const persisted =
   typeof window === "undefined"
@@ -27,11 +35,19 @@ const persisted =
 interface OnboardingState {
   settings: AppSettings;
   googleAuth: GoogleAuthState;
+  llmValidation: {
+    pendingConfiguration: LlmConfigurationIdentity | null;
+    lastResult: LlmValidationResult | null;
+  };
 }
 
 const initialState: OnboardingState = {
   settings: persisted.settings,
   googleAuth: createInitialGoogleAuthState(persisted.googleAuth),
+  llmValidation: {
+    pendingConfiguration: null,
+    lastResult: persisted.llmValidation ?? null,
+  },
 };
 
 function persistState(state: OnboardingState) {
@@ -42,18 +58,12 @@ function persistState(state: OnboardingState) {
   persistOnboardingState({
     settings: state.settings,
     googleAuth: state.googleAuth,
+    llmValidation: state.llmValidation.lastResult ?? undefined,
   });
 }
 
 function hasProviderConfiguration(settings: AppSettings) {
-  switch (settings.llmProvider) {
-    case "openai":
-      return settings.openAiApiKey.trim().length > 0;
-    case "anthropic":
-      return settings.anthropicApiKey.trim().length > 0;
-    default:
-      return false;
-  }
+  return getCurrentLlmConfiguration(settings) !== null;
 }
 
 const onboardingSlice = createSlice({
@@ -96,6 +106,40 @@ const onboardingSlice = createSlice({
       state.googleAuth = action.payload;
       persistState(state);
     },
+    startLlmValidation(
+      state,
+      action: PayloadAction<LlmConfigurationIdentity>,
+    ) {
+      state.llmValidation.pendingConfiguration = action.payload;
+      persistState(state);
+    },
+    completeLlmValidationSuccess(
+      state,
+      action: PayloadAction<LlmConfigurationIdentity>,
+    ) {
+      state.llmValidation.pendingConfiguration = null;
+      state.llmValidation.lastResult = {
+        ...action.payload,
+        isValid: true,
+        checkedAt: new Date().toISOString(),
+      };
+      persistState(state);
+    },
+    completeLlmValidationFailure(
+      state,
+      action: PayloadAction<LlmConfigurationIdentity & { errorMessage: string }>,
+    ) {
+      state.llmValidation.pendingConfiguration = null;
+      state.llmValidation.lastResult = {
+        provider: action.payload.provider,
+        apiKey: action.payload.apiKey,
+        model: action.payload.model,
+        checkedAt: new Date().toISOString(),
+        isValid: false,
+        errorMessage: action.payload.errorMessage,
+      };
+      persistState(state);
+    },
     completeOnboarding(state) {
       state.settings.onboardingCompletedAt = new Date().toISOString();
       persistState(state);
@@ -107,6 +151,10 @@ const onboardingSlice = createSlice({
     clearAllSettings(state) {
       state.settings = defaultSettings;
       state.googleAuth = createInitialGoogleAuthState();
+      state.llmValidation = {
+        pendingConfiguration: null,
+        lastResult: null,
+      };
       clearPersistedState();
     },
   },
@@ -122,6 +170,9 @@ export const {
   setThemeMode,
   setLocale,
   setGoogleAuthState,
+  startLlmValidation,
+  completeLlmValidationSuccess,
+  completeLlmValidationFailure,
   completeOnboarding,
   signOutGoogle,
   clearAllSettings,
@@ -138,8 +189,57 @@ export const selectLocale = (state: RootState) =>
   state.onboarding.settings.locale;
 export const selectHasCompletedOnboarding = (state: RootState) =>
   Boolean(state.onboarding.settings.onboardingCompletedAt);
+export const selectLlmValidationState = (state: RootState) =>
+  state.onboarding.llmValidation;
+export const selectCurrentLlmValidation = createSelector(
+  [selectSettings, selectLlmValidationState],
+  (settings, llmValidation): {
+    status: LlmValidationStatus;
+    errorMessage?: string;
+    isValidated: boolean;
+  } => {
+    const currentConfiguration = getCurrentLlmConfiguration(settings);
+    if (!currentConfiguration) {
+      return {
+        status: "idle",
+        isValidated: false,
+      };
+    }
+
+    if (
+      matchesLlmConfiguration(
+        llmValidation.pendingConfiguration,
+        currentConfiguration,
+      )
+    ) {
+      return {
+        status: "validating",
+        isValidated: false,
+      };
+    }
+
+    const lastValidatedConfiguration = getValidationIdentity(
+      llmValidation.lastResult,
+    );
+    if (
+      matchesLlmConfiguration(lastValidatedConfiguration, currentConfiguration)
+    ) {
+      return {
+        status: llmValidation.lastResult?.isValid ? "valid" : "invalid",
+        errorMessage: llmValidation.lastResult?.errorMessage,
+        isValidated: llmValidation.lastResult?.isValid ?? false,
+      };
+    }
+
+    return {
+      status: "idle",
+      isValidated: false,
+    };
+  },
+);
 export const selectHasLlmConfiguration = (state: RootState) =>
-  hasProviderConfiguration(state.onboarding.settings);
+  hasProviderConfiguration(state.onboarding.settings) &&
+  selectCurrentLlmValidation(state).isValidated;
 export const selectHasGoogleAuthorization = (state: RootState) =>
   state.onboarding.googleAuth.status === "connected";
 export const selectHasGoogleToken = selectHasGoogleAuthorization;

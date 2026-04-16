@@ -7,7 +7,6 @@ import { Button } from "../../shared/ui/button";
 import { Select } from "../../shared/ui/select";
 import { Spinner } from "../../shared/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "../../shared/ui/card";
-import { Input } from "../../shared/ui/input";
 import { Label } from "../../shared/ui/label";
 import { Alert } from "../../shared/ui/alert";
 import { Textarea } from "../../shared/ui/textarea";
@@ -15,13 +14,8 @@ import {
   clearAllSettings,
   selectGoogleAuth,
   selectSettings,
-  setAnthropicApiKey,
   setExtractionPrompt,
   setGoogleAuthState,
-  setLlmProvider,
-  setOpenAiApiKey,
-  setPreferredAnthropicModel,
-  setPreferredOpenAiModel,
   setLocale,
   setThemeMode,
   signOutGoogle,
@@ -32,12 +26,8 @@ import {
 } from "../google-auth/googleIdentity";
 import { useGoogleAuthStateSync } from "../google-auth/useGoogleAuthStateSync";
 import { pushToast } from "../../shared/ui/toastBus";
-import { getSupportedModelOptions } from "./modelOptions";
-import {
-  getProviderFieldLabels,
-  getProviderOptionLabels,
-  getSettingsContent,
-} from "./onboardingContent";
+import { getSettingsContent } from "./onboardingContent";
+import { LlmConfigurationForm } from "./LlmConfigurationForm";
 
 export function SettingsPanel() {
   useGoogleAuthStateSync();
@@ -47,26 +37,10 @@ export function SettingsPanel() {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectSettings);
   const googleAuth = useAppSelector(selectGoogleAuth);
-  const selectedProvider =
-    settings.llmProvider === "anthropic" ? "anthropic" : "openai";
-  const providerApiKey =
-    selectedProvider === "anthropic"
-      ? settings.anthropicApiKey
-      : settings.openAiApiKey;
-  const providerModel =
-    selectedProvider === "anthropic"
-      ? settings.preferredAnthropicModel
-      : settings.preferredOpenAiModel;
-  const providerModelOptions = getSupportedModelOptions(
-    selectedProvider,
-    providerModel,
-  );
   const content = getSettingsContent(intl);
   const connectedOnLabel = googleAuth.connectedAt
     ? content.connectedOn(googleAuth.connectedAt)
     : null;
-  const providerLabels = getProviderFieldLabels(intl, selectedProvider);
-  const providerOptionLabels = getProviderOptionLabels(intl);
 
   async function handleGoogleStatusChange(
     nextValue: "connected" | "signed_out",
@@ -144,83 +118,16 @@ export function SettingsPanel() {
           <CardTitle>{content.llmTitle}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
-            <div className="space-y-1 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">
-                {content.securityTitle}
-              </p>
-              <p>{content.securityBody}</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Label htmlFor="settings-provider">{providerLabels.provider}</Label>
-            <Select
-              id="settings-provider"
-              value={settings.llmProvider}
-              onChange={(event) =>
-                dispatch(
-                  setLlmProvider(
-                    event.target.value as typeof settings.llmProvider,
-                  ),
-                )
-              }
-            >
-              <option value="openai">{providerOptionLabels.openai}</option>
-              <option value="anthropic">
-                {providerOptionLabels.anthropic}
-              </option>
-              <option value="gemini" disabled>
-                {providerOptionLabels.gemini}
-              </option>
-            </Select>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-3">
-              <Label htmlFor="settings-api-key">{providerLabels.apiKey}</Label>
-              <Input
-                id="settings-api-key"
-                type="password"
-                autoComplete="off"
-                placeholder={
-                  selectedProvider === "anthropic" ? "sk-ant-..." : "sk-..."
-                }
-                value={providerApiKey}
-                onChange={(event) => {
-                  const nextValue = event.target.value;
-                  if (selectedProvider === "anthropic") {
-                    dispatch(setAnthropicApiKey(nextValue));
-                    return;
-                  }
-
-                  dispatch(setOpenAiApiKey(nextValue));
-                }}
-              />
-            </div>
-            <div className="space-y-3">
-              <Label htmlFor="settings-model">{providerLabels.model}</Label>
-              <Select
-                id="settings-model"
-                value={providerModel}
-                onChange={(event) => {
-                  const nextValue = event.target.value;
-                  if (selectedProvider === "anthropic") {
-                    dispatch(setPreferredAnthropicModel(nextValue));
-                    return;
-                  }
-
-                  dispatch(setPreferredOpenAiModel(nextValue));
-                }}
-              >
-                {providerModelOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </div>
+          <LlmConfigurationForm
+            apiKeyInputId="settings-api-key"
+            modelInputId="settings-model"
+            providerInputId="settings-provider"
+            securityNote={{
+              title: content.securityTitle,
+              body: content.securityBody,
+            }}
+            showApiKeyLinks
+          />
         </CardContent>
       </Card>
 

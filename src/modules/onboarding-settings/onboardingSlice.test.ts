@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  completeLlmValidationSuccess,
   onboardingReducer,
   selectAppReadiness,
   setAnthropicApiKey,
@@ -66,9 +67,17 @@ describe("onboardingSlice", () => {
         connectedAt: "2026-04-06T00:00:00.000Z",
       }),
     );
+    const validated = onboardingReducer(
+      withGoogleAuth,
+      completeLlmValidationSuccess({
+        provider: "anthropic",
+        apiKey: "sk-ant-test",
+        model: withGoogleAuth.settings.preferredAnthropicModel,
+      }),
+    );
 
     const readiness = selectAppReadiness({
-      onboarding: withGoogleAuth,
+      onboarding: validated,
     } as never);
 
     expect(readiness.hasLlmConfiguration).toBe(true);
@@ -83,7 +92,15 @@ describe("onboardingSlice", () => {
       withProvider,
       setOpenAiApiKey("sk-test"),
     );
-    const completed = onboardingReducer(withApiKey, {
+    const validated = onboardingReducer(
+      withApiKey,
+      completeLlmValidationSuccess({
+        provider: "openai",
+        apiKey: "sk-test",
+        model: withApiKey.settings.preferredOpenAiModel,
+      }),
+    );
+    const completed = onboardingReducer(validated, {
       type: "onboarding/completeOnboarding",
     });
 
@@ -94,5 +111,15 @@ describe("onboardingSlice", () => {
     expect(readiness.hasLlmConfiguration).toBe(true);
     expect(readiness.hasGoogleAuthorization).toBe(false);
     expect(readiness.isCaptureReady).toBe(true);
+  });
+
+  it("requires validation for the active provider configuration", () => {
+    const withApiKey = onboardingReducer(undefined, setOpenAiApiKey("sk-test"));
+
+    expect(
+      selectAppReadiness({
+        onboarding: withApiKey,
+      } as never).hasLlmConfiguration,
+    ).toBe(false);
   });
 });

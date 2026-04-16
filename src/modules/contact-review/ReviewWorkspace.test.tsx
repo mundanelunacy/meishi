@@ -23,7 +23,9 @@ const saveCapturedImagesMock = vi.fn<
 const saveDraftMock = vi.fn<(draft: ContactDraft) => Promise<void>>(() =>
   Promise.resolve(),
 );
-const clearLatestDraftMock = vi.fn<() => Promise<void>>(() => Promise.resolve());
+const clearLatestDraftMock = vi.fn<() => Promise<void>>(() =>
+  Promise.resolve(),
+);
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
@@ -50,11 +52,13 @@ type UseSyncGoogleContactResult = ReturnType<
   (typeof import("../google-contacts"))["useSyncGoogleContact"]
 >;
 
-const useSyncGoogleContactMock = vi.fn<() => UseSyncGoogleContactResult>(() => ({
-  syncContact: syncContactMock,
-  isSyncing: false,
-  errorMessage: null,
-}));
+const useSyncGoogleContactMock = vi.fn<() => UseSyncGoogleContactResult>(
+  () => ({
+    syncContact: syncContactMock,
+    isSyncing: false,
+    errorMessage: null,
+  }),
+);
 const pushToastMock = vi.fn();
 const saveContactVCardMock = vi.fn();
 
@@ -70,7 +74,8 @@ vi.mock("../vcard-export", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../vcard-export")>();
   return {
     ...actual,
-    saveContactVCard: (contact: VerifiedContact) => saveContactVCardMock(contact),
+    saveContactVCard: (contact: VerifiedContact) =>
+      saveContactVCardMock(contact),
   };
 });
 
@@ -116,6 +121,10 @@ const preloadedState = {
       scope: "https://www.googleapis.com/auth/contacts",
       accountEmail: "developer@example.com",
       connectedAt: "2026-04-06T00:00:00.000Z",
+    },
+    llmValidation: {
+      pendingConfiguration: null,
+      lastResult: null,
     },
   },
   reviewDraft: {
@@ -202,22 +211,27 @@ const preloadedState = {
 } satisfies TestPreloadedState;
 
 function renderWorkspace(overrideState?: TestStateOverride) {
+  const onboardingState: TestPreloadedState["onboarding"] = {
+    ...preloadedState.onboarding,
+    ...overrideState?.onboarding,
+    llmValidation:
+      overrideState?.onboarding?.llmValidation ??
+      preloadedState.onboarding.llmValidation,
+  };
+
+  const reviewDraftState: TestPreloadedState["reviewDraft"] = {
+    ...preloadedState.reviewDraft,
+    ...overrideState?.reviewDraft,
+  };
+
   const store = configureStore({
     reducer: {
       onboarding: onboardingReducer,
       reviewDraft: reviewDraftReducer,
     },
     preloadedState: {
-      ...preloadedState,
-      ...overrideState,
-      onboarding: {
-        ...preloadedState.onboarding,
-        ...overrideState?.onboarding,
-      },
-      reviewDraft: {
-        ...preloadedState.reviewDraft,
-        ...overrideState?.reviewDraft,
-      },
+      onboarding: onboardingState,
+      reviewDraft: reviewDraftState,
     },
   });
 
