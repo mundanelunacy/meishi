@@ -140,4 +140,27 @@ describe("googleIdentity", () => {
       "Google authorization popup was blocked by the browser.",
     );
   });
+
+  it("identifies revoked-or-expired token errors as reconnectable", async () => {
+    const { shouldReconnectGoogleContacts } = await import("./googleIdentity");
+
+    expect(
+      shouldReconnectGoogleContacts(
+        new Error("Token has been expired or revoked."),
+      ),
+    ).toBe(true);
+    expect(
+      shouldReconnectGoogleContacts({
+        data: {
+          error: {
+            message:
+              "Google Contacts is not connected for the current Firebase session.",
+          },
+        },
+      }),
+    ).toBe(true);
+    expect(
+      shouldReconnectGoogleContacts(new Error("Unable to create Google contact.")),
+    ).toBe(false);
+  });
 });

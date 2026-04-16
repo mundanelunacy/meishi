@@ -14,6 +14,7 @@
 - Anonymous Firebase session bootstrap
 - Popup-based Google OAuth connect flow with callback route handoff
 - Backend token fetch with in-memory browser caching
+- Recoverable-auth-failure detection so review sync can reconnect automatically after revoked or expired Google credentials
 - Disconnect helper that clears the backend Google connection and signs out Firebase locally
 - Scope definition for Google Contacts sync
 - Route-local Google auth status refresh for settings and review flows instead of an app-wide startup effect

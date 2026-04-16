@@ -6,15 +6,24 @@ import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type {
+  CapturedCardImage,
+  ContactDraft,
+  VerifiedContact,
+} from "../../shared/types/models";
 import { renderWithIntl } from "../../test/renderWithIntl";
 import { onboardingReducer } from "../onboarding-settings/onboardingSlice";
 import { reviewDraftReducer } from "./reviewDraftSlice";
 import { ReviewWorkspace } from "./ReviewWorkspace";
 
 const navigateMock = vi.fn();
-const saveCapturedImagesMock = vi.fn(() => Promise.resolve());
-const saveDraftMock = vi.fn(() => Promise.resolve());
-const clearLatestDraftMock = vi.fn(() => Promise.resolve());
+const saveCapturedImagesMock = vi.fn<
+  (images: CapturedCardImage[]) => Promise<void>
+>(() => Promise.resolve());
+const saveDraftMock = vi.fn<(draft: ContactDraft) => Promise<void>>(() =>
+  Promise.resolve(),
+);
+const clearLatestDraftMock = vi.fn<() => Promise<void>>(() => Promise.resolve());
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
@@ -24,18 +33,24 @@ vi.mock("../local-data", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../local-data")>();
   return {
     ...actual,
-    clearLatestDraft: (...args: unknown[]) => clearLatestDraftMock(...args),
+    clearLatestDraft: () => clearLatestDraftMock(),
     loadCapturedImages: vi.fn(() => Promise.resolve([])),
     loadLatestDraft: vi.fn(() => Promise.resolve(null)),
-    saveCapturedImages: (...args: unknown[]) => saveCapturedImagesMock(...args),
-    saveDraft: (...args: unknown[]) => saveDraftMock(...args),
+    saveCapturedImages: (images: CapturedCardImage[]) =>
+      saveCapturedImagesMock(images),
+    saveDraft: (draft: ContactDraft) => saveDraftMock(draft),
     saveSyncOutcome: vi.fn(() => Promise.resolve()),
   };
 });
 
 const syncContactMock = vi.fn();
 const connectGoogleContactsMock = vi.fn();
-const useSyncGoogleContactMock = vi.fn(() => ({
+
+type UseSyncGoogleContactResult = ReturnType<
+  (typeof import("../google-contacts"))["useSyncGoogleContact"]
+>;
+
+const useSyncGoogleContactMock = vi.fn<() => UseSyncGoogleContactResult>(() => ({
   syncContact: syncContactMock,
   isSyncing: false,
   errorMessage: null,
@@ -55,7 +70,7 @@ vi.mock("../vcard-export", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../vcard-export")>();
   return {
     ...actual,
-    saveContactVCard: (...args: unknown[]) => saveContactVCardMock(...args),
+    saveContactVCard: (contact: VerifiedContact) => saveContactVCardMock(contact),
   };
 });
 
@@ -64,14 +79,23 @@ vi.mock("../google-auth/googleIdentity", async (importOriginal) => {
     await importOriginal<typeof import("../google-auth/googleIdentity")>();
   return {
     ...actual,
-    connectGoogleContacts: (...args: unknown[]) =>
-      connectGoogleContactsMock(...args),
+    connectGoogleContacts: () => connectGoogleContactsMock(),
   };
 });
 
 vi.mock("../../shared/ui/toastBus", () => ({
   pushToast: (message: string) => pushToastMock(message),
 }));
+
+type TestPreloadedState = {
+  onboarding: ReturnType<typeof onboardingReducer>;
+  reviewDraft: ReturnType<typeof reviewDraftReducer>;
+};
+
+type TestStateOverride = {
+  onboarding?: Partial<TestPreloadedState["onboarding"]>;
+  reviewDraft?: Partial<TestPreloadedState["reviewDraft"]>;
+};
 
 const preloadedState = {
   onboarding: {
@@ -82,6 +106,8 @@ const preloadedState = {
       preferredOpenAiModel: "gpt-5.4-mini",
       preferredAnthropicModel: "claude-sonnet-4-20250514",
       extractionPrompt: "Use the printed title verbatim.",
+      themeMode: "system" as const,
+      locale: "en-US" as const,
       onboardingCompletedAt: "2026-04-05T00:00:00.000Z",
     },
     googleAuth: {
@@ -173,9 +199,9 @@ const preloadedState = {
     },
     verifiedContact: null,
   },
-};
+} satisfies TestPreloadedState;
 
-function renderWorkspace(overrideState?: Partial<typeof preloadedState>) {
+function renderWorkspace(overrideState?: TestStateOverride) {
   const store = configureStore({
     reducer: {
       onboarding: onboardingReducer,
@@ -660,6 +686,38 @@ describe("ReviewWorkspace", () => {
     expect(
       screen.queryByRole("dialog", { name: /contact saved/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("reconnects Google and retries once when sync fails with a revoked token", async () => {
+    syncContactMock
+      .mockRejectedValueOnce(new Error("Token has been expired or revoked."))
+      .mockResolvedValueOnce({
+        outcome: {
+          contactResourceName: "people/123",
+          photoUploaded: true,
+          localOnlyImageIds: [],
+          syncedAt: "2026-04-06T00:00:00.000Z",
+        },
+      });
+
+    renderWorkspace();
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", { name: /save to google contacts/i }),
+    );
+
+    await waitFor(() => {
+      expect(syncContactMock).toHaveBeenCalledTimes(2);
+    });
+
+    expect(connectGoogleContactsMock).toHaveBeenCalledTimes(1);
+    expect(pushToastMock).toHaveBeenCalledWith(
+      "Verified contact synced to Google Contacts.",
+    );
+    expect(
+      screen.getByRole("dialog", { name: /contact saved/i }),
+    ).toBeInTheDocument();
   });
 
   it("disables both save actions when the review form is clean", async () => {
