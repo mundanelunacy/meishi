@@ -23,8 +23,7 @@ vi.mock("../../app/env", () => ({
 }));
 
 vi.mock("../google-auth/googleIdentity", () => ({
-  connectGoogleContacts: (...args: unknown[]) =>
-    connectGoogleContactsMock(...args),
+  connectGoogleContacts: () => connectGoogleContactsMock(),
   createInitialGoogleAuthState: () => ({
     status: "signed_out",
     firebaseUid: null,
@@ -81,7 +80,10 @@ describe("OnboardingPanel", () => {
 
     expect(continueButton).toBeDisabled();
 
-    await user.type(screen.getByLabelText(/api key/i), "sk-test");
+    await user.type(
+      screen.getByLabelText(/api key/i),
+      "sk-abcdefghijklmnopqrstuvwxyz",
+    );
     fetchMock.mockResolvedValue({
       ok: true,
     });
@@ -114,7 +116,10 @@ describe("OnboardingPanel", () => {
 
     expect(continueButton).toBeDisabled();
 
-    await user.type(screen.getByLabelText(/api key/i), "sk-test");
+    await user.type(
+      screen.getByLabelText(/api key/i),
+      "sk-abcdefghijklmnopqrstuvwxyz",
+    );
     fetchMock.mockResolvedValue({
       ok: true,
     });
@@ -138,7 +143,10 @@ describe("OnboardingPanel", () => {
     renderPanel();
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/api key/i), "sk-test");
+    await user.type(
+      screen.getByLabelText(/api key/i),
+      "sk-abcdefghijklmnopqrstuvwxyz",
+    );
     await user.click(screen.getByRole("button", { name: /validate api key/i }));
 
     await waitFor(() => {

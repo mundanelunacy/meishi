@@ -56,21 +56,23 @@ export function OnboardingPanel() {
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const selectedProvider = settings.llmProvider;
+  const effectiveProvider =
+    selectedProvider === "anthropic" ? "anthropic" : "openai";
   const providerApiKey =
-    selectedProvider === "anthropic"
+    effectiveProvider === "anthropic"
       ? settings.anthropicApiKey
       : settings.openAiApiKey;
   const providerModel =
-    selectedProvider === "anthropic"
+    effectiveProvider === "anthropic"
       ? settings.preferredAnthropicModel
       : settings.preferredOpenAiModel;
   const providerModelOptions = getSupportedModelOptions(
-    selectedProvider,
+    effectiveProvider,
     providerModel,
   );
   const content = getOnboardingPanelContent(intl, getGoogleScope());
   const validationContent = getLlmValidationContent(intl);
-  const providerLabels = getProviderFieldLabels(intl, selectedProvider);
+  const providerLabels = getProviderFieldLabels(intl, effectiveProvider);
   const providerOptionLabels = getProviderOptionLabels(intl);
 
   const posthog = usePostHog();
@@ -151,7 +153,7 @@ export function OnboardingPanel() {
             <Label htmlFor="provider">{providerLabels.provider}</Label>
             <Select
               id="provider"
-              value={settings.llmProvider}
+              value={effectiveProvider}
               onChange={(event) =>
                 dispatch(
                   setLlmProvider(
@@ -178,12 +180,12 @@ export function OnboardingPanel() {
                 type="password"
                 autoComplete="off"
                 placeholder={
-                  selectedProvider === "anthropic" ? "sk-ant-..." : "sk-..."
+                  effectiveProvider === "anthropic" ? "sk-ant-..." : "sk-..."
                 }
                 value={providerApiKey}
                 onChange={(event) => {
                   const nextValue = event.target.value;
-                  if (selectedProvider === "anthropic") {
+                  if (effectiveProvider === "anthropic") {
                     dispatch(setAnthropicApiKey(nextValue));
                     return;
                   }
@@ -199,7 +201,7 @@ export function OnboardingPanel() {
                 value={providerModel}
                 onChange={(event) => {
                   const nextValue = event.target.value;
-                  if (selectedProvider === "anthropic") {
+                  if (effectiveProvider === "anthropic") {
                     dispatch(setPreferredAnthropicModel(nextValue));
                     return;
                   }
