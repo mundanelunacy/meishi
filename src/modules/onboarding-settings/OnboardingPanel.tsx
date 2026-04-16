@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { usePostHog } from "@posthog/react";
 import { KeyRound, ShieldAlert } from "lucide-react";
 import { useIntl } from "react-intl";
 import { Spinner } from "../../shared/ui/spinner";
@@ -67,6 +68,7 @@ export function OnboardingPanel() {
   const providerLabels = getProviderFieldLabels(intl, selectedProvider);
   const providerOptionLabels = getProviderOptionLabels(intl);
 
+  const posthog = usePostHog();
   const canContinue = readiness.hasLlmConfiguration;
 
   async function handleGoogleConnect() {
@@ -82,6 +84,10 @@ export function OnboardingPanel() {
       );
       const nextAuthState = await connectGoogleContacts();
       dispatch(setGoogleAuthState(nextAuthState));
+      posthog.capture("google_auth_connected", {
+        account_email: nextAuthState.accountEmail ?? null,
+        context: "onboarding",
+      });
       pushToast(content.toasts.accessGranted);
     } catch (error) {
       dispatch(
@@ -90,6 +96,7 @@ export function OnboardingPanel() {
           status: googleAuth.connectedAt ? "connected" : "signed_out",
         }),
       );
+      posthog.captureException(error);
       const message =
         error instanceof Error ? error.message : content.toasts.connectError;
       setErrorMessage(message);
@@ -100,6 +107,10 @@ export function OnboardingPanel() {
 
   function handleFinish() {
     dispatch(completeOnboarding());
+    posthog.capture("onboarding_completed", {
+      llm_provider: settings.llmProvider,
+      has_google_auth: readiness.hasGoogleAuthorization,
+    });
     pushToast(content.toasts.complete);
     navigate({ to: "/capture" });
   }

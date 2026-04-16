@@ -122,6 +122,46 @@ Google Contacts auth no longer uses a browser-only token flow. Firebase Function
   - [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs)
   - [Best Practices for API Key Safety](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety)
 
+## PostHog analytics
+
+Meishi uses PostHog for product analytics across the browser app. The integration is browser-side and is initialized through `PostHogProvider` in [src/app/AppRoot.tsx](./src/app/AppRoot.tsx), which wraps the application. In development, event delivery uses the `/ingest` reverse proxy configured in [vite.config.ts](./vite.config.ts). In production, the browser client sends events directly to the configured PostHog API host.
+
+The analytics client is configured with:
+
+- `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN`
+- `VITE_PUBLIC_POSTHOG_HOST`
+- `VITE_PUBLIC_POSTHOG_UI_HOST` (optional, defaults to `https://us.posthog.com`)
+
+The current event inventory is:
+
+| Event | Description | File |
+|---|---|---|
+| `card_extraction_started` | User clicks "Extract contact draft" to begin AI extraction | `src/modules/card-capture/CaptureWorkspace.tsx` |
+| `card_extraction_succeeded` | AI extraction completed successfully and draft created | `src/modules/card-capture/CaptureWorkspace.tsx` |
+| `card_extraction_failed` | AI extraction returned an error | `src/modules/card-capture/CaptureWorkspace.tsx` |
+| `camera_opened` | User opened camera to capture a business card | `src/modules/card-capture/CaptureWorkspace.tsx` |
+| `image_added_from_library` | User added images from their file library | `src/modules/card-capture/CaptureWorkspace.tsx` |
+| `google_contact_synced` | Contact successfully synced to Google Contacts | `src/modules/contact-review/ReviewWorkspace.tsx` |
+| `google_contact_sync_failed` | Contact sync to Google Contacts failed | `src/modules/contact-review/ReviewWorkspace.tsx` |
+| `vcard_saved` | User saved or shared a contact as a vCard | `src/modules/contact-review/ReviewWorkspace.tsx` |
+| `google_auth_connected` | User connected Google Contacts during onboarding | `src/modules/onboarding-settings/OnboardingPanel.tsx` |
+| `onboarding_completed` | User completed setup and proceeded to the capture screen | `src/modules/onboarding-settings/OnboardingPanel.tsx` |
+| `google_auth_disconnected` | User disconnected Google Contacts in settings | `src/modules/onboarding-settings/SettingsPanel.tsx` |
+| `settings_cleared` | User cleared all application settings | `src/modules/onboarding-settings/SettingsPanel.tsx` |
+| `site_shared` | User triggered the share action for the Meishi app URL | `src/modules/app-shell/AppShell.tsx` |
+| `pwa_install_prompted` | User tapped the Install button in the PWA install banner | `src/modules/app-shell/AppShell.tsx` |
+
+Exception capture through `posthog.captureException` is used at critical error boundaries in the capture and camera flows.
+
+Analytics dashboards and insights:
+
+- [Analytics basics dashboard](https://us.posthog.com/project/384071/dashboard/1473541)
+- [Card Extraction Funnel](https://us.posthog.com/project/384071/insights/IUNVTbuL): scan to extract to sync
+- [Contact Sync Outcomes](https://us.posthog.com/project/384071/insights/r0MZihm0): sync success and failure trend
+- [Onboarding Completions](https://us.posthog.com/project/384071/insights/529olG93): onboarding and Google auth trend
+- [Core Feature Usage](https://us.posthog.com/project/384071/insights/N6QCCnhG): card scans, syncs, and vCards per week
+- [Churn Signals](https://us.posthog.com/project/384071/insights/nbqqJRkY): settings cleared and Google disconnections
+
 ## Development
 
 ```bash

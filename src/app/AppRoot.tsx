@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { IntlProvider } from "react-intl";
 import { Provider } from "react-redux";
+import { PostHogProvider } from "@posthog/react";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { store } from "./store";
 import { routeTree } from "../routeTree.gen";
@@ -18,6 +19,12 @@ declare global {
     __meishiPageSessionId?: string;
   }
 }
+
+const POSTHOG_API_HOST =
+  import.meta.env.VITE_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+const POSTHOG_UI_HOST =
+  import.meta.env.VITE_PUBLIC_POSTHOG_UI_HOST || "https://us.posthog.com";
+const POSTHOG_CLIENT_API_HOST = import.meta.env.DEV ? "/ingest" : POSTHOG_API_HOST;
 
 if (typeof window !== "undefined" && !window.__meishiPageSessionId) {
   window.__meishiPageSessionId = crypto.randomUUID();
@@ -40,10 +47,21 @@ declare module "@tanstack/react-router" {
 
 export function AppRoot() {
   return (
-    <Provider store={store}>
-      <ThemeBootstrap />
-      <IntlBootstrap />
-    </Provider>
+    <PostHogProvider
+      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN!}
+      options={{
+        api_host: POSTHOG_CLIENT_API_HOST,
+        ui_host: POSTHOG_UI_HOST,
+        defaults: "2026-01-30",
+        capture_exceptions: true,
+        debug: import.meta.env.DEV,
+      }}
+    >
+      <Provider store={store}>
+        <ThemeBootstrap />
+        <IntlBootstrap />
+      </Provider>
+    </PostHogProvider>
   );
 }
 

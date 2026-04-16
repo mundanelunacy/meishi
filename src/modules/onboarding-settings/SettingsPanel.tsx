@@ -1,3 +1,4 @@
+import { usePostHog } from "@posthog/react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { LOCALE_LABELS } from "../../app/intl";
 import { hasFirebaseConfiguration } from "../../app/env";
@@ -41,6 +42,7 @@ import {
 export function SettingsPanel() {
   useGoogleAuthStateSync();
 
+  const posthog = usePostHog();
   const intl = useIntl();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectSettings);
@@ -121,6 +123,7 @@ export function SettingsPanel() {
       );
       await disconnectGoogleContacts();
       dispatch(signOutGoogle());
+      posthog.capture("google_auth_disconnected");
     } catch (error) {
       dispatch(
         setGoogleAuthState({
@@ -363,7 +366,10 @@ export function SettingsPanel() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => dispatch(clearAllSettings())}
+            onClick={() => {
+              posthog.capture("settings_cleared");
+              dispatch(clearAllSettings());
+            }}
           >
             {content.clearButton}
           </Button>

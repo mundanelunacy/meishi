@@ -15,6 +15,7 @@
 
 - Work module-by-module under `src/modules`.
 - Read the target module `README.md` before editing. Consult `DEV-NOTES.md` when the task needs broader technical context such as architecture, routing, persistence, auth, deployment, or debugging behavior beyond the local module boundary. Consult `functions/README.md` before editing privileged backend flows, Google auth broker logic, or deploy-sensitive Functions behavior.
+- When a task needs implementation guidance for a specific technology or workflow, check `.ai/skills/README.md` and read the relevant skill under `.ai/skills/` before editing.
 - Keep module boundaries explicit and typed.
 - Keep provider-specific logic out of shared UI components.
 - Keep privileged logic explicit: browser UI and local draft flows stay in `src/modules`, while secret-bearing or admin-only work belongs in `functions/`.
@@ -97,7 +98,7 @@
 
 ## Localization workflow
 
-- When `react-intl` message descriptors change, use [skills/formatjs-extract-workflow.md](skills/formatjs-extract-workflow.md) for the extraction workflow.
+- When `react-intl` message descriptors change, use [.ai/skills/formatjs-extract-workflow.md](.ai/skills/formatjs-extract-workflow.md) for the extraction workflow.
 - Keep the FormatJS extract command documented in that skill file rather than adding package scripts for it by default.
 
 ## Documentation loop
