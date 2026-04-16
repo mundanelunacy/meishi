@@ -99,6 +99,7 @@
 ## Localization workflow
 
 - When `react-intl` message descriptors change, use [.ai/skills/formatjs-extract-workflow.md](.ai/skills/formatjs-extract-workflow.md) for the extraction workflow.
+- When adding or removing a supported locale, use [.ai/skills/formatjs-extract-workflow.md](.ai/skills/formatjs-extract-workflow.md) for the step-by-step checklist and consult [src/modules/app-shell/README.md](src/modules/app-shell/README.md), [src/modules/onboarding-settings/README.md](src/modules/onboarding-settings/README.md), and [src/modules/local-data/README.md](src/modules/local-data/README.md) for the module ownership boundaries involved.
 - Keep the FormatJS extract command documented in that skill file rather than adding package scripts for it by default.
 
 ## Documentation loop
