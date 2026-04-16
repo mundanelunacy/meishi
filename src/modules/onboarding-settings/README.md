@@ -18,7 +18,7 @@
 - `/capture`, `/review`, and `/settings` route entry now redirects through `/setup` until an API key is configured
 - `/setup` redirects to `/settings` once an API key is configured
 - Appearance preference with `system`, `light`, and `dark` modes
-- Docs language preference with `en-US` and `ja` options
+- Docs language preference with `en-US`, `ja`, and `ko` options
 - Shared advanced extraction guidance setting appended to fixed structured-output and fidelity rules
 - Settings screen for later edits and local reset
 - Settings screen that reuses the landing-page provider form, exposes a simple Google connection toggle, and separates advanced controls
@@ -44,7 +44,7 @@
 - Persists the settings object in `localStorage`.
 - Keeps only light Google connection metadata such as scope, connected account email, and connected timestamp in `localStorage`; Google bearer tokens are reacquired from Functions when needed.
 - Stores the appearance preference alongside other settings and resolves `system` against the browser color-scheme preference at runtime.
-- Stores the docs locale preference in the same settings payload. `en-US` is the persisted default and `ja` is the initial translated locale.
+- Stores the docs locale preference in the same settings payload. `en-US` is the persisted default, with `ja` and `ko` available as translated locales.
 
 ## Constraints
 

@@ -6,7 +6,7 @@ If you want the quick product overview, public app link, install instructions, o
 
 ## Product flow
 
-1. On first load, the user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, can choose an appearance mode that defaults to the system setting, can set the docs locale (`en-US` by default, with initial `ja` support), and can tune one shared advanced extraction prompt.
+1. On first load, the user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, can choose an appearance mode that defaults to the system setting, can set the docs locale (`en-US` by default, with `ja` and `ko` support), and can tune one shared advanced extraction prompt.
 2. The user captures one or more business-card images from a mobile camera or image library.
 3. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
 4. The review screen shows source images in the top section and an editable contact form in the lower section. The form covers Google-Contacts-style name/company fields such as prefix, phonetic name parts, nickname, file-as, and department, and expands to repeatable collections such as multiple emails, phone numbers, addresses, websites, related people, significant dates, and custom fields. Draft edits autosave locally for recovery after refresh.
@@ -89,7 +89,7 @@ If you want the quick product overview, public app link, install instructions, o
   - provider-specific API keys
   - preferred OpenAI and Anthropic models
   - appearance mode preference (`system`, `light`, or `dark`)
-  - docs locale preference (`en-US` or `ja`)
+  - docs locale preference (`en-US`, `ja`, or `ko`)
   - shared advanced extraction prompt
   - limited Google auth metadata such as scope, connected account email, and connection timestamp, but not Google bearer tokens
 - IndexedDB
@@ -309,7 +309,7 @@ Vite loads env files from the repo root automatically. Meishi now assumes this l
 - Docs copy is sourced from `src/modules/app-shell/docsContent.tsx`, legal copy from `src/modules/app-shell/legalContent.tsx`, and landing/onboarding/settings copy from `src/modules/onboarding-settings/onboardingContent.tsx` so rendered text and localized schema content stay aligned.
 - Manual FormatJS extraction is documented in [skills/formatjs-extract-workflow.md](skills/formatjs-extract-workflow.md) rather than package scripts.
 
-- The extracted `en-US.messages.json` file is the source catalog for translation updates; the runtime currently uses descriptor defaults for `en-US` fallback and `src/app/locales/ja.json` for Japanese overrides.
+- The extracted `en-US.messages.json` file is the source catalog for translation updates; the runtime currently uses descriptor defaults for `en-US` fallback plus `src/app/locales/ja.json` and `src/app/locales/ko.json` for translated overrides.
 - After changing `.env.production`, rebuild before re-testing: `npm run build && npm run preview`.
 - `npm run dev` is not the authoritative way to test PWA behavior in this repo because `vite-plugin-pwa` development service worker support is not enabled in [vite.config.ts](./vite.config.ts).
 - When testing through the Vite dev server with `npm run dev`, mobile native-camera capture on `/capture` can still trigger page refreshes after returning from the camera flow. Treat that as an open issue to address in future capture/runtime work, and prefer `npm run build && npm run preview` when validating mobile capture behavior.

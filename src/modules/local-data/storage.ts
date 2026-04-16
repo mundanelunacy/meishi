@@ -8,7 +8,7 @@ import { DEFAULT_EXTRACTION_PROMPT } from "../../shared/lib/extractionPrompt";
 
 const SETTINGS_KEY = "meishi.settings";
 const VALID_THEME_MODES = new Set<ThemeMode>(["system", "light", "dark"]);
-const VALID_LOCALES = new Set<AppLocale>(["en-US", "ja"]);
+const VALID_LOCALES = new Set<AppLocale>(["en-US", "ja", "ko"]);
 
 export interface PersistedOnboardingState {
   settings: AppSettings;

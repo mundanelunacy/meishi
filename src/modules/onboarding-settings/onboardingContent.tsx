@@ -1,4 +1,5 @@
 import { defineMessages, type IntlShape } from "react-intl";
+import type { AppLocale } from "../../shared/types/models";
 
 const messages = defineMessages({
   providerLabel: {
@@ -664,7 +665,7 @@ const messages = defineMessages({
 });
 
 export type LandingSchemaContent = {
-  locale: "en-US" | "ja";
+  locale: AppLocale;
   softwareDescription: string;
   browserRequirements: string;
   featureList: string[];
@@ -958,7 +959,7 @@ export function getSettingsContent(intl: IntlShape) {
 
 export function getLandingSchemaContent(
   intl: IntlShape,
-  locale: "en-US" | "ja",
+  locale: AppLocale,
 ): LandingSchemaContent {
   return {
     locale,
