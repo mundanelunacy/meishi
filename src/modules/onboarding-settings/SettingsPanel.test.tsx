@@ -53,8 +53,7 @@ vi.mock("../../app/env", () => ({
 }));
 
 vi.mock("../google-auth/googleIdentity", () => ({
-  connectGoogleContacts: (...args: unknown[]) =>
-    connectGoogleContactsMock(...args),
+  connectGoogleContacts: connectGoogleContactsMock,
   createInitialGoogleAuthState: () => ({
     status: "signed_out",
     firebaseUid: null,
@@ -62,8 +61,7 @@ vi.mock("../google-auth/googleIdentity", () => ({
     accountEmail: undefined,
     connectedAt: null,
   }),
-  disconnectGoogleContacts: (...args: unknown[]) =>
-    disconnectGoogleContactsMock(...args),
+  disconnectGoogleContacts: disconnectGoogleContactsMock,
 }));
 
 vi.mock("../google-auth/useGoogleAuthStateSync", () => ({
