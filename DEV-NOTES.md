@@ -306,10 +306,7 @@ Vite loads env files from the repo root automatically. Meishi now assumes this l
 
 - Route UI copy is localized across landing, capture, review, settings, docs, privacy, terms, shell navigation, and the Google OAuth callback route. Landing and docs JSON-LD also follow the active locale.
 - Locale is stored in the same `meishi.settings` payload as the other onboarding preferences. Unknown locale values must sanitize back to `en-US`.
-- Docs copy is sourced from `src/modules/app-shell/docsContent.tsx`, legal copy from `src/modules/app-shell/legalContent.tsx`, and landing/onboarding/settings copy from `src/modules/onboarding-settings/onboardingContent.tsx` so rendered text and localized schema content stay aligned.
-- Manual FormatJS extraction is documented in [skills/formatjs-extract-workflow.md](skills/formatjs-extract-workflow.md) rather than package scripts.
-
-- The extracted `en-US.messages.json` file is the source catalog for translation updates; the runtime currently uses descriptor defaults for `en-US` fallback plus `src/app/locales/ja.json` and `src/app/locales/ko.json` for translated overrides.
+- For the operational workflow to add or update locales, use [skills/formatjs-extract-workflow.md](skills/formatjs-extract-workflow.md). For module ownership, consult `src/modules/app-shell/README.md`, `src/modules/onboarding-settings/README.md`, and `src/modules/local-data/README.md`.
 - After changing `.env.production`, rebuild before re-testing: `npm run build && npm run preview`.
 - `npm run dev` is not the authoritative way to test PWA behavior in this repo because `vite-plugin-pwa` development service worker support is not enabled in [vite.config.ts](./vite.config.ts).
 - When testing through the Vite dev server with `npm run dev`, mobile native-camera capture on `/capture` can still trigger page refreshes after returning from the camera flow. Treat that as an open issue to address in future capture/runtime work, and prefer `npm run build && npm run preview` when validating mobile capture behavior.
