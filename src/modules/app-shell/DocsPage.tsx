@@ -11,6 +11,7 @@ import {
 } from "../../shared/ui/card";
 import { ImageLightbox } from "../../shared/ui/image-lightbox";
 import { JsonLdScript } from "../../shared/seo/JsonLdScript";
+import type { AppLocale } from "../../shared/types/models";
 import { getDocsPageSchema } from "../../shared/seo/jsonLd";
 import { getDocsPageContent } from "./docsContent";
 
@@ -85,7 +86,7 @@ export function DocsPage() {
   const [activeApiProvider, setActiveApiProvider] = useState<
     "openai" | "anthropic"
   >("openai");
-  const content = getDocsPageContent(intl, intl.locale as "en-US" | "ja", {
+  const content = getDocsPageContent(intl, intl.locale as AppLocale, {
     settingsLink: (chunks: ReactNode) => (
       <Link to="/settings" className={internalDocLinkClassName}>
         {chunks}

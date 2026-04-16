@@ -234,10 +234,10 @@ describe("AppShell", () => {
 
     await user.selectOptions(
       screen.getAllByLabelText("Select language (desktop)")[0],
-      "ja",
+      "ko",
     );
 
-    expect(store.getState().onboarding.settings.locale).toBe("ja");
+    expect(store.getState().onboarding.settings.locale).toBe("ko");
   });
 
   it("renders the stored locale in both header pickers", () => {
@@ -246,7 +246,7 @@ describe("AppShell", () => {
         onboarding: onboardingReducer,
       },
       preloadedState: {
-        onboarding: onboardingReducer(undefined, setLocale("ja")),
+        onboarding: onboardingReducer(undefined, setLocale("ko")),
       },
     });
 
@@ -258,9 +258,9 @@ describe("AppShell", () => {
 
     expect(
       screen.getAllByLabelText("Select language (desktop)")[0],
-    ).toHaveValue("ja");
+    ).toHaveValue("ko");
     expect(screen.getAllByLabelText("Select language (mobile)")[0]).toHaveValue(
-      "ja",
+      "ko",
     );
 
     const desktopPicker = screen.getAllByLabelText(
@@ -271,6 +271,7 @@ describe("AppShell", () => {
     expect(desktopOptions.map((option) => option.textContent)).toEqual([
       "English",
       "日本語",
+      "한국어",
     ]);
   });
 

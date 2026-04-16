@@ -19,7 +19,7 @@ export type GoogleAuthStatus =
   | "disconnecting"
   | "connected";
 export type ThemeMode = "system" | "light" | "dark";
-export type AppLocale = "en-US" | "ja";
+export type AppLocale = "en-US" | "ja" | "ko";
 
 export interface AppSettings {
   llmProvider: SupportedLlmProvider;

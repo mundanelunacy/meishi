@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-16
+
+### PostHog analytics and internal skill-doc reorganization
+
+- Added browser-side PostHog initialization plus product analytics events across onboarding, capture, review, vCard export, sharing, and PWA install flows, along with the required Vite env variables, development `/ingest` proxy, and developer notes for dashboards and event inventory.
+- Reorganized the internal agent skill markdown/reference files under `.ai/skills` and refreshed related agent guidance; most of this was documentation structure work rather than app behavior changes.
+
 ## 2026-04-08
 
 ### Dedicated setup route and API-key gating

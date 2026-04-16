@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { usePostHog } from "@posthog/react";
 import { useNavigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -649,6 +650,7 @@ export function ReviewWorkspace() {
   const intl = useIntl();
   useGoogleAuthStateSync();
 
+  const posthog = usePostHog();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const draft = useAppSelector(selectDraft);
@@ -847,11 +849,18 @@ export function ReviewWorkspace() {
         images,
       });
 
+      posthog.capture("google_contact_synced", {
+        photo_uploaded: result.outcome.photoUploaded,
+        had_warning: Boolean(result.warningMessage),
+      });
       pushToast(
         result.warningMessage ?? intl.formatMessage(messages.syncedToGoogle),
       );
       setIsSaveSuccessModalOpen(true);
     } catch (error) {
+      posthog.capture("google_contact_sync_failed", {
+        error_message: error instanceof Error ? error.message : String(error),
+      });
       pushToast(
         error instanceof Error
           ? error.message
@@ -886,6 +895,7 @@ export function ReviewWorkspace() {
       const exportResult = await saveContactVCard(
         buildVerifiedContact(updatedDraft, values),
       );
+      posthog.capture("vcard_saved", { method: exportResult });
       pushToast(
         exportResult === "shared"
           ? intl.formatMessage(messages.vcardShared)

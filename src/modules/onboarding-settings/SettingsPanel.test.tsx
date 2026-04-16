@@ -53,8 +53,7 @@ vi.mock("../../app/env", () => ({
 }));
 
 vi.mock("../google-auth/googleIdentity", () => ({
-  connectGoogleContacts: (...args: unknown[]) =>
-    connectGoogleContactsMock(...args),
+  connectGoogleContacts: connectGoogleContactsMock,
   createInitialGoogleAuthState: () => ({
     status: "signed_out",
     firebaseUid: null,
@@ -62,8 +61,7 @@ vi.mock("../google-auth/googleIdentity", () => ({
     accountEmail: undefined,
     connectedAt: null,
   }),
-  disconnectGoogleContacts: (...args: unknown[]) =>
-    disconnectGoogleContactsMock(...args),
+  disconnectGoogleContacts: disconnectGoogleContactsMock,
 }));
 
 vi.mock("../google-auth/useGoogleAuthStateSync", () => ({
@@ -273,9 +271,9 @@ describe("SettingsPanel", () => {
     const { store } = renderPanel();
     const user = userEvent.setup();
 
-    await user.selectOptions(screen.getByLabelText(/app language/i), "ja");
+    await user.selectOptions(screen.getByLabelText(/app language/i), "ko");
 
-    expect(store.getState().onboarding.settings.locale).toBe("ja");
+    expect(store.getState().onboarding.settings.locale).toBe("ko");
   });
 
   it("uses the landing-style provider form", async () => {
@@ -316,5 +314,6 @@ describe("SettingsPanel", () => {
     expect(localePicker).toHaveValue("en-US");
     expect(screen.getByRole("option", { name: "English" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "日本語" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "한국어" })).toBeInTheDocument();
   });
 });

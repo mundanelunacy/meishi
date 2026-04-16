@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { usePostHog } from "@posthog/react";
 import { Camera, Eraser, ImagePlus, Sparkles, Trash2 } from "lucide-react";
 import { defineMessages, useIntl } from "react-intl";
 import { Spinner } from "../../shared/ui/spinner";
@@ -202,6 +203,7 @@ export function CaptureWorkspace() {
   const intl = useIntl();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const images = useAppSelector(selectCapturedImages);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -377,6 +379,10 @@ export function CaptureWorkspace() {
       logDebugEvent("saveCapturedImages:end", {
         nextImageCount: nextImages.length,
       });
+      posthog.capture("image_added_from_library", {
+        image_count: files.length,
+        total_images: nextImages.length,
+      });
       pushToast(
         intl.formatMessage(messages.imagesAdded, { count: files.length }),
       );
@@ -387,6 +393,7 @@ export function CaptureWorkspace() {
         message:
           error instanceof Error ? error.message : "Unable to process images.",
       });
+      posthog.captureException(error);
       setCameraError(
         error instanceof Error
           ? error.message
@@ -462,12 +469,16 @@ export function CaptureWorkspace() {
       setIsStartingCamera(true);
       const nextStream = await openPreferredCameraStream();
       setCameraStream(nextStream);
+      posthog.capture("camera_opened", {
+        capture_experience: captureExperience,
+      });
       logDebugEvent("handleOpenCamera:live-preview-opened");
     } catch (error) {
       logDebugEvent("handleOpenCamera:error", {
         message:
           error instanceof Error ? error.message : "Unable to open the camera.",
       });
+      posthog.captureException(error);
       setCameraError(
         error instanceof Error
           ? error.message
@@ -553,8 +564,12 @@ export function CaptureWorkspace() {
       return;
     }
 
+    posthog.capture("card_extraction_started", { image_count: images.length });
     const result = await extractBusinessCard({ images });
     if ("data" in result && result.data) {
+      posthog.capture("card_extraction_succeeded", {
+        image_count: images.length,
+      });
       const nextDraft = createContactDraft(images, result.data);
       dispatch(
         populateDraftFromExtraction({
@@ -568,12 +583,15 @@ export function CaptureWorkspace() {
       return;
     }
 
-    setCameraError(
-      readExtractionError(
-        result.error,
-        intl.formatMessage(messages.extractionFailed),
-      ),
+    const errorMessage = readExtractionError(
+      result.error,
+      intl.formatMessage(messages.extractionFailed),
     );
+    posthog.capture("card_extraction_failed", {
+      image_count: images.length,
+      error_message: errorMessage,
+    });
+    setCameraError(errorMessage);
   }
 
   return (

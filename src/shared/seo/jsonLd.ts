@@ -1,3 +1,5 @@
+import type { AppLocale } from "../types/models";
+
 const SITE_ORIGIN = "https://meishi-492400.web.app";
 const SITE_NAME = "Meishi";
 const SITE_DESCRIPTION =
@@ -8,7 +10,7 @@ const CREATOR_URL = "https://github.com/mundanelunacy";
 type JsonLdNode = Record<string, unknown>;
 
 interface LandingSchemaContent {
-  locale: "en-US" | "ja";
+  locale: AppLocale;
   softwareDescription: string;
   browserRequirements: string;
   featureList: string[];
@@ -18,7 +20,7 @@ interface LandingSchemaContent {
 }
 
 interface DocsSchemaContent {
-  locale: "en-US" | "ja";
+  locale: AppLocale;
   softwareDescription: string;
   browserRequirements: string;
   featureList: string[];
