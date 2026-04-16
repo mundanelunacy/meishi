@@ -23,6 +23,7 @@
 - Successful vCard export and Google sync open a full-screen follow-up modal with actions to scan another card or dismiss the prompt
 - Save actions stay disabled until the reviewed form contains meaningful contact data
 - On-demand Google authorization from review before sync when no Google session is active
+- Automatic Google reauthorization-and-retry when sync fails because the stored Google token was expired, revoked, or otherwise no longer usable
 
 ## Interfaces
 

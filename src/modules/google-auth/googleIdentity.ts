@@ -53,6 +53,12 @@ type GoogleAuthPopupMessage =
 
 let authBootstrapPromise: Promise<User> | null = null;
 let googleAccessTokenCache: { value: string; expiresAt: number } | null = null;
+const RECOVERABLE_GOOGLE_AUTH_MESSAGE_PATTERNS = [
+  /token has been expired or revoked/i,
+  /invalid_grant/i,
+  /invalid authentication credentials/i,
+  /google contacts is not connected for the current firebase session/i,
+] as const;
 
 export function getGoogleScope() {
   return GOOGLE_SCOPE;
@@ -213,7 +219,9 @@ export async function connectGoogleContacts() {
   }
 
   popup.focus();
-  return waitForPopupResult(popup, user.uid);
+  const nextGoogleAuth = await waitForPopupResult(popup, user.uid);
+  invalidateGoogleAccessTokenCache();
+  return nextGoogleAuth;
 }
 
 export async function completeGoogleContactsAuthCallback(
@@ -236,6 +244,56 @@ export async function getGoogleAuthStatus() {
 
 export function invalidateGoogleAccessTokenCache() {
   googleAccessTokenCache = null;
+}
+
+function findNestedErrorMessage(value: unknown): string | null {
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const nested = findNestedErrorMessage(item);
+      if (nested) {
+        return nested;
+      }
+    }
+
+    return null;
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  for (const key of ["message", "error_description", "statusText"]) {
+    const nested = findNestedErrorMessage(record[key]);
+    if (nested) {
+      return nested;
+    }
+  }
+
+  for (const key of ["error", "data", "details"]) {
+    const nested = findNestedErrorMessage(record[key]);
+    if (nested) {
+      return nested;
+    }
+  }
+
+  return null;
+}
+
+export function shouldReconnectGoogleContacts(error: unknown) {
+  const message = findNestedErrorMessage(error);
+  if (!message) {
+    return false;
+  }
+
+  return RECOVERABLE_GOOGLE_AUTH_MESSAGE_PATTERNS.some((pattern) =>
+    pattern.test(message),
+  );
 }
 
 export async function getValidGoogleAccessToken() {
@@ -273,4 +331,4 @@ export async function disconnectGoogleContacts() {
   await signOut(getFirebaseAuth());
 }
 
-export { POPUP_MESSAGE_TYPE, postPopupMessage };
+export { createInitialGoogleAuthState, POPUP_MESSAGE_TYPE, postPopupMessage };

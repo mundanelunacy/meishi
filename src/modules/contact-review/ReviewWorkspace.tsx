@@ -76,7 +76,10 @@ import { buildContactPayload, useSyncGoogleContact } from "../google-contacts";
 import { buildContactVCard, saveContactVCard } from "../vcard-export";
 import { pushToast } from "../../shared/ui/toastBus";
 import { buildPreservedNotes } from "../../shared/lib/contactFidelity";
-import { connectGoogleContacts } from "../google-auth/googleIdentity";
+import {
+  connectGoogleContacts,
+  shouldReconnectGoogleContacts,
+} from "../google-auth/googleIdentity";
 import { useGoogleAuthStateSync } from "../google-auth/useGoogleAuthStateSync";
 import {
   selectGoogleAuth,
@@ -776,6 +779,27 @@ export function ReviewWorkspace() {
   const selectedPhotoImageId = form.watch("selectedPhotoImageId");
   const hasAnyReviewData = hasReviewData(currentValues);
 
+  async function authorizeGoogle(currentGoogleAuth: typeof googleAuth) {
+    setIsAuthorizing(true);
+    dispatch(setGoogleAuthState({ ...currentGoogleAuth, status: "connecting" }));
+
+    try {
+      const nextAuthState = await connectGoogleContacts();
+      dispatch(setGoogleAuthState(nextAuthState));
+      return nextAuthState;
+    } catch (error) {
+      dispatch(
+        setGoogleAuthState({
+          ...currentGoogleAuth,
+          status: currentGoogleAuth.connectedAt ? "connected" : "signed_out",
+        }),
+      );
+      throw error;
+    } finally {
+      setIsAuthorizing(false);
+    }
+  }
+
   function clearPendingAutosave() {
     if (autosaveTimeoutRef.current) {
       window.clearTimeout(autosaveTimeoutRef.current);
@@ -824,30 +848,29 @@ export function ReviewWorkspace() {
     const verifiedContact = buildVerifiedContact(activeDraft, values);
 
     try {
+      let currentGoogleAuth = googleAuth;
       if (googleAuth.status !== "connected") {
-        setIsAuthorizing(true);
-        dispatch(setGoogleAuthState({ ...googleAuth, status: "connecting" }));
-
-        try {
-          const nextAuthState = await connectGoogleContacts();
-          dispatch(setGoogleAuthState(nextAuthState));
-        } catch (error) {
-          dispatch(
-            setGoogleAuthState({
-              ...googleAuth,
-              status: googleAuth.connectedAt ? "connected" : "signed_out",
-            }),
-          );
-          throw error;
-        } finally {
-          setIsAuthorizing(false);
-        }
+        currentGoogleAuth = await authorizeGoogle(currentGoogleAuth);
       }
 
-      const result = await syncContact({
-        contact: verifiedContact,
-        images,
-      });
+      let result;
+
+      try {
+        result = await syncContact({
+          contact: verifiedContact,
+          images,
+        });
+      } catch (error) {
+        if (!shouldReconnectGoogleContacts(error)) {
+          throw error;
+        }
+
+        await authorizeGoogle(currentGoogleAuth);
+        result = await syncContact({
+          contact: verifiedContact,
+          images,
+        });
+      }
 
       posthog.capture("google_contact_synced", {
         photo_uploaded: result.outcome.photoUploaded,
