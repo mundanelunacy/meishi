@@ -1,3 +1,5 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
@@ -5,6 +7,7 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import { APP_CHROME_THEME_COLORS } from "./src/app/chromeColors";
 
 const DEFAULT_SITE_ORIGIN = "https://meishi-492400.web.app";
+const PRIVACY_REGION_TOKEN = "__MEISHI_PRIVACY_REGION__";
 const SITEMAP_PATHS = [
   "/landing",
   "/capture",
@@ -13,6 +16,40 @@ const SITEMAP_PATHS = [
   "/docs",
   "/privacy",
   "/terms",
+] as const;
+const GDPR_COUNTRIES = [
+  "at",
+  "be",
+  "bg",
+  "hr",
+  "ch",
+  "cy",
+  "cz",
+  "dk",
+  "ee",
+  "fi",
+  "fr",
+  "de",
+  "gr",
+  "hu",
+  "ie",
+  "it",
+  "lv",
+  "lt",
+  "lu",
+  "mt",
+  "nl",
+  "pl",
+  "pt",
+  "ro",
+  "sk",
+  "si",
+  "es",
+  "se",
+  "is",
+  "li",
+  "no",
+  "gb",
 ] as const;
 
 function escapeXml(value: string): string {
@@ -66,6 +103,42 @@ function createSiteMetadataPlugin(siteOrigin: string): Plugin {
   };
 }
 
+function createPrivacyIndexPlugin(): Plugin {
+  return {
+    name: "meishi-privacy-index",
+    apply: "build",
+    async writeBundle(options) {
+      const outDir = resolve(options.dir ?? "dist");
+      const indexPath = resolve(outDir, "index.html");
+      const sourceHtml = await readFile(indexPath, "utf8");
+
+      if (!sourceHtml.includes(PRIVACY_REGION_TOKEN)) {
+        throw new Error(
+          `Privacy bootstrap token ${PRIVACY_REGION_TOKEN} was not found in index.html.`,
+        );
+      }
+
+      const nonGdprHtml = sourceHtml.replaceAll(
+        PRIVACY_REGION_TOKEN,
+        "non-gdpr",
+      );
+      const gdprHtml = sourceHtml.replaceAll(PRIVACY_REGION_TOKEN, "gdpr");
+
+      await writeFile(indexPath, nonGdprHtml);
+
+      for (const countryCode of GDPR_COUNTRIES) {
+        const localizedDir = resolve(
+          outDir,
+          "localized-files",
+          `ALL_${countryCode}`,
+        );
+        await mkdir(localizedDir, { recursive: true });
+        await writeFile(resolve(localizedDir, "index.html"), gdprHtml);
+      }
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   // Load mode-specific .env files from the repo root for both dev and production.
   const env = loadEnv(mode, process.cwd(), "");
@@ -80,6 +153,7 @@ export default defineConfig(({ mode }) => {
         generatedRouteTree: "./src/routeTree.gen.ts",
       }),
       createSiteMetadataPlugin(siteOrigin),
+      createPrivacyIndexPlugin(),
       react(),
       VitePWA({
         registerType: "prompt",

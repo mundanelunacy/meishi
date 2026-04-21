@@ -31,7 +31,7 @@
 
 ## Route Map
 
-- `/landing`: app entry and onboarding surface.
+- `/landing`: marketing and onboarding surface for users who still need valid LLM setup.
 - `/setup`: standalone quick-setup surface that reuses the landing-page setup form.
 - `/capture`: image capture and extraction start point.
 - `/review`: review, edit, export, and sync surface.
@@ -40,6 +40,8 @@
 - `/terms`: static terms of service page.
 - `/settings`: later configuration and account-management surface.
 - `/auth/google/callback`: OAuth callback handoff route for Google connection completion, rendered without the shared app chrome so the popup only shows the connection status.
+
+- `/`: root entry that redirects to `/capture` when the currently selected LLM provider key/model has already been validated, otherwise to `/landing`.
 
 ## Notes
 

@@ -1,4 +1,5 @@
 import type {
+  AnalyticsConsent,
   AppLocale,
   AppSettings,
   GoogleAuthState,
@@ -10,6 +11,10 @@ import { DEFAULT_EXTRACTION_PROMPT } from "../../shared/lib/extractionPrompt";
 const SETTINGS_KEY = "meishi.settings";
 const VALID_THEME_MODES = new Set<ThemeMode>(["system", "light", "dark"]);
 const VALID_LOCALES = new Set<AppLocale>(["en-US", "ja", "ko"]);
+const VALID_ANALYTICS_CONSENT = new Set<AnalyticsConsent>([
+  "granted",
+  "denied",
+]);
 
 export interface PersistedOnboardingState {
   settings: AppSettings;
@@ -45,6 +50,7 @@ function sanitizeSettings(settings: unknown): AppSettings {
   const llmProvider = candidate.llmProvider;
   const themeMode = candidate.themeMode;
   const locale = candidate.locale;
+  const analyticsConsent = candidate.analyticsConsent;
   const legacyApiKey =
     typeof candidate.llmApiKey === "string" ? candidate.llmApiKey : "";
 
@@ -88,6 +94,15 @@ function sanitizeSettings(settings: unknown): AppSettings {
     onboardingCompletedAt:
       typeof candidate.onboardingCompletedAt === "string"
         ? candidate.onboardingCompletedAt
+        : undefined,
+    analyticsConsent:
+      typeof analyticsConsent === "string" &&
+      VALID_ANALYTICS_CONSENT.has(analyticsConsent as AnalyticsConsent)
+        ? (analyticsConsent as AnalyticsConsent)
+        : undefined,
+    analyticsConsentUpdatedAt:
+      typeof candidate.analyticsConsentUpdatedAt === "string"
+        ? candidate.analyticsConsentUpdatedAt
         : undefined,
   };
 }

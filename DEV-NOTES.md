@@ -125,7 +125,9 @@ Google Contacts auth no longer uses a browser-only token flow. Firebase Function
 
 ## PostHog analytics
 
-Meishi uses PostHog for product analytics across the browser app. The integration is browser-side and is initialized through `PostHogProvider` in [src/app/AppRoot.tsx](./src/app/AppRoot.tsx), which wraps the application. In development, event delivery uses the `/ingest` reverse proxy configured in [vite.config.ts](./vite.config.ts). In production, the browser client sends events directly to the configured PostHog API host.
+Meishi uses PostHog for product analytics across the browser app. The integration is browser-side and is initialized by the GDPR bootstrap in [src/app/AppRoot.tsx](./src/app/AppRoot.tsx). In development, event delivery uses the `/ingest` reverse proxy configured in [vite.config.ts](./vite.config.ts). In production, the browser client sends events directly to the configured PostHog API host.
+
+Analytics activation is now gated by the GDPR module in `src/modules/gdpr`. Firebase Hosting i18n country matching serves a GDPR-flavored `index.html` that injects a privacy bootstrap flag for EU/EEA/UK requests, and the browser shows a first-load consent screen before enabling PostHog for those visitors. Non-GDPR requests receive the default `index.html` and analytics are enabled by default unless the user later disables them in Settings.
 
 The analytics client is configured with:
 

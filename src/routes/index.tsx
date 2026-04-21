@@ -1,11 +1,13 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { selectHasCompletedOnboarding } from "../modules/onboarding-settings/onboardingSlice";
+import { selectHasLlmConfiguration } from "../modules/onboarding-settings/onboardingSlice";
+import { getRootRouteRedirect } from "../modules/onboarding-settings/setupGate";
 
 export const Route = createFileRoute("/")({
   beforeLoad: ({ context }) => {
-    const ready = selectHasCompletedOnboarding(context.store.getState());
     throw redirect({
-      to: ready ? "/capture" : "/landing",
+      to: getRootRouteRedirect(
+        selectHasLlmConfiguration(context.store.getState()),
+      ),
     });
   },
 });

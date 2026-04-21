@@ -65,6 +65,9 @@
   "capture.photoroll.deleteImage": {
     "defaultMessage": "Delete {fileName}"
   },
+  "capture.photoroll.empty": {
+    "defaultMessage": "No images captured yet."
+  },
   "capture.photoroll.title": {
     "defaultMessage": "Photoroll"
   },
@@ -404,6 +407,63 @@
   "docs.tutorial.stepCardTitle": {
     "defaultMessage": "Step {stepNumber}: {title}"
   },
+  "gdpr.consent.allow": {
+    "defaultMessage": "Allow analytics"
+  },
+  "gdpr.consent.body1": {
+    "defaultMessage": "Meishi can collect limited usage data to understand which parts of the app are helpful and where problems occur."
+  },
+  "gdpr.consent.body2": {
+    "defaultMessage": "Because you are visiting from a GDPR-region country, this stays off until you choose. You can change this later in Settings."
+  },
+  "gdpr.consent.decline": {
+    "defaultMessage": "Not now"
+  },
+  "gdpr.consent.eyebrow": {
+    "defaultMessage": "Privacy settings"
+  },
+  "gdpr.consent.title": {
+    "defaultMessage": "Allow optional analytics?"
+  },
+  "gdpr.settings.allow": {
+    "defaultMessage": "Allow analytics"
+  },
+  "gdpr.settings.allowHelp": {
+    "defaultMessage": "Enable PostHog product analytics and error capture for this browser."
+  },
+  "gdpr.settings.currentStatusLabel": {
+    "defaultMessage": "Current status"
+  },
+  "gdpr.settings.decline": {
+    "defaultMessage": "Decline analytics"
+  },
+  "gdpr.settings.declineHelp": {
+    "defaultMessage": "Keep PostHog disabled for this browser until you opt in later."
+  },
+  "gdpr.settings.description": {
+    "defaultMessage": "Product analytics are powered by PostHog. You can review and change this choice at any time."
+  },
+  "gdpr.settings.region.gdpr": {
+    "defaultMessage": "Detected region: GDPR"
+  },
+  "gdpr.settings.region.nonGdpr": {
+    "defaultMessage": "Detected region: non-GDPR"
+  },
+  "gdpr.settings.status.denied": {
+    "defaultMessage": "Analytics disabled"
+  },
+  "gdpr.settings.status.granted": {
+    "defaultMessage": "Analytics allowed"
+  },
+  "gdpr.settings.status.pending": {
+    "defaultMessage": "No choice recorded yet"
+  },
+  "gdpr.settings.title": {
+    "defaultMessage": "Analytics"
+  },
+  "gdpr.settings.updatedAtLabel": {
+    "defaultMessage": "Updated on {dateTime}"
+  },
   "googleAuth.callback.eyebrow": {
     "defaultMessage": "Google Contacts"
   },
@@ -683,6 +743,27 @@
   "landing.setup.title": {
     "defaultMessage": "Quick setup"
   },
+  "landing.setup.validation.help": {
+    "defaultMessage": "Meishi automatically checks the selected provider key and model before enabling capture."
+  },
+  "landing.setup.validation.invalidAnthropicFormat": {
+    "defaultMessage": "Anthropic keys should start with `sk-ant-`."
+  },
+  "landing.setup.validation.invalidOpenAiFormat": {
+    "defaultMessage": "OpenAI keys should start with `sk-`."
+  },
+  "landing.setup.validation.missingApiKey": {
+    "defaultMessage": "Paste an API key to start validation."
+  },
+  "landing.setup.validation.missingModel": {
+    "defaultMessage": "Choose a model before validation can run."
+  },
+  "landing.setup.validation.tooShort": {
+    "defaultMessage": "This API key looks too short to validate yet."
+  },
+  "landing.setup.validation.waiting": {
+    "defaultMessage": "Checking this provider key shortly..."
+  },
   "landing.time.label": {
     "defaultMessage": "Average time from photo to verified contact with an LLM"
   },
@@ -709,6 +790,18 @@
   },
   "legal.layout.footerText": {
     "defaultMessage": "Questions about these terms can be directed through the project repository."
+  },
+  "legal.privacy.analytics.body1": {
+    "defaultMessage": "Meishi uses PostHog for product analytics and error monitoring related to app usage flows such as onboarding, capture, review, sharing, and sync outcomes."
+  },
+  "legal.privacy.analytics.body2": {
+    "defaultMessage": "Visitors from GDPR-region countries see an analytics consent screen before PostHog is enabled. Visitors from non-GDPR countries have analytics enabled by default unless they later disable it in Settings."
+  },
+  "legal.privacy.analytics.body3": {
+    "defaultMessage": "You can change this analytics choice at any time from Settings. If analytics are disabled, Meishi uses a no-op analytics client and does not send PostHog capture events from the browser."
+  },
+  "legal.privacy.analytics.title": {
+    "defaultMessage": "Product analytics"
   },
   "legal.privacy.choices.body": {
     "defaultMessage": "You can stop using Meishi at any time, clear browser storage, remove the app, revoke Google access from your Google account, and delete generated contacts from Google Contacts if you no longer want them stored there."
@@ -784,6 +877,9 @@
   },
   "legal.privacy.stored.item5": {
     "defaultMessage": "Append-only local sync history and lightweight Google connection metadata"
+  },
+  "legal.privacy.stored.item6": {
+    "defaultMessage": "Analytics consent choice and the time that choice was updated"
   },
   "legal.privacy.stored.title": {
     "defaultMessage": "Data stored on your device"
@@ -1159,6 +1255,9 @@
   },
   "review.photoroll.clear": {
     "defaultMessage": "Clear photoroll"
+  },
+  "review.photoroll.empty": {
+    "defaultMessage": "No images captured yet."
   },
   "review.photoroll.title": {
     "defaultMessage": "Photoroll"

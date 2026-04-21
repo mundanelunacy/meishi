@@ -9,6 +9,7 @@
 
 - `localStorage` helpers for onboarding/settings persistence
 - `localStorage` persistence for the last validated LLM provider/key/model result
+- `localStorage` persistence for the browser's analytics consent choice
 - Dexie-based IndexedDB for images, sessions, drafts, and sync history
 - Recovery helpers for active capture and the latest autosaved draft
 - Append-only sync outcome recording for create-plus-photo flows
@@ -31,6 +32,7 @@
 - `localStorage`
   - settings
   - docs locale preference
+  - analytics consent choice and update timestamp
   - light Google auth metadata only
   - last LLM provider validation result for the active key/model pair
 - IndexedDB
@@ -44,3 +46,4 @@
 - Do not store Google access tokens or refresh tokens here.
 - Keep review-draft autosave recoverable after navigation or refresh.
 - Keep locale settings sanitized at the storage boundary so unknown values fall back to `en-US`.
+- Keep analytics consent values sanitized so unknown persisted values are treated as unset.

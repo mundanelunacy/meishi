@@ -1,4 +1,3 @@
-import { usePostHog } from "@posthog/react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { LOCALE_LABELS } from "../../app/intl";
 import { hasFirebaseConfiguration } from "../../app/env";
@@ -24,6 +23,7 @@ import {
   connectGoogleContacts,
   disconnectGoogleContacts,
 } from "../google-auth/googleIdentity";
+import { AnalyticsSettingsCard, useAnalytics } from "../gdpr";
 import { useGoogleAuthStateSync } from "../google-auth/useGoogleAuthStateSync";
 import { pushToast } from "../../shared/ui/toastBus";
 import { getSettingsContent } from "./onboardingContent";
@@ -32,7 +32,7 @@ import { LlmConfigurationForm } from "./LlmConfigurationForm";
 export function SettingsPanel() {
   useGoogleAuthStateSync();
 
-  const posthog = usePostHog();
+  const analytics = useAnalytics();
   const intl = useIntl();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(selectSettings);
@@ -97,7 +97,7 @@ export function SettingsPanel() {
       );
       await disconnectGoogleContacts();
       dispatch(signOutGoogle());
-      posthog.capture("google_auth_disconnected");
+      analytics.capture("google_auth_disconnected");
     } catch (error) {
       dispatch(
         setGoogleAuthState({
@@ -249,6 +249,8 @@ export function SettingsPanel() {
         </CardContent>
       </Card>
 
+      <AnalyticsSettingsCard />
+
       <Card>
         <CardHeader>
           <CardTitle>{content.advancedTitle}</CardTitle>
@@ -274,7 +276,7 @@ export function SettingsPanel() {
             type="button"
             variant="outline"
             onClick={() => {
-              posthog.capture("settings_cleared");
+              analytics.capture("settings_cleared");
               dispatch(clearAllSettings());
             }}
           >

@@ -10,6 +10,7 @@ import { renderWithIntl } from "../../test/renderWithIntl";
 import {
   completeLlmValidationSuccess,
   onboardingReducer,
+  setAnalyticsConsent,
   setGoogleAuthState,
   setOpenAiApiKey,
   setThemeMode,
@@ -301,6 +302,28 @@ describe("SettingsPanel", () => {
     expect(store.getState().onboarding.settings.locale).toBe("ko");
   });
 
+  it("updates the analytics consent preference", async () => {
+    const { store } = renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("radio", { name: /allow analytics/i }));
+
+    expect(store.getState().onboarding.settings.analyticsConsent).toBe(
+      "granted",
+    );
+
+    await user.click(
+      screen.getByRole("radio", { name: /decline analytics/i }),
+    );
+
+    expect(store.getState().onboarding.settings.analyticsConsent).toBe(
+      "denied",
+    );
+    expect(
+      store.getState().onboarding.settings.analyticsConsentUpdatedAt,
+    ).toBeTruthy();
+  });
+
   it("uses the landing-style provider form", async () => {
     renderPanel();
 
@@ -352,7 +375,10 @@ describe("SettingsPanel", () => {
         onboarding: onboardingReducer,
       },
       preloadedState: {
-        onboarding: onboardingReducer(undefined, setThemeMode("dark")),
+        onboarding: onboardingReducer(
+          onboardingReducer(undefined, setThemeMode("dark")),
+          setAnalyticsConsent("granted"),
+        ),
       },
     });
 
@@ -369,5 +395,8 @@ describe("SettingsPanel", () => {
     expect(screen.getByRole("option", { name: "English" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "日本語" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "한국어" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/analytics allowed/i),
+    ).toBeInTheDocument();
   });
 });

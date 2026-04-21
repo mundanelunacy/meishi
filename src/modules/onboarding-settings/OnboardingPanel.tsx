@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { usePostHog } from "@posthog/react";
 import { KeyRound, ShieldAlert } from "lucide-react";
 import { useIntl } from "react-intl";
 import { Spinner } from "../../shared/ui/spinner";
@@ -35,6 +34,7 @@ import {
   connectGoogleContacts,
   getGoogleScope,
 } from "../google-auth/googleIdentity";
+import { useAnalytics } from "../gdpr";
 import { getSupportedModelOptions } from "./modelOptions";
 import {
   getLlmValidationContent,
@@ -75,7 +75,7 @@ export function OnboardingPanel() {
   const providerLabels = getProviderFieldLabels(intl, effectiveProvider);
   const providerOptionLabels = getProviderOptionLabels(intl);
 
-  const posthog = usePostHog();
+  const analytics = useAnalytics();
   const canContinue = readiness.hasLlmConfiguration;
 
   async function handleGoogleConnect() {
@@ -91,7 +91,7 @@ export function OnboardingPanel() {
       );
       const nextAuthState = await connectGoogleContacts();
       dispatch(setGoogleAuthState(nextAuthState));
-      posthog.capture("google_auth_connected", {
+      analytics.capture("google_auth_connected", {
         account_email: nextAuthState.accountEmail ?? null,
         context: "onboarding",
       });
@@ -103,7 +103,7 @@ export function OnboardingPanel() {
           status: googleAuth.connectedAt ? "connected" : "signed_out",
         }),
       );
-      posthog.captureException(error);
+      analytics.captureException(error);
       const message =
         error instanceof Error ? error.message : content.toasts.connectError;
       setErrorMessage(message);
@@ -114,7 +114,7 @@ export function OnboardingPanel() {
 
   function handleFinish() {
     dispatch(completeOnboarding());
-    posthog.capture("onboarding_completed", {
+    analytics.capture("onboarding_completed", {
       llm_provider: settings.llmProvider,
       has_google_auth: readiness.hasGoogleAuthorization,
     });
