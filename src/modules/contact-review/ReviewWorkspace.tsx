@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { usePostHog } from "@posthog/react";
 import { useNavigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -73,6 +72,7 @@ import {
   saveDraft,
 } from "../local-data";
 import { buildContactPayload, useSyncGoogleContact } from "../google-contacts";
+import { useAnalytics } from "../gdpr";
 import { buildContactVCard, saveContactVCard } from "../vcard-export";
 import { pushToast } from "../../shared/ui/toastBus";
 import { buildPreservedNotes } from "../../shared/lib/contactFidelity";
@@ -127,6 +127,10 @@ const messages = defineMessages({
   photorollTitle: {
     id: "review.photoroll.title",
     defaultMessage: "Photoroll",
+  },
+  photorollEmpty: {
+    id: "review.photoroll.empty",
+    defaultMessage: "No images captured yet.",
   },
   clearPhotoroll: {
     id: "review.photoroll.clear",
@@ -653,7 +657,7 @@ export function ReviewWorkspace() {
   const intl = useIntl();
   useGoogleAuthStateSync();
 
-  const posthog = usePostHog();
+  const analytics = useAnalytics();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const draft = useAppSelector(selectDraft);
@@ -872,7 +876,7 @@ export function ReviewWorkspace() {
         });
       }
 
-      posthog.capture("google_contact_synced", {
+      analytics.capture("google_contact_synced", {
         photo_uploaded: result.outcome.photoUploaded,
         had_warning: Boolean(result.warningMessage),
       });
@@ -881,7 +885,7 @@ export function ReviewWorkspace() {
       );
       setIsSaveSuccessModalOpen(true);
     } catch (error) {
-      posthog.capture("google_contact_sync_failed", {
+      analytics.capture("google_contact_sync_failed", {
         error_message: error instanceof Error ? error.message : String(error),
       });
       pushToast(
@@ -918,7 +922,7 @@ export function ReviewWorkspace() {
       const exportResult = await saveContactVCard(
         buildVerifiedContact(updatedDraft, values),
       );
-      posthog.capture("vcard_saved", { method: exportResult });
+      analytics.capture("vcard_saved", { method: exportResult });
       pushToast(
         exportResult === "shared"
           ? intl.formatMessage(messages.vcardShared)
@@ -1028,6 +1032,7 @@ export function ReviewWorkspace() {
           <CardContent>
             <Photoroll
               images={images}
+              emptyMessage={intl.formatMessage(messages.photorollEmpty)}
               getItemClassName={(image) =>
                 selectedPhotoImageId === image.id
                   ? "border-primary ring-2 ring-primary/25"

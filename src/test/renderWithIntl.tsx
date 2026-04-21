@@ -8,7 +8,17 @@ export function renderWithIntl(
 ) {
   return render(ui, {
     wrapper: ({ children }: { children: ReactNode }) => (
-      <IntlProvider locale="en-US" messages={{}}>
+      <IntlProvider
+        locale="en-US"
+        messages={{}}
+        onError={(error) => {
+          if (error.code === "MISSING_TRANSLATION") {
+            return;
+          }
+
+          throw error;
+        }}
+      >
         {children}
       </IntlProvider>
     ),

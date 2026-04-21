@@ -21,6 +21,7 @@ export type GoogleAuthStatus =
 export type ThemeMode = "system" | "light" | "dark";
 export type AppLocale = "en-US" | "ja" | "ko";
 export type LlmValidationStatus = "idle" | "validating" | "valid" | "invalid";
+export type AnalyticsConsent = "granted" | "denied";
 
 export interface AppSettings {
   llmProvider: SupportedLlmProvider;
@@ -32,6 +33,8 @@ export interface AppSettings {
   themeMode: ThemeMode;
   locale: AppLocale;
   onboardingCompletedAt?: string;
+  analyticsConsent?: AnalyticsConsent;
+  analyticsConsentUpdatedAt?: string;
 }
 
 export interface LlmValidationResult {

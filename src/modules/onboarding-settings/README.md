@@ -18,12 +18,15 @@
 - Standalone `/setup` page that reuses the landing-page quick setup section
 - `/capture`, `/review`, and `/settings` route entry now redirects through `/setup` until the selected provider key has been configured and validated
 - `/setup` redirects to `/settings` once the selected provider key has been configured and validated
+- `/` redirects straight to `/capture` once the selected provider key/model has been configured and validated, otherwise to `/landing`
 - Appearance preference with `system`, `light`, and `dark` modes
 - Docs language preference with `en-US`, `ja`, and `ko` options
+- Persisted analytics consent state used by the GDPR module
 - Shared advanced extraction guidance setting appended to fixed structured-output and fidelity rules
 - Settings screen for later edits and local reset
 - Settings reuses the same provider configuration form as quick setup, including debounced automatic validation and inline API-key feedback
 - Settings screen that exposes a simple Google connection toggle and separates advanced controls
+- Settings screen that exposes analytics consent management for later review
 - Landing-page quick setup and the standalone `/setup` page auto-validate eligible provider key/model changes after a short debounce
 - Route readiness selectors
 - Firebase-backed Google connection status and reconnect/disconnect controls
@@ -46,6 +49,7 @@
 
 - Persists the settings object in `localStorage`.
 - Persists the last validation result for the selected provider key/model pair in `localStorage` so validated setups survive reloads until the provider config changes.
+- Persists the current analytics consent choice and update timestamp in `localStorage`.
 - Keeps only light Google connection metadata such as scope, connected account email, and connected timestamp in `localStorage`; Google bearer tokens are reacquired from Functions when needed.
 - Stores the appearance preference alongside other settings and resolves `system` against the browser color-scheme preference at runtime.
 - Stores the docs locale preference in the same settings payload. `en-US` is the persisted default, with `ja` and `ko` available as translated locales.
@@ -53,6 +57,7 @@
 ## Constraints
 
 - This module must continue to warn that client-side API key storage is prototype-only.
+- GDPR-region detection is owned by `src/modules/gdpr`; this module only persists the user's consent choice.
 - Google readiness is based on a renewable backend-backed connection, not the presence of a bearer token in Redux.
 - The settings screen may place Google auth in a transient `disconnecting` state so both connection toggles stay locked until backend disconnect finishes.
 - Onboarding copy should explain that Google consent text is broader than the app's current create-plus-photo-upload flow because the People API requires the full contacts scope.

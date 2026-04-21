@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type TouchEvent } from "react";
-import { usePostHog } from "@posthog/react";
 import { defineMessages, useIntl } from "react-intl";
 import {
   Link,
@@ -28,6 +27,7 @@ import {
   setLocale,
 } from "../onboarding-settings/onboardingSlice";
 import { Button } from "../../shared/ui/button";
+import { useAnalytics } from "../gdpr";
 import { usePwaLifecycle } from "../pwa-runtime";
 import { getPrimarySwipeDestination } from "./navigation";
 import { ShareSiteDialog } from "./ShareSiteDialog";
@@ -240,7 +240,7 @@ export function AppShell() {
     offlineReady,
     promptInstall,
   } = usePwaLifecycle();
-  const posthog = usePostHog();
+  const analytics = useAnalytics();
   const [openMenu, setOpenMenu] = useState<"desktop" | "mobile" | null>(null);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const desktopMenuRef = useRef<HTMLDivElement | null>(null);
@@ -273,7 +273,7 @@ export function AppShell() {
 
   async function handleShareSite() {
     setOpenMenu(null);
-    posthog.capture("site_shared");
+    analytics.capture("site_shared");
 
     try {
       const shared = await shareSiteUrl(shareUrl, shareCopy);
@@ -602,7 +602,7 @@ export function AppShell() {
             size="sm"
             variant="outline"
             onClick={() => {
-              posthog.capture("pwa_install_prompted");
+              analytics.capture("pwa_install_prompted");
               void promptInstall();
             }}
           >

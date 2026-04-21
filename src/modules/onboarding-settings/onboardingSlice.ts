@@ -5,6 +5,7 @@ import {
 } from "@reduxjs/toolkit";
 import type { RootState } from "../../app/store";
 import type {
+  AnalyticsConsent,
   AppLocale,
   AppSettings,
   GoogleAuthState,
@@ -102,6 +103,16 @@ const onboardingSlice = createSlice({
       state.settings.locale = action.payload;
       persistState(state);
     },
+    setAnalyticsConsent(
+      state,
+      action: PayloadAction<AnalyticsConsent | undefined>,
+    ) {
+      state.settings.analyticsConsent = action.payload;
+      state.settings.analyticsConsentUpdatedAt = action.payload
+        ? new Date().toISOString()
+        : undefined;
+      persistState(state);
+    },
     setGoogleAuthState(state, action: PayloadAction<GoogleAuthState>) {
       state.googleAuth = action.payload;
       persistState(state);
@@ -169,6 +180,7 @@ export const {
   setExtractionPrompt,
   setThemeMode,
   setLocale,
+  setAnalyticsConsent,
   setGoogleAuthState,
   startLlmValidation,
   completeLlmValidationSuccess,
@@ -187,6 +199,10 @@ export const selectThemeMode = (state: RootState) =>
   state.onboarding.settings.themeMode;
 export const selectLocale = (state: RootState) =>
   state.onboarding.settings.locale;
+export const selectAnalyticsConsent = (state: RootState) =>
+  state.onboarding.settings.analyticsConsent;
+export const selectAnalyticsConsentUpdatedAt = (state: RootState) =>
+  state.onboarding.settings.analyticsConsentUpdatedAt;
 export const selectHasCompletedOnboarding = (state: RootState) =>
   Boolean(state.onboarding.settings.onboardingCompletedAt);
 export const selectLlmValidationState = (state: RootState) =>

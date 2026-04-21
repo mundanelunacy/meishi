@@ -55,6 +55,10 @@ const messages = defineMessages({
     defaultMessage:
       "Append-only local sync history and lightweight Google connection metadata",
   },
+  privacyStoredItem6: {
+    id: "legal.privacy.stored.item6",
+    defaultMessage: "Analytics consent choice and the time that choice was updated",
+  },
   privacyStoredBody: {
     id: "legal.privacy.stored.body",
     defaultMessage:
@@ -125,6 +129,25 @@ const messages = defineMessages({
     id: "legal.privacy.retention.body2",
     defaultMessage:
       "If those backend records are deleted, you may need to reconnect your Google account before syncing again.",
+  },
+  privacyAnalyticsTitle: {
+    id: "legal.privacy.analytics.title",
+    defaultMessage: "Product analytics",
+  },
+  privacyAnalyticsBody1: {
+    id: "legal.privacy.analytics.body1",
+    defaultMessage:
+      "Meishi uses PostHog for product analytics and error monitoring related to app usage flows such as onboarding, capture, review, sharing, and sync outcomes.",
+  },
+  privacyAnalyticsBody2: {
+    id: "legal.privacy.analytics.body2",
+    defaultMessage:
+      "Visitors from GDPR-region countries see an analytics consent screen before PostHog is enabled. Visitors from non-GDPR countries have analytics enabled by default unless they later disable it in Settings.",
+  },
+  privacyAnalyticsBody3: {
+    id: "legal.privacy.analytics.body3",
+    defaultMessage:
+      "You can change this analytics choice at any time from Settings. If analytics are disabled, Meishi uses a no-op analytics client and does not send PostHog capture events from the browser.",
   },
   privacySecurityTitle: {
     id: "legal.privacy.security.title",
@@ -285,6 +308,7 @@ export function getPrivacyPolicyContent(intl: IntlShape): LegalPageContent {
           intl.formatMessage(messages.privacyStoredItem3),
           intl.formatMessage(messages.privacyStoredItem4),
           intl.formatMessage(messages.privacyStoredItem5),
+          intl.formatMessage(messages.privacyStoredItem6),
         ],
       },
       {
@@ -315,6 +339,14 @@ export function getPrivacyPolicyContent(intl: IntlShape): LegalPageContent {
         paragraphs: [
           intl.formatMessage(messages.privacyRetentionBody1),
           intl.formatMessage(messages.privacyRetentionBody2),
+        ],
+      },
+      {
+        title: intl.formatMessage(messages.privacyAnalyticsTitle),
+        paragraphs: [
+          intl.formatMessage(messages.privacyAnalyticsBody1),
+          intl.formatMessage(messages.privacyAnalyticsBody2),
+          intl.formatMessage(messages.privacyAnalyticsBody3),
         ],
       },
       {

@@ -92,4 +92,39 @@ describe("local-data/storage", () => {
       settings: defaultSettings,
     });
   });
+
+  it("loads and persists sanitized analytics consent fields", () => {
+    window.localStorage.setItem(
+      "meishi.settings",
+      JSON.stringify({
+        settings: {
+          analyticsConsent: "granted",
+          analyticsConsentUpdatedAt: "2026-04-21T10:00:00.000Z",
+        },
+      }),
+    );
+
+    expect(loadPersistedState()).toEqual({
+      settings: {
+        ...defaultSettings,
+        analyticsConsent: "granted",
+        analyticsConsentUpdatedAt: "2026-04-21T10:00:00.000Z",
+      },
+    });
+
+    persistOnboardingState({
+      settings: {
+        ...defaultSettings,
+        analyticsConsent: "unsupported" as "granted",
+        analyticsConsentUpdatedAt: "2026-04-21T11:00:00.000Z",
+      },
+    });
+
+    expect(loadPersistedState()).toEqual({
+      settings: {
+        ...defaultSettings,
+        analyticsConsentUpdatedAt: "2026-04-21T11:00:00.000Z",
+      },
+    });
+  });
 });

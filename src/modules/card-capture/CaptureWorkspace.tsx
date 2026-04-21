@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { usePostHog } from "@posthog/react";
 import { Camera, Eraser, ImagePlus, Sparkles, Trash2 } from "lucide-react";
 import { defineMessages, useIntl } from "react-intl";
 import { Spinner } from "../../shared/ui/spinner";
@@ -39,6 +38,7 @@ import {
   setCapturedImages,
 } from "../contact-review/reviewDraftSlice";
 import { useExtractBusinessCardMutation } from "../card-extraction/extractionApi";
+import { useAnalytics } from "../gdpr";
 import { Photoroll } from "../../shared/ui/photoroll";
 import { pushToast } from "../../shared/ui/toastBus";
 
@@ -87,6 +87,10 @@ const messages = defineMessages({
   photorollTitle: {
     id: "capture.photoroll.title",
     defaultMessage: "Photoroll",
+  },
+  photorollEmpty: {
+    id: "capture.photoroll.empty",
+    defaultMessage: "No images captured yet.",
   },
   clearPhotoroll: {
     id: "capture.photoroll.clear",
@@ -203,7 +207,7 @@ export function CaptureWorkspace() {
   const intl = useIntl();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const posthog = usePostHog();
+  const analytics = useAnalytics();
   const images = useAppSelector(selectCapturedImages);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -379,7 +383,7 @@ export function CaptureWorkspace() {
       logDebugEvent("saveCapturedImages:end", {
         nextImageCount: nextImages.length,
       });
-      posthog.capture("image_added_from_library", {
+      analytics.capture("image_added_from_library", {
         image_count: files.length,
         total_images: nextImages.length,
       });
@@ -393,7 +397,7 @@ export function CaptureWorkspace() {
         message:
           error instanceof Error ? error.message : "Unable to process images.",
       });
-      posthog.captureException(error);
+      analytics.captureException(error);
       setCameraError(
         error instanceof Error
           ? error.message
@@ -469,7 +473,7 @@ export function CaptureWorkspace() {
       setIsStartingCamera(true);
       const nextStream = await openPreferredCameraStream();
       setCameraStream(nextStream);
-      posthog.capture("camera_opened", {
+      analytics.capture("camera_opened", {
         capture_experience: captureExperience,
       });
       logDebugEvent("handleOpenCamera:live-preview-opened");
@@ -478,7 +482,7 @@ export function CaptureWorkspace() {
         message:
           error instanceof Error ? error.message : "Unable to open the camera.",
       });
-      posthog.captureException(error);
+      analytics.captureException(error);
       setCameraError(
         error instanceof Error
           ? error.message
@@ -564,10 +568,10 @@ export function CaptureWorkspace() {
       return;
     }
 
-    posthog.capture("card_extraction_started", { image_count: images.length });
+    analytics.capture("card_extraction_started", { image_count: images.length });
     const result = await extractBusinessCard({ images });
     if ("data" in result && result.data) {
-      posthog.capture("card_extraction_succeeded", {
+      analytics.capture("card_extraction_succeeded", {
         image_count: images.length,
       });
       const nextDraft = createContactDraft(images, result.data);
@@ -587,7 +591,7 @@ export function CaptureWorkspace() {
       result.error,
       intl.formatMessage(messages.extractionFailed),
     );
-    posthog.capture("card_extraction_failed", {
+    analytics.capture("card_extraction_failed", {
       image_count: images.length,
       error_message: errorMessage,
     });
@@ -622,6 +626,7 @@ export function CaptureWorkspace() {
           <CardContent>
             <Photoroll
               images={images}
+              emptyMessage={intl.formatMessage(messages.photorollEmpty)}
               renderOverlayAction={(image) => (
                 <Button
                   type="button"
