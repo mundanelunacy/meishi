@@ -2,12 +2,10 @@
 
 Meishi turns business cards into structured contacts you can review, export, and optionally sync to Google Contacts.
 
-[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/mundanelunacy)
-
 [Open the public app](https://meishi.dev)  
 [Read the technical notes](./DEV-NOTES.md)
 
-![Meishi review screen](./public/docs/screenshots/capture-photoroll.png)
+![Meishi hero](./public/landing/networking_scene.jpg)
 
 ## Why it exists
 
@@ -96,3 +94,5 @@ Use these deeper references when you need more than the quick path:
 - [DEV-NOTES.md](./DEV-NOTES.md)
 - [LOCAL-DEV.md](./LOCAL-DEV.md)
 - [functions/README.md](./functions/README.md)
+
+[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/mundanelunacy)
