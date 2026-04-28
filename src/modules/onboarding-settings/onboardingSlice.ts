@@ -59,7 +59,7 @@ function persistState(state: OnboardingState) {
   persistOnboardingState({
     settings: state.settings,
     googleAuth: state.googleAuth,
-    llmValidation: state.llmValidation.lastResult ?? undefined,
+    llmValidation: state.llmValidation?.lastResult ?? undefined,
   });
 }
 
@@ -83,12 +83,20 @@ const onboardingSlice = createSlice({
       state.settings.anthropicApiKey = action.payload;
       persistState(state);
     },
+    setGeminiApiKey(state, action: PayloadAction<string>) {
+      state.settings.geminiApiKey = action.payload;
+      persistState(state);
+    },
     setPreferredOpenAiModel(state, action: PayloadAction<string>) {
       state.settings.preferredOpenAiModel = action.payload;
       persistState(state);
     },
     setPreferredAnthropicModel(state, action: PayloadAction<string>) {
       state.settings.preferredAnthropicModel = action.payload;
+      persistState(state);
+    },
+    setPreferredGeminiModel(state, action: PayloadAction<string>) {
+      state.settings.preferredGeminiModel = action.payload;
       persistState(state);
     },
     setExtractionPrompt(state, action: PayloadAction<string>) {
@@ -175,8 +183,10 @@ export const {
   setLlmProvider,
   setOpenAiApiKey,
   setAnthropicApiKey,
+  setGeminiApiKey,
   setPreferredOpenAiModel,
   setPreferredAnthropicModel,
+  setPreferredGeminiModel,
   setExtractionPrompt,
   setThemeMode,
   setLocale,

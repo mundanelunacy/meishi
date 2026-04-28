@@ -16,6 +16,7 @@
 - Centered two-option primary navigation for capture/review that reads as a toggle, with a right-aligned overflow menu in the desktop header and in the mobile top header beside the brand
 - Overflow-menu navigation for sharing the app site, docs, settings, Google Contacts, and external project/support links on both desktop and mobile
 - React Intl-backed app shell, legal routes, and docs content with `en-US` as the default locale plus `ja` and `ko` translations
+- Docs API-key guidance for OpenAI, Anthropic, and Google Gemini
 - Header-level language pickers beside the overflow-menu trigger on both mobile and desktop layouts
 - Mobile swipe gestures on the primary navigation surface to move left/right between capture and review
 - PWA update notification hook integration

@@ -11,13 +11,17 @@ import {
   type BusinessCardExtraction,
 } from "./extractionSchema";
 
+const GEMINI_EXTRACTION_MAX_OUTPUT_TOKENS = 8192;
+
 type ExtractionSettings = Pick<
   AppSettings,
   | "llmProvider"
   | "openAiApiKey"
   | "anthropicApiKey"
+  | "geminiApiKey"
   | "preferredOpenAiModel"
   | "preferredAnthropicModel"
+  | "preferredGeminiModel"
   | "extractionPrompt"
 >;
 
@@ -42,7 +46,7 @@ export async function extractBusinessCardWithProvider({
     case "anthropic":
       return extractWithAnthropic({ request, settings, fetchImpl });
     case "gemini":
-      throw new Error("Gemini extraction is not implemented yet.");
+      return extractWithGemini({ request, settings, fetchImpl });
     default:
       return assertNever(settings.llmProvider);
   }
@@ -137,6 +141,56 @@ async function extractWithAnthropic({
   return businessCardExtractionSchema.parse(structured);
 }
 
+async function extractWithGemini({
+  request,
+  settings,
+  fetchImpl,
+}: ExtractionRuntimeContext): Promise<BusinessCardExtraction> {
+  if (!settings.geminiApiKey.trim()) {
+    throw new Error("Add a Gemini API key in settings before extraction.");
+  }
+
+  const response = await fetchImpl(
+    getGeminiGenerateContentUrl(settings.preferredGeminiModel),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": settings.geminiApiKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: "Return only the required structured extraction. Never invent unsupported fields.",
+            },
+          ],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: buildGeminiParts(request, settings.extractionPrompt),
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: GEMINI_EXTRACTION_MAX_OUTPUT_TOKENS,
+          responseMimeType: "application/json",
+          responseJsonSchema: businessCardExtractionJsonSchema,
+          ...getGeminiThinkingConfig(settings.preferredGeminiModel),
+        },
+      }),
+    },
+  );
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(readProviderError(payload, "Gemini extraction failed."));
+  }
+
+  const rawText = readGeminiOutputText(payload);
+  return businessCardExtractionSchema.parse(JSON.parse(rawText));
+}
+
 function buildOpenAiInput(
   request: ExtractionRequest,
   extractionPrompt: string,
@@ -183,6 +237,24 @@ function buildAnthropicContent(
       source: {
         type: "base64",
         media_type: image.mimeType,
+        data: base64FromDataUrl(image.dataUrl),
+      },
+    })),
+  ];
+}
+
+function buildGeminiParts(
+  request: ExtractionRequest,
+  extractionPrompt: string,
+) {
+  const effectivePrompt = buildEffectiveExtractionPrompt(extractionPrompt);
+  return [
+    {
+      text: effectivePrompt,
+    },
+    ...request.images.map((image) => ({
+      inlineData: {
+        mimeType: image.mimeType,
         data: base64FromDataUrl(image.dataUrl),
       },
     })),
@@ -254,6 +326,65 @@ function readAnthropicToolInput(payload: unknown) {
   return input;
 }
 
+function readGeminiOutputText(payload: unknown) {
+  if (!payload || typeof payload !== "object") {
+    throw new Error("Gemini returned an empty response.");
+  }
+
+  const candidates = Reflect.get(payload, "candidates");
+  if (!Array.isArray(candidates)) {
+    throw new Error("Gemini response did not include candidates.");
+  }
+
+  const text = candidates
+    .flatMap((candidate) => {
+      if (typeof candidate !== "object" || !candidate) {
+        return [];
+      }
+
+      const content = Reflect.get(candidate, "content");
+      if (typeof content !== "object" || !content) {
+        return [];
+      }
+
+      const parts = Reflect.get(content, "parts");
+      return Array.isArray(parts) ? parts : [];
+    })
+    .map((part) => {
+      if (typeof part !== "object" || !part) {
+        return "";
+      }
+
+      const candidate = Reflect.get(part, "text");
+      return typeof candidate === "string" ? candidate : "";
+    })
+    .join("");
+
+  if (!text) {
+    throw new Error("Gemini returned no structured text.");
+  }
+
+  return text;
+}
+
+function getGeminiGenerateContentUrl(model: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+    model,
+  )}:generateContent`;
+}
+
+function getGeminiThinkingConfig(model: string) {
+  if (!model.includes("2.5-flash")) {
+    return {};
+  }
+
+  return {
+    thinkingConfig: {
+      thinkingBudget: 0,
+    },
+  };
+}
+
 function readProviderError(payload: unknown, fallback: string) {
   if (!payload || typeof payload !== "object") {
     return fallback;
@@ -293,7 +424,7 @@ function getSettingsByProvider(
     case "anthropic":
       return settings.anthropicApiKey;
     case "gemini":
-      return "";
+      return settings.geminiApiKey;
     default:
       return assertNever(provider);
   }

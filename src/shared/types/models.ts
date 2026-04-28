@@ -27,8 +27,10 @@ export interface AppSettings {
   llmProvider: SupportedLlmProvider;
   openAiApiKey: string;
   anthropicApiKey: string;
+  geminiApiKey: string;
   preferredOpenAiModel: string;
   preferredAnthropicModel: string;
+  preferredGeminiModel: string;
   extractionPrompt: string;
   themeMode: ThemeMode;
   locale: AppLocale;

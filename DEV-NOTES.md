@@ -6,7 +6,7 @@ If you want the quick product overview, public app link, install instructions, o
 
 ## Product flow
 
-1. On first load, the user selects OpenAI or Anthropic, stores the provider-specific BYOK key locally in the browser, validates that the selected key/model pair works, can choose an appearance mode that defaults to the system setting, can set the docs locale (`en-US` by default, with `ja` and `ko` support), and can tune one shared advanced extraction prompt.
+1. On first load, the user selects OpenAI, Anthropic, or Google Gemini, stores the provider-specific BYOK key locally in the browser, validates that the selected key/model pair works, can choose an appearance mode that defaults to the system setting, can set the docs locale (`en-US` by default, with `ja` and `ko` support), and can tune one shared advanced extraction prompt.
 2. The user captures one or more business-card images from a mobile camera or image library.
 3. The app sends those images to the configured LLM using structured-output mode, validates the response, and builds a local contact draft with a persisted extraction snapshot.
 4. The review screen shows source images in the top section and an editable contact form in the lower section. The form covers Google-Contacts-style name/company fields such as prefix, phonetic name parts, nickname, file-as, and department, and expands to repeatable collections such as multiple emails, phone numbers, addresses, websites, related people, significant dates, and custom fields. Draft edits autosave locally for recovery after refresh.
@@ -60,7 +60,7 @@ If you want the quick product overview, public app link, install instructions, o
 
 ### `src/modules/card-extraction`
 
-- LLM provider abstraction, OpenAI and Anthropic structured-output extraction, response parsing, and schema validation.
+- LLM provider abstraction, OpenAI, Anthropic, and Gemini structured-output extraction, response parsing, and schema validation.
 
 ### `src/modules/contact-review`
 
@@ -87,7 +87,7 @@ If you want the quick product overview, public app link, install instructions, o
 - `localStorage`
   - LLM provider choice
   - provider-specific API keys
-  - preferred OpenAI and Anthropic models
+  - preferred OpenAI, Anthropic, and Gemini models
   - last successful or failed validation result for the current provider/key/model pair
   - appearance mode preference (`system`, `light`, or `dark`)
   - docs locale preference (`en-US`, `ja`, or `ko`)
@@ -122,6 +122,10 @@ Google Contacts auth no longer uses a browser-only token flow. Firebase Function
   - [Images and vision](https://platform.openai.com/docs/guides/images-vision)
   - [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs)
   - [Best Practices for API Key Safety](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety)
+- Gemini:
+  - [Using Gemini API keys](https://ai.google.dev/gemini-api/docs/api-key)
+  - [Structured outputs](https://ai.google.dev/gemini-api/docs/structured-output)
+  - [Gemini models](https://ai.google.dev/gemini-api/docs/models)
 
 ## PostHog analytics
 

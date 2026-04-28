@@ -338,6 +338,14 @@ describe("SettingsPanel", () => {
     expect(
       screen.getByRole("option", { name: /claude sonnet 4\.6/i }),
     ).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText(/llm provider/i), "gemini");
+
+    expect(screen.getByLabelText(/gemini api key/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/gemini model/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /^gemini 2\.5 flash$/i }),
+    ).toBeInTheDocument();
   });
 
   it("reuses the quick-setup auto-validation flow in settings", async () => {

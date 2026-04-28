@@ -31,6 +31,7 @@
 
 - `localStorage`
   - settings
+  - provider-specific OpenAI, Anthropic, and Gemini API keys and preferred models
   - docs locale preference
   - analytics consent choice and update timestamp
   - light Google auth metadata only

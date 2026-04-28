@@ -69,8 +69,10 @@ function createStore(images: CapturedCardImage[] = []) {
           llmProvider: "openai" as const,
           openAiApiKey: "sk-test",
           anthropicApiKey: "",
+          geminiApiKey: "",
           preferredOpenAiModel: "gpt-5.4-mini",
           preferredAnthropicModel: "claude-sonnet-4-20250514",
+          preferredGeminiModel: "gemini-2.5-flash",
           extractionPrompt: "Use the printed title verbatim.",
           onboardingCompletedAt: "2026-04-05T00:00:00.000Z",
         },
@@ -622,7 +624,7 @@ describe("CaptureWorkspace", () => {
       screen.getByRole("dialog", { name: /camera capture/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /capture photo/i }),
+      screen.getByRole("button", { name: /take photo/i }),
     ).toBeInTheDocument();
   });
 

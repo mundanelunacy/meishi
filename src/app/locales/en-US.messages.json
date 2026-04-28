@@ -147,10 +147,34 @@
     "defaultMessage": "Confirm that your Anthropic account has billing or usage access if your plan requires it."
   },
   "docs.apiKeys.description": {
-    "defaultMessage": "Meishi asks you to use your own API key. During setup, or later on the settings page, choose either OpenAI or Anthropic and paste your key into the app."
+    "defaultMessage": "Meishi asks you to use your own API key. During setup, or later on the settings page, choose OpenAI, Anthropic, or Gemini and paste your key into the app."
   },
   "docs.apiKeys.eyebrow": {
     "defaultMessage": "Setup"
+  },
+  "docs.apiKeys.gemini.description": {
+    "defaultMessage": "Choose this if you want Meishi to read cards using Google Gemini."
+  },
+  "docs.apiKeys.gemini.linkLabel": {
+    "defaultMessage": "Google AI Studio API keys"
+  },
+  "docs.apiKeys.gemini.step1": {
+    "defaultMessage": "Go to the Google AI Studio API keys page."
+  },
+  "docs.apiKeys.gemini.step2": {
+    "defaultMessage": "Sign in with a Google account."
+  },
+  "docs.apiKeys.gemini.step3": {
+    "defaultMessage": "Create or select a Google Cloud project if Google AI Studio asks for one."
+  },
+  "docs.apiKeys.gemini.step4": {
+    "defaultMessage": "Create a Gemini API key and copy it."
+  },
+  "docs.apiKeys.gemini.step5": {
+    "defaultMessage": "Paste the key into Meishi during setup or later on the <settingsLink>Settings</settingsLink> page."
+  },
+  "docs.apiKeys.gemini.step6": {
+    "defaultMessage": "Meishi keeps this key in browser storage on this device so it can use it again later."
   },
   "docs.apiKeys.openai.description": {
     "defaultMessage": "Choose this if you want Meishi to read cards using OpenAI."
@@ -179,6 +203,9 @@
   "docs.apiKeys.providers.anthropic": {
     "defaultMessage": "Anthropic"
   },
+  "docs.apiKeys.providers.gemini": {
+    "defaultMessage": "Google Gemini"
+  },
   "docs.apiKeys.providers.openai": {
     "defaultMessage": "OpenAI"
   },
@@ -198,7 +225,7 @@
     "defaultMessage": "Step {stepNumber} of {totalSteps}"
   },
   "docs.overview.description": {
-    "defaultMessage": "Meishi helps you turn a photo of a business card into a digital contact you can actually use. Your images and in-progress edits stay in your browser, the app uses your own OpenAI or Anthropic key to read the card, and you can export the final result as a vCard or send it to Google Contacts after checking it."
+    "defaultMessage": "Meishi helps you turn a photo of a business card into a digital contact you can actually use. Your images and in-progress edits stay in your browser, the app uses your own OpenAI, Anthropic, or Gemini key to read the card, and you can export the final result as a vCard or send it to Google Contacts after checking it."
   },
   "docs.overview.eyebrow": {
     "defaultMessage": "Overview"
@@ -222,7 +249,7 @@
     "defaultMessage": "Captures card images from your camera or image library."
   },
   "docs.overview.whatAppDoes.item2": {
-    "defaultMessage": "Pulls contact details from the card with OpenAI or Anthropic."
+    "defaultMessage": "Pulls contact details from the card with OpenAI, Anthropic, or Gemini."
   },
   "docs.overview.whatAppDoes.item3": {
     "defaultMessage": "Lets you verify and edit the extracted data before saving."
@@ -234,7 +261,7 @@
     "defaultMessage": "What the app does"
   },
   "docs.schema.faq.apiKeys.answer": {
-    "defaultMessage": "Choose OpenAI or Anthropic in Meishi, then create an API key in that provider's dashboard and paste it into Meishi during setup or later on the Settings page."
+    "defaultMessage": "Choose OpenAI, Anthropic, or Gemini in Meishi, then create an API key in that provider's dashboard and paste it into Meishi during setup or later on the Settings page."
   },
   "docs.schema.faq.howToUse.answer": {
     "defaultMessage": "Set up your AI provider, capture one or more business-card images, run extraction, review and correct the contact draft, then export a vCard or sync to Google Contacts."
@@ -249,7 +276,7 @@
     "defaultMessage": "Set up your AI provider, capture business-card images, run extraction, review the draft, and export or sync the finished contact."
   },
   "docs.schema.howTo.supplyApiKey": {
-    "defaultMessage": "An OpenAI or Anthropic API key"
+    "defaultMessage": "An OpenAI, Anthropic, or Gemini API key"
   },
   "docs.schema.howTo.supplyImages": {
     "defaultMessage": "One or more business-card images"
@@ -270,6 +297,9 @@
     "defaultMessage": "Anthropic API key setup"
   },
   "docs.schema.page.keyword5": {
+    "defaultMessage": "Gemini API key setup"
+  },
+  "docs.schema.page.keyword6": {
     "defaultMessage": "Google Contacts sync help"
   },
   "docs.schema.software.browserRequirements": {
@@ -282,7 +312,7 @@
     "defaultMessage": "Scan business cards from your camera or photo library."
   },
   "docs.schema.software.feature2": {
-    "defaultMessage": "Extract structured contact details with OpenAI or Anthropic."
+    "defaultMessage": "Extract structured contact details with OpenAI, Anthropic, or Gemini."
   },
   "docs.schema.software.feature3": {
     "defaultMessage": "Review and edit the extracted contact data in your browser."
@@ -351,10 +381,10 @@
     "defaultMessage": "Tutorial"
   },
   "docs.tutorial.step1.bodyPlain": {
-    "defaultMessage": "Open Settings, choose OpenAI or Anthropic, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync."
+    "defaultMessage": "Open Settings, choose OpenAI, Anthropic, or Gemini, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync."
   },
   "docs.tutorial.step1.bodyRich": {
-    "defaultMessage": "Open <settingsLink>Settings</settingsLink>, choose OpenAI or Anthropic, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync."
+    "defaultMessage": "Open <settingsLink>Settings</settingsLink>, choose OpenAI, Anthropic, or Gemini, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync."
   },
   "docs.tutorial.step1.imageAlt": {
     "defaultMessage": "Cropped Meishi settings screen focused on the LLM Provider section with the provider picker, API key field, and model selection."
@@ -627,7 +657,7 @@
     "defaultMessage": "< $0.01"
   },
   "landing.feature1.description": {
-    "defaultMessage": "Bring your own API key and use the latest models from OpenAI or Anthropic. No vendor lock-in; switch providers any time."
+    "defaultMessage": "Bring your own API key and use the latest models from OpenAI, Anthropic, or Google Gemini. No vendor lock-in; switch providers any time."
   },
   "landing.feature1.title": {
     "defaultMessage": "Your AI, your choice"
@@ -690,7 +720,7 @@
     "defaultMessage": "Scan business cards from your camera or photo library."
   },
   "landing.schema.feature2": {
-    "defaultMessage": "Extract structured contact details with OpenAI or Anthropic."
+    "defaultMessage": "Extract structured contact details with OpenAI, Anthropic, or Gemini."
   },
   "landing.schema.feature3": {
     "defaultMessage": "Review and edit the extracted contact data in your browser."
@@ -718,6 +748,9 @@
   },
   "landing.schema.keyword6": {
     "defaultMessage": "Anthropic business card scanner"
+  },
+  "landing.schema.keyword7": {
+    "defaultMessage": "Gemini business card scanner"
   },
   "landing.schema.pageDescription": {
     "defaultMessage": "Open-source AI business card scanner for private, browser-based capture, review, vCard export, and optional Google Contacts sync."
@@ -748,6 +781,9 @@
   },
   "landing.setup.validation.invalidAnthropicFormat": {
     "defaultMessage": "Anthropic keys should start with `sk-ant-`."
+  },
+  "landing.setup.validation.invalidGeminiFormat": {
+    "defaultMessage": "Gemini keys should start with `AIza`."
   },
   "landing.setup.validation.invalidOpenAiFormat": {
     "defaultMessage": "OpenAI keys should start with `sk-`."
@@ -986,6 +1022,12 @@
   "onboarding.firebaseAlert": {
     "defaultMessage": "Set the required VITE_FIREBASE_* values before Google sign-in will work."
   },
+  "onboarding.geminiApiKey": {
+    "defaultMessage": "Gemini API key"
+  },
+  "onboarding.geminiModel": {
+    "defaultMessage": "Gemini model"
+  },
   "onboarding.google.body": {
     "defaultMessage": "Meishi creates new Google contacts and can upload one contact photo after save. Google currently requires the {scope} scope for that flow, so the consent screen may mention broader contact access than the app uses. Short-lived access tokens are re-acquired only when needed."
   },
@@ -1055,8 +1097,8 @@
   "onboarding.provider.anthropic": {
     "defaultMessage": "Anthropic"
   },
-  "onboarding.provider.geminiPlanned": {
-    "defaultMessage": "Gemini (planned)"
+  "onboarding.provider.gemini": {
+    "defaultMessage": "Google Gemini"
   },
   "onboarding.provider.label": {
     "defaultMessage": "LLM provider"
@@ -1347,7 +1389,7 @@
     "defaultMessage": "Clears saved API keys, preferred models, extraction prompt, Google connection metadata, appearance preference, and onboarding progress from this browser."
   },
   "settings.advanced.promptHelp": {
-    "defaultMessage": "This guidance is shared by OpenAI and Anthropic and is appended to the fixed structured-output and fidelity rules. Prompt edits cannot disable schema enforcement."
+    "defaultMessage": "This guidance is shared by OpenAI, Anthropic, and Gemini and is appended to the fixed structured-output and fidelity rules. Prompt edits cannot disable schema enforcement."
   },
   "settings.advanced.promptLabel": {
     "defaultMessage": "Advanced extraction prompt"

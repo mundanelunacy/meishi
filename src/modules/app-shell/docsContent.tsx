@@ -50,6 +50,8 @@ export interface DocsSchemaContent {
   }>;
 }
 
+export type ApiKeyProviderId = "openai" | "anthropic" | "gemini";
+
 const messages = defineMessages({
   heroEyebrow: {
     id: "docs.hero.eyebrow",
@@ -99,7 +101,7 @@ const messages = defineMessages({
   overviewDescription: {
     id: "docs.overview.description",
     defaultMessage:
-      "Meishi helps you turn a photo of a business card into a digital contact you can actually use. Your images and in-progress edits stay in your browser, the app uses your own OpenAI or Anthropic key to read the card, and you can export the final result as a vCard or send it to Google Contacts after checking it.",
+      "Meishi helps you turn a photo of a business card into a digital contact you can actually use. Your images and in-progress edits stay in your browser, the app uses your own OpenAI, Anthropic, or Gemini key to read the card, and you can export the final result as a vCard or send it to Google Contacts after checking it.",
   },
   overviewWhatAppDoesTitle: {
     id: "docs.overview.whatAppDoes.title",
@@ -112,7 +114,7 @@ const messages = defineMessages({
   overviewWhatAppDoesItem2: {
     id: "docs.overview.whatAppDoes.item2",
     defaultMessage:
-      "Pulls contact details from the card with OpenAI or Anthropic.",
+      "Pulls contact details from the card with OpenAI, Anthropic, or Gemini.",
   },
   overviewWhatAppDoesItem3: {
     id: "docs.overview.whatAppDoes.item3",
@@ -155,7 +157,7 @@ const messages = defineMessages({
   apiKeysDescription: {
     id: "docs.apiKeys.description",
     defaultMessage:
-      "Meishi asks you to use your own API key. During setup, or later on the settings page, choose either OpenAI or Anthropic and paste your key into the app.",
+      "Meishi asks you to use your own API key. During setup, or later on the settings page, choose OpenAI, Anthropic, or Gemini and paste your key into the app.",
   },
   apiProviderAriaLabel: {
     id: "docs.apiKeys.providerAriaLabel",
@@ -168,6 +170,10 @@ const messages = defineMessages({
   providerAnthropic: {
     id: "docs.apiKeys.providers.anthropic",
     defaultMessage: "Anthropic",
+  },
+  providerGemini: {
+    id: "docs.apiKeys.providers.gemini",
+    defaultMessage: "Google Gemini",
   },
   openAiDescription: {
     id: "docs.apiKeys.openai.description",
@@ -231,6 +237,42 @@ const messages = defineMessages({
     id: "docs.apiKeys.anthropic.linkLabel",
     defaultMessage: "Anthropic API keys",
   },
+  geminiDescription: {
+    id: "docs.apiKeys.gemini.description",
+    defaultMessage:
+      "Choose this if you want Meishi to read cards using Google Gemini.",
+  },
+  geminiStep1: {
+    id: "docs.apiKeys.gemini.step1",
+    defaultMessage: "Go to the Google AI Studio API keys page.",
+  },
+  geminiStep2: {
+    id: "docs.apiKeys.gemini.step2",
+    defaultMessage: "Sign in with a Google account.",
+  },
+  geminiStep3: {
+    id: "docs.apiKeys.gemini.step3",
+    defaultMessage:
+      "Create or select a Google Cloud project if Google AI Studio asks for one.",
+  },
+  geminiStep4: {
+    id: "docs.apiKeys.gemini.step4",
+    defaultMessage: "Create a Gemini API key and copy it.",
+  },
+  geminiStep5: {
+    id: "docs.apiKeys.gemini.step5",
+    defaultMessage:
+      "Paste the key into Meishi during setup or later on the <settingsLink>Settings</settingsLink> page.",
+  },
+  geminiStep6: {
+    id: "docs.apiKeys.gemini.step6",
+    defaultMessage:
+      "Meishi keeps this key in browser storage on this device so it can use it again later.",
+  },
+  geminiLinkLabel: {
+    id: "docs.apiKeys.gemini.linkLabel",
+    defaultMessage: "Google AI Studio API keys",
+  },
   tutorialEyebrow: {
     id: "docs.tutorial.eyebrow",
     defaultMessage: "Tutorial",
@@ -251,12 +293,12 @@ const messages = defineMessages({
   tutorialStep1BodyRich: {
     id: "docs.tutorial.step1.bodyRich",
     defaultMessage:
-      "Open <settingsLink>Settings</settingsLink>, choose OpenAI or Anthropic, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync.",
+      "Open <settingsLink>Settings</settingsLink>, choose OpenAI, Anthropic, or Gemini, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync.",
   },
   tutorialStep1BodyPlain: {
     id: "docs.tutorial.step1.bodyPlain",
     defaultMessage:
-      "Open Settings, choose OpenAI or Anthropic, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync.",
+      "Open Settings, choose OpenAI, Anthropic, or Gemini, paste your own API key, confirm the selected model, and save your setup. Google Contacts access is optional at this stage and can wait until you want to sync.",
   },
   tutorialStep1ImageAlt: {
     id: "docs.tutorial.step1.imageAlt",
@@ -434,7 +476,7 @@ const messages = defineMessages({
   schemaFeature2: {
     id: "docs.schema.software.feature2",
     defaultMessage:
-      "Extract structured contact details with OpenAI or Anthropic.",
+      "Extract structured contact details with OpenAI, Anthropic, or Gemini.",
   },
   schemaFeature3: {
     id: "docs.schema.software.feature3",
@@ -474,6 +516,10 @@ const messages = defineMessages({
   },
   schemaKeyword5: {
     id: "docs.schema.page.keyword5",
+    defaultMessage: "Gemini API key setup",
+  },
+  schemaKeyword6: {
+    id: "docs.schema.page.keyword6",
     defaultMessage: "Google Contacts sync help",
   },
   schemaHowToDescription: {
@@ -483,7 +529,7 @@ const messages = defineMessages({
   },
   schemaHowToSupplyApiKey: {
     id: "docs.schema.howTo.supplyApiKey",
-    defaultMessage: "An OpenAI or Anthropic API key",
+    defaultMessage: "An OpenAI, Anthropic, or Gemini API key",
   },
   schemaHowToSupplyImages: {
     id: "docs.schema.howTo.supplyImages",
@@ -492,7 +538,7 @@ const messages = defineMessages({
   faqApiKeysAnswer: {
     id: "docs.schema.faq.apiKeys.answer",
     defaultMessage:
-      "Choose OpenAI or Anthropic in Meishi, then create an API key in that provider's dashboard and paste it into Meishi during setup or later on the Settings page.",
+      "Choose OpenAI, Anthropic, or Gemini in Meishi, then create an API key in that provider's dashboard and paste it into Meishi during setup or later on the Settings page.",
   },
   faqHowToUseAnswer: {
     id: "docs.schema.faq.howToUse.answer",
@@ -669,6 +715,21 @@ export function getDocsPageContent(
           ],
           linkLabel: intl.formatMessage(messages.anthropicLinkLabel),
         },
+        gemini: {
+          label: intl.formatMessage(messages.providerGemini),
+          description: intl.formatMessage(messages.geminiDescription),
+          steps: [
+            intl.formatMessage(messages.geminiStep1),
+            intl.formatMessage(messages.geminiStep2),
+            intl.formatMessage(messages.geminiStep3),
+            intl.formatMessage(messages.geminiStep4),
+            formatRich(intl, messages.geminiStep5, {
+              settingsLink: linkValues.settingsLink,
+            }),
+            intl.formatMessage(messages.geminiStep6),
+          ],
+          linkLabel: intl.formatMessage(messages.geminiLinkLabel),
+        },
       },
     },
     tutorial: {
@@ -770,6 +831,10 @@ export function getApiKeyLinkContent(intl: IntlShape) {
         href: "https://console.anthropic.com/settings/keys",
         linkLabel: intl.formatMessage(messages.anthropicLinkLabel),
       },
+      gemini: {
+        href: "https://aistudio.google.com/app/apikey",
+        linkLabel: intl.formatMessage(messages.geminiLinkLabel),
+      },
     },
   };
 }
@@ -841,6 +906,7 @@ export function getDocsSchemaContent(
       intl.formatMessage(messages.schemaKeyword3),
       intl.formatMessage(messages.schemaKeyword4),
       intl.formatMessage(messages.schemaKeyword5),
+      intl.formatMessage(messages.schemaKeyword6),
     ],
     howToDescription: intl.formatMessage(messages.schemaHowToDescription),
     howToSupplies: [

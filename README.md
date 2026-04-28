@@ -14,7 +14,7 @@ Typing contact details by hand is slow, inconsistent, and easy to abandon. Meish
 ## What you get
 
 - Mobile-friendly business-card capture and image import
-- Structured extraction with OpenAI or Anthropic using your own API key
+- Structured extraction with OpenAI, Anthropic, or Google Gemini using your own API key
 - Editable review UI with repeatable contact fields
 - Local draft recovery in the browser
 - `.vcf` export

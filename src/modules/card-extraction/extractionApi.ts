@@ -9,8 +9,10 @@ interface ExtractionApiState {
       | "llmProvider"
       | "openAiApiKey"
       | "anthropicApiKey"
+      | "geminiApiKey"
       | "preferredOpenAiModel"
       | "preferredAnthropicModel"
+      | "preferredGeminiModel"
       | "extractionPrompt"
     >;
   };

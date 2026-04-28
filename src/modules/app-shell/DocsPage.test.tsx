@@ -45,6 +45,9 @@ describe("DocsPage", () => {
     expect(screen.getByText("목차")).toBeInTheDocument();
     expect(screen.getByRole("tablist", { name: "API 제공자" })).toBeInTheDocument();
     expect(
+      screen.getByRole("tab", { name: /google gemini/i }),
+    ).toBeInTheDocument();
+    expect(
       screen.getAllByRole("button", {
         name: /스크린샷 열기:/,
       }),

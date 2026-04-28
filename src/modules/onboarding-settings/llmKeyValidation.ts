@@ -26,8 +26,10 @@ type ValidationCompatibleSettings = Pick<
   | "llmProvider"
   | "openAiApiKey"
   | "anthropicApiKey"
+  | "geminiApiKey"
   | "preferredOpenAiModel"
   | "preferredAnthropicModel"
+  | "preferredGeminiModel"
 >;
 
 interface ValidateLlmConfigurationOptions {
@@ -60,8 +62,17 @@ export function getCurrentLlmConfiguration(
           }
         : null;
     }
-    case "gemini":
-      return null;
+    case "gemini": {
+      const apiKey = settings.geminiApiKey.trim();
+      const model = settings.preferredGeminiModel.trim();
+      return apiKey && model
+        ? {
+            provider: "gemini",
+            apiKey,
+            model,
+          }
+        : null;
+    }
   }
 }
 
@@ -118,10 +129,7 @@ export function getLlmValidationPrecheck(
     };
   }
 
-  const pattern =
-    configuration.provider === "anthropic"
-      ? /^sk-ant-[A-Za-z0-9._-]+$/
-      : /^sk-[A-Za-z0-9._-]+$/;
+  const pattern = getApiKeyPattern(configuration.provider);
 
   if (!pattern.test(configuration.apiKey)) {
     return {
@@ -147,7 +155,19 @@ export async function validateLlmConfiguration(
       await validateAnthropicConfiguration(configuration, fetchImpl);
       return;
     case "gemini":
-      throw new Error("Gemini validation is not implemented yet.");
+      await validateGeminiConfiguration(configuration, fetchImpl);
+      return;
+  }
+}
+
+function getApiKeyPattern(provider: SupportedLlmProvider) {
+  switch (provider) {
+    case "anthropic":
+      return /^sk-ant-[A-Za-z0-9._-]+$/;
+    case "gemini":
+      return /^AIza[A-Za-z0-9_-]+$/;
+    case "openai":
+      return /^sk-[A-Za-z0-9._-]+$/;
   }
 }
 
@@ -224,6 +244,64 @@ async function validateAnthropicConfiguration(
       "Anthropic rejected this key or model. Check that the key is correct and has access to the selected model.",
     ),
   );
+}
+
+async function validateGeminiConfiguration(
+  configuration: LlmConfigurationIdentity,
+  fetchImpl: typeof fetch,
+) {
+  const response = await fetchImpl(getGeminiGenerateContentUrl(configuration.model), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": configuration.apiKey,
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: "Reply with OK.",
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: 16,
+        ...getGeminiValidationThinkingConfig(configuration.model),
+      },
+    }),
+  });
+
+  if (response.ok) {
+    return;
+  }
+
+  throw new Error(
+    readProviderError(
+      await readJsonPayload(response),
+      "Gemini rejected this key or model. Check that the key is correct and has access to the selected model.",
+    ),
+  );
+}
+
+function getGeminiGenerateContentUrl(model: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+    model,
+  )}:generateContent`;
+}
+
+function getGeminiValidationThinkingConfig(model: string) {
+  if (!model.includes("2.5-flash")) {
+    return {};
+  }
+
+  return {
+    thinkingConfig: {
+      thinkingBudget: 0,
+    },
+  };
 }
 
 async function readJsonPayload(response: Response) {
