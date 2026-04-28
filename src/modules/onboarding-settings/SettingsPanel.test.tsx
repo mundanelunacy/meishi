@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
@@ -56,8 +62,11 @@ vi.mock("../../app/env", () => ({
 }));
 
 vi.mock("../google-auth/googleIdentity", () => ({
-  connectGoogleContacts: (...args: unknown[]) =>
-    connectGoogleContactsMock(...args),
+  connectGoogleContacts: (
+    ...args: Parameters<
+      (typeof import("../google-auth/googleIdentity"))["connectGoogleContacts"]
+    >
+  ) => connectGoogleContactsMock(...args),
   createInitialGoogleAuthState: () => ({
     status: "signed_out",
     firebaseUid: null,
@@ -65,8 +74,11 @@ vi.mock("../google-auth/googleIdentity", () => ({
     accountEmail: undefined,
     connectedAt: null,
   }),
-  disconnectGoogleContacts: (...args: unknown[]) =>
-    disconnectGoogleContactsMock(...args),
+  disconnectGoogleContacts: (
+    ...args: Parameters<
+      (typeof import("../google-auth/googleIdentity"))["disconnectGoogleContacts"]
+    >
+  ) => disconnectGoogleContactsMock(...args),
 }));
 
 vi.mock("../google-auth/useGoogleAuthStateSync", () => ({
@@ -312,9 +324,7 @@ describe("SettingsPanel", () => {
       "granted",
     );
 
-    await user.click(
-      screen.getByRole("radio", { name: /decline analytics/i }),
-    );
+    await user.click(screen.getByRole("radio", { name: /decline analytics/i }));
 
     expect(store.getState().onboarding.settings.analyticsConsent).toBe(
       "denied",
@@ -335,6 +345,9 @@ describe("SettingsPanel", () => {
 
     expect(screen.getByLabelText(/anthropic api key/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/anthropic model/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /claude opus 4\.7/i }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: /claude sonnet 4\.6/i }),
     ).toBeInTheDocument();
@@ -403,8 +416,6 @@ describe("SettingsPanel", () => {
     expect(screen.getByRole("option", { name: "English" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "日本語" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "한국어" })).toBeInTheDocument();
-    expect(
-      screen.getByText(/analytics allowed/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/analytics allowed/i)).toBeInTheDocument();
   });
 });

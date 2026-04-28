@@ -7,6 +7,7 @@ This directory holds project-local and imported skill instructions for future ag
 - [`docs-sync.md`](docs-sync.md): Use when a code change alters module boundaries, public interfaces, persistence shape, integration behavior, or documentation expectations.
 - [`formatjs-extract-workflow.md`](formatjs-extract-workflow.md): Use when adding, removing, or renaming `react-intl` message descriptors and regenerating locale catalogs.
 - [`google-auth-contacts.md`](google-auth-contacts.md): Use when changing Google Identity Services auth, Google Contacts sync, contact creation, or contact photo upload behavior.
+- [`llm-model-list-update.md`](llm-model-list-update.md): Use when updating selectable OpenAI, Anthropic, or Gemini model IDs, labels, or default model settings.
 - [`openai-business-card-extraction.md`](openai-business-card-extraction.md): Use when changing the OpenAI-backed business card extraction pipeline, schema validation, or provider abstraction.
 - [`project-bootstrap.md`](project-bootstrap.md): Use when bootstrapping or reshaping the project foundation, stack configuration, routing structure, shared types, or dependencies.
 - [`pwa-camera-storage.md`](pwa-camera-storage.md): Use when changing card capture, service worker behavior, offline behavior, local image storage, drafts, or IndexedDB persistence.

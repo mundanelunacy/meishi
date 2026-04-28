@@ -29,7 +29,7 @@ const defaultSettings: AppSettings = {
   geminiApiKey: "",
   preferredOpenAiModel: "gpt-5.4-mini",
   preferredAnthropicModel: "claude-haiku-4-5-20251001",
-  preferredGeminiModel: "gemini-2.5-flash",
+  preferredGeminiModel: "gemini-2.5-flash-lite",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
   themeMode: "system",
   locale: "en-US",

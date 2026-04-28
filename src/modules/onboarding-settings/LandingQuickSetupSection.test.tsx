@@ -204,7 +204,7 @@ describe("LandingQuickSetupSection", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const request = fetchMock.mock.calls[0];
     expect(request[0]).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
     );
   });
 });

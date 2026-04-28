@@ -16,6 +16,9 @@ describe("local-data/storage", () => {
 
   it("falls back to default settings when persisted data is missing or malformed", () => {
     expect(loadPersistedState()).toEqual({ settings: defaultSettings });
+    expect(defaultSettings.preferredGeminiModel).toBe(
+      "gemini-2.5-flash-lite",
+    );
 
     window.localStorage.setItem("meishi.settings", "{invalid");
     expect(loadPersistedState()).toEqual({ settings: defaultSettings });

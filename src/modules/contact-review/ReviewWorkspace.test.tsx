@@ -111,7 +111,7 @@ const preloadedState = {
       geminiApiKey: "",
       preferredOpenAiModel: "gpt-5.4-mini",
       preferredAnthropicModel: "claude-sonnet-4-20250514",
-      preferredGeminiModel: "gemini-2.5-flash",
+      preferredGeminiModel: "gemini-2.5-flash-lite",
       extractionPrompt: "Use the printed title verbatim.",
       themeMode: "system" as const,
       locale: "en-US" as const,

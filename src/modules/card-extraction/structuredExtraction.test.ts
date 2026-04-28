@@ -20,7 +20,7 @@ const baseSettings: AppSettings = {
   geminiApiKey: "AIzaabcdefghijklmnopqrstuvwxyz123456789",
   preferredOpenAiModel: "gpt-5.4-mini",
   preferredAnthropicModel: "claude-sonnet-4-20250514",
-  preferredGeminiModel: "gemini-2.5-flash",
+  preferredGeminiModel: "gemini-2.5-flash-lite",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
   themeMode: "system",
   locale: "en-US",
@@ -228,7 +228,7 @@ describe("structuredExtraction", () => {
 
     const request = fetchImpl.mock.calls[0];
     expect(request[0]).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
     );
     expect(request[1]?.headers).toMatchObject({
       "x-goog-api-key": baseSettings.geminiApiKey,

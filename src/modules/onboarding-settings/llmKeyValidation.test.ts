@@ -56,7 +56,7 @@ describe("getLlmValidationPrecheck", () => {
       getLlmValidationPrecheck({
         provider: "gemini",
         apiKey: "AIzaabcdefghijklmnopqrstuvwxyz123456789",
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-flash-lite",
       }),
     ).toEqual({ eligible: true });
   });
@@ -66,7 +66,7 @@ describe("getLlmValidationPrecheck", () => {
       getLlmValidationPrecheck({
         provider: "gemini",
         apiKey: "sk-abcdefghijklmnopqrstuvwxyz",
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-flash-lite",
       }),
     ).toEqual({
       eligible: false,
@@ -96,7 +96,7 @@ describe("getLlmValidationPrecheck", () => {
       {
         provider: "gemini",
         apiKey: "AIzaabcdefghijklmnopqrstuvwxyz123456789",
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-flash-lite",
       },
       { fetchImpl },
     );
@@ -104,7 +104,7 @@ describe("getLlmValidationPrecheck", () => {
     expect(fetchImpl).toHaveBeenCalledOnce();
     const request = fetchImpl.mock.calls[0];
     expect(request[0]).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
     );
     expect(request[1]?.headers).toMatchObject({
       "x-goog-api-key": "AIzaabcdefghijklmnopqrstuvwxyz123456789",
