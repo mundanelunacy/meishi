@@ -15,13 +15,16 @@ import {
 import {
   selectSettings,
   setAnthropicApiKey,
+  setGeminiApiKey,
   setLlmProvider,
   setOpenAiApiKey,
   setPreferredAnthropicModel,
+  setPreferredGeminiModel,
   setPreferredOpenAiModel,
 } from "./onboardingSlice";
 import type { LlmValidationPrecheckReason } from "./llmKeyValidation";
 import { useLlmValidation } from "./useLlmValidation";
+import type { AppSettings, SupportedLlmProvider } from "../../shared/types/models";
 
 interface LlmConfigurationFormProps {
   apiKeyInputId: string;
@@ -56,22 +59,13 @@ export function LlmConfigurationForm({
   });
 
   const selectedProvider = settings.llmProvider;
-  const providerApiKey =
-    selectedProvider === "anthropic"
-      ? settings.anthropicApiKey
-      : settings.openAiApiKey;
-  const providerModel =
-    selectedProvider === "anthropic"
-      ? settings.preferredAnthropicModel
-      : settings.preferredOpenAiModel;
-  const providerModelOptions =
-    selectedProvider === "anthropic" || selectedProvider === "openai"
-      ? getSupportedModelOptions(selectedProvider, providerModel)
-      : [];
-  const providerLabels = getProviderFieldLabels(
-    intl,
-    selectedProvider === "anthropic" ? "anthropic" : "openai",
+  const providerApiKey = getProviderApiKey(settings, selectedProvider);
+  const providerModel = getProviderModel(settings, selectedProvider);
+  const providerModelOptions = getSupportedModelOptions(
+    selectedProvider,
+    providerModel,
   );
+  const providerLabels = getProviderFieldLabels(intl, selectedProvider);
   const providerOptionLabels = getProviderOptionLabels(intl);
   const validationContent = getQuickSetupValidationContent(intl);
   const apiKeyLinks = getApiKeyLinkContent(intl);
@@ -84,9 +78,7 @@ export function LlmConfigurationForm({
       case "too_short":
         return validationContent.tooShort;
       case "invalid_format":
-        return selectedProvider === "anthropic"
-          ? validationContent.invalidAnthropicFormat
-          : validationContent.invalidOpenAiFormat;
+        return getInvalidFormatMessage(selectedProvider, validationContent);
       case "missing_model":
         return validationContent.missingModel;
       default:
@@ -122,9 +114,7 @@ export function LlmConfigurationForm({
           >
             <option value="openai">{providerOptionLabels.openai}</option>
             <option value="anthropic">{providerOptionLabels.anthropic}</option>
-            <option value="gemini" disabled>
-              {providerOptionLabels.gemini}
-            </option>
+            <option value="gemini">{providerOptionLabels.gemini}</option>
           </Select>
         </div>
         <div className="space-y-3">
@@ -136,6 +126,10 @@ export function LlmConfigurationForm({
               const nextValue = event.target.value;
               if (selectedProvider === "anthropic") {
                 dispatch(setPreferredAnthropicModel(nextValue));
+                return;
+              }
+              if (selectedProvider === "gemini") {
+                dispatch(setPreferredGeminiModel(nextValue));
                 return;
               }
               dispatch(setPreferredOpenAiModel(nextValue));
@@ -157,12 +151,16 @@ export function LlmConfigurationForm({
           aria-describedby={apiKeyHintId}
           type="password"
           autoComplete="off"
-          placeholder={selectedProvider === "anthropic" ? "sk-ant-..." : "sk-..."}
+          placeholder={getApiKeyPlaceholder(selectedProvider)}
           value={providerApiKey}
           onChange={(event) => {
             const nextValue = event.target.value;
             if (selectedProvider === "anthropic") {
               dispatch(setAnthropicApiKey(nextValue));
+              return;
+            }
+            if (selectedProvider === "gemini") {
+              dispatch(setGeminiApiKey(nextValue));
               return;
             }
             dispatch(setOpenAiApiKey(nextValue));
@@ -248,10 +246,74 @@ export function LlmConfigurationForm({
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </div>
+              <div className="mr-1 inline-block">
+                <a
+                  href={apiKeyLinks.providers.gemini.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  {providerOptionLabels.gemini}
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
             </div>
           </div>
         </div>
       ) : null}
     </>
   );
+}
+
+function getProviderApiKey(
+  settings: AppSettings,
+  provider: SupportedLlmProvider,
+) {
+  switch (provider) {
+    case "anthropic":
+      return settings.anthropicApiKey;
+    case "gemini":
+      return settings.geminiApiKey;
+    case "openai":
+      return settings.openAiApiKey;
+  }
+}
+
+function getProviderModel(
+  settings: AppSettings,
+  provider: SupportedLlmProvider,
+) {
+  switch (provider) {
+    case "anthropic":
+      return settings.preferredAnthropicModel;
+    case "gemini":
+      return settings.preferredGeminiModel;
+    case "openai":
+      return settings.preferredOpenAiModel;
+  }
+}
+
+function getApiKeyPlaceholder(provider: SupportedLlmProvider) {
+  switch (provider) {
+    case "anthropic":
+      return "sk-ant-...";
+    case "gemini":
+      return "AIza...";
+    case "openai":
+      return "sk-...";
+  }
+}
+
+function getInvalidFormatMessage(
+  provider: SupportedLlmProvider,
+  validationContent: ReturnType<typeof getQuickSetupValidationContent>,
+) {
+  switch (provider) {
+    case "anthropic":
+      return validationContent.invalidAnthropicFormat;
+    case "gemini":
+      return validationContent.invalidGeminiFormat;
+    case "openai":
+      return validationContent.invalidOpenAiFormat;
+  }
 }

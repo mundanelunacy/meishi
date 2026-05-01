@@ -11,7 +11,7 @@
 ## Features
 
 - First-run onboarding panel
-- Provider picker with OpenAI and Anthropic support
+- Provider picker with OpenAI, Anthropic, and Gemini support
 - Provider-specific BYOK API key entry
 - Provider key validation before setup can unlock extraction routes, with automatic validation in the quick-setup flow
 - Provider-specific model selection from the app's current supported-model list
@@ -40,7 +40,7 @@
   - `GoogleAuthState`
   - `ThemeMode`
   - onboarding selectors including `selectHasLlmConfiguration`, `selectHasGoogleAuthorization`, `selectLocale`, and `selectAppReadiness`
-  - onboarding actions such as `setOpenAiApiKey`, `setAnthropicApiKey`, `setExtractionPrompt`, `setThemeMode`, `setLocale`, `setGoogleAuthState`, and `completeOnboarding`
+  - onboarding actions such as `setOpenAiApiKey`, `setAnthropicApiKey`, `setGeminiApiKey`, `setExtractionPrompt`, `setThemeMode`, `setLocale`, `setGoogleAuthState`, and `completeOnboarding`
 - Depends on:
   - `src/modules/google-auth`
   - `src/modules/local-data`

@@ -13,7 +13,7 @@ import { ImageLightbox } from "../../shared/ui/image-lightbox";
 import { JsonLdScript } from "../../shared/seo/JsonLdScript";
 import type { AppLocale } from "../../shared/types/models";
 import { getDocsPageSchema } from "../../shared/seo/jsonLd";
-import { getDocsPageContent } from "./docsContent";
+import { getDocsPageContent, type ApiKeyProviderId } from "./docsContent";
 
 const internalDocLinkClassName =
   "font-medium text-foreground underline-offset-4 hover:underline";
@@ -83,9 +83,8 @@ function TutorialStepBody({ body }: { body: ReactNode }) {
 export function DocsPage() {
   const intl = useIntl();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [activeApiProvider, setActiveApiProvider] = useState<
-    "openai" | "anthropic"
-  >("openai");
+  const [activeApiProvider, setActiveApiProvider] =
+    useState<ApiKeyProviderId>("openai");
   const content = getDocsPageContent(intl, intl.locale as AppLocale, {
     settingsLink: (chunks: ReactNode) => (
       <Link to="/settings" className={internalDocLinkClassName}>
@@ -104,6 +103,27 @@ export function DocsPage() {
     ),
   });
   const tutorialSteps = content.tutorial.steps;
+  const apiKeyProviders = [
+    {
+      id: "openai",
+      href: "https://platform.openai.com/api-keys",
+      content: content.apiKeys.providers.openai,
+    },
+    {
+      id: "anthropic",
+      href: "https://console.anthropic.com/settings/keys",
+      content: content.apiKeys.providers.anthropic,
+    },
+    {
+      id: "gemini",
+      href: "https://aistudio.google.com/app/apikey",
+      content: content.apiKeys.providers.gemini,
+    },
+  ] satisfies Array<{
+    id: ApiKeyProviderId;
+    href: string;
+    content: (typeof content.apiKeys.providers)[ApiKeyProviderId];
+  }>;
   const activeImage =
     lightboxIndex === null ? null : (tutorialSteps[lightboxIndex] ?? null);
   const hasMultipleImages = tutorialSteps.length > 1;
@@ -223,109 +243,64 @@ export function DocsPage() {
           <Card>
             <CardContent className="space-y-6 pt-6">
               <div
-                className="inline-flex w-full max-w-md rounded-2xl border border-border bg-muted/40 p-1"
+                className="inline-flex w-full max-w-2xl rounded-2xl border border-border bg-muted/40 p-1"
                 role="tablist"
                 aria-label={content.apiKeys.providerAriaLabel}
               >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeApiProvider === "openai"}
-                  aria-controls="api-provider-openai"
-                  id="api-provider-tab-openai"
-                  className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-                    activeApiProvider === "openai"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  onClick={() => setActiveApiProvider("openai")}
-                >
-                  {content.apiKeys.providers.openai.label}
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeApiProvider === "anthropic"}
-                  aria-controls="api-provider-anthropic"
-                  id="api-provider-tab-anthropic"
-                  className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-                    activeApiProvider === "anthropic"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  onClick={() => setActiveApiProvider("anthropic")}
-                >
-                  {content.apiKeys.providers.anthropic.label}
-                </button>
+                {apiKeyProviders.map((provider) => (
+                  <button
+                    key={provider.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeApiProvider === provider.id}
+                    aria-controls={`api-provider-${provider.id}`}
+                    id={`api-provider-tab-${provider.id}`}
+                    className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+                      activeApiProvider === provider.id
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={() => setActiveApiProvider(provider.id)}
+                  >
+                    {provider.content.label}
+                  </button>
+                ))}
               </div>
 
-              {activeApiProvider === "openai" ? (
+              {apiKeyProviders.map((provider) => (
                 <div
+                  key={provider.id}
                   role="tabpanel"
-                  id="api-provider-openai"
-                  aria-labelledby="api-provider-tab-openai"
+                  id={`api-provider-${provider.id}`}
+                  aria-labelledby={`api-provider-tab-${provider.id}`}
+                  hidden={activeApiProvider !== provider.id}
                 >
                   <div className="space-y-4">
                     <div className="space-y-1">
                       <h3 className="font-display text-lg font-semibold text-foreground">
-                        {content.apiKeys.providers.openai.label}
+                        {provider.content.label}
                       </h3>
                       <p className="text-sm leading-6 text-muted-foreground">
-                        {content.apiKeys.providers.openai.description}
+                        {provider.content.description}
                       </p>
                     </div>
                     <ol className="space-y-2 text-sm leading-6 text-muted-foreground">
-                      {content.apiKeys.providers.openai.steps.map(
-                        (step, index) => (
-                          <li key={index}>{step}</li>
-                        ),
-                      )}
+                      {provider.content.steps.map((step, index) => (
+                        <li key={index}>{step}</li>
+                      ))}
                     </ol>
                     <a
-                      href="https://platform.openai.com/api-keys"
+                      href={provider.href}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-2 text-sm font-medium text-foreground underline-offset-4 hover:underline"
                     >
-                      {content.apiKeys.providers.openai.linkLabel}
+                      {provider.content.linkLabel}
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </div>
                 </div>
-              ) : (
-                <div
-                  role="tabpanel"
-                  id="api-provider-anthropic"
-                  aria-labelledby="api-provider-tab-anthropic"
-                >
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <h3 className="font-display text-lg font-semibold text-foreground">
-                        {content.apiKeys.providers.anthropic.label}
-                      </h3>
-                      <p className="text-sm leading-6 text-muted-foreground">
-                        {content.apiKeys.providers.anthropic.description}
-                      </p>
-                    </div>
-                    <ol className="space-y-2 text-sm leading-6 text-muted-foreground">
-                      {content.apiKeys.providers.anthropic.steps.map(
-                        (step, index) => (
-                          <li key={index}>{step}</li>
-                        ),
-                      )}
-                    </ol>
-                    <a
-                      href="https://console.anthropic.com/settings/keys"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 text-sm font-medium text-foreground underline-offset-4 hover:underline"
-                    >
-                      {content.apiKeys.providers.anthropic.linkLabel}
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </div>
-                </div>
-              )}
+              ))}
             </CardContent>
           </Card>
         </section>

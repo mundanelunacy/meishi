@@ -24,10 +24,12 @@ import {
   selectGoogleAuth,
   selectSettings,
   setAnthropicApiKey,
+  setGeminiApiKey,
   setGoogleAuthState,
   setLlmProvider,
   setOpenAiApiKey,
   setPreferredAnthropicModel,
+  setPreferredGeminiModel,
   setPreferredOpenAiModel,
 } from "./onboardingSlice";
 import {
@@ -43,6 +45,7 @@ import {
   getProviderOptionLabels,
 } from "./onboardingContent";
 import { useLlmValidation } from "./useLlmValidation";
+import type { AppSettings, SupportedLlmProvider } from "../../shared/types/models";
 
 export function OnboardingPanel() {
   const intl = useIntl();
@@ -56,23 +59,15 @@ export function OnboardingPanel() {
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const selectedProvider = settings.llmProvider;
-  const effectiveProvider =
-    selectedProvider === "anthropic" ? "anthropic" : "openai";
-  const providerApiKey =
-    effectiveProvider === "anthropic"
-      ? settings.anthropicApiKey
-      : settings.openAiApiKey;
-  const providerModel =
-    effectiveProvider === "anthropic"
-      ? settings.preferredAnthropicModel
-      : settings.preferredOpenAiModel;
+  const providerApiKey = getProviderApiKey(settings, selectedProvider);
+  const providerModel = getProviderModel(settings, selectedProvider);
   const providerModelOptions = getSupportedModelOptions(
-    effectiveProvider,
+    selectedProvider,
     providerModel,
   );
   const content = getOnboardingPanelContent(intl, getGoogleScope());
   const validationContent = getLlmValidationContent(intl);
-  const providerLabels = getProviderFieldLabels(intl, effectiveProvider);
+  const providerLabels = getProviderFieldLabels(intl, selectedProvider);
   const providerOptionLabels = getProviderOptionLabels(intl);
 
   const analytics = useAnalytics();
@@ -153,7 +148,7 @@ export function OnboardingPanel() {
             <Label htmlFor="provider">{providerLabels.provider}</Label>
             <Select
               id="provider"
-              value={effectiveProvider}
+              value={selectedProvider}
               onChange={(event) =>
                 dispatch(
                   setLlmProvider(
@@ -166,9 +161,7 @@ export function OnboardingPanel() {
               <option value="anthropic">
                 {providerOptionLabels.anthropic}
               </option>
-              <option value="gemini" disabled>
-                {providerOptionLabels.gemini}
-              </option>
+              <option value="gemini">{providerOptionLabels.gemini}</option>
             </Select>
           </section>
 
@@ -179,14 +172,16 @@ export function OnboardingPanel() {
                 id="api-key"
                 type="password"
                 autoComplete="off"
-                placeholder={
-                  effectiveProvider === "anthropic" ? "sk-ant-..." : "sk-..."
-                }
+                placeholder={getApiKeyPlaceholder(selectedProvider)}
                 value={providerApiKey}
                 onChange={(event) => {
                   const nextValue = event.target.value;
-                  if (effectiveProvider === "anthropic") {
+                  if (selectedProvider === "anthropic") {
                     dispatch(setAnthropicApiKey(nextValue));
+                    return;
+                  }
+                  if (selectedProvider === "gemini") {
+                    dispatch(setGeminiApiKey(nextValue));
                     return;
                   }
 
@@ -201,8 +196,12 @@ export function OnboardingPanel() {
                 value={providerModel}
                 onChange={(event) => {
                   const nextValue = event.target.value;
-                  if (effectiveProvider === "anthropic") {
+                  if (selectedProvider === "anthropic") {
                     dispatch(setPreferredAnthropicModel(nextValue));
+                    return;
+                  }
+                  if (selectedProvider === "gemini") {
+                    dispatch(setPreferredGeminiModel(nextValue));
                     return;
                   }
 
@@ -335,4 +334,43 @@ export function OnboardingPanel() {
       </Card>
     </div>
   );
+}
+
+function getProviderApiKey(
+  settings: AppSettings,
+  provider: SupportedLlmProvider,
+) {
+  switch (provider) {
+    case "anthropic":
+      return settings.anthropicApiKey;
+    case "gemini":
+      return settings.geminiApiKey;
+    case "openai":
+      return settings.openAiApiKey;
+  }
+}
+
+function getProviderModel(
+  settings: AppSettings,
+  provider: SupportedLlmProvider,
+) {
+  switch (provider) {
+    case "anthropic":
+      return settings.preferredAnthropicModel;
+    case "gemini":
+      return settings.preferredGeminiModel;
+    case "openai":
+      return settings.preferredOpenAiModel;
+  }
+}
+
+function getApiKeyPlaceholder(provider: SupportedLlmProvider) {
+  switch (provider) {
+    case "anthropic":
+      return "sk-ant-...";
+    case "gemini":
+      return "AIza...";
+    case "openai":
+      return "sk-...";
+  }
 }

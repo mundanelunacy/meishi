@@ -14,7 +14,7 @@ export const llmProviders: LLMProviderAdapter[] = [
   {
     provider: "gemini",
     displayName: "Google Gemini",
-    isConfigured: () => false,
+    isConfigured: (settings) => settings.geminiApiKey.trim().length > 0,
   },
 ];
 

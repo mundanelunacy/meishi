@@ -16,6 +16,9 @@ describe("local-data/storage", () => {
 
   it("falls back to default settings when persisted data is missing or malformed", () => {
     expect(loadPersistedState()).toEqual({ settings: defaultSettings });
+    expect(defaultSettings.preferredGeminiModel).toBe(
+      "gemini-2.5-flash-lite",
+    );
 
     window.localStorage.setItem("meishi.settings", "{invalid");
     expect(loadPersistedState()).toEqual({ settings: defaultSettings });
@@ -27,7 +30,10 @@ describe("local-data/storage", () => {
       JSON.stringify({
         settings: {
           llmApiKey: "sk-test",
+          llmProvider: "gemini",
+          geminiApiKey: "AIzaabcdefghijklmnopqrstuvwxyz123456789",
           preferredOpenAiModel: "gpt-5.4-mini",
+          preferredGeminiModel: "gemini-2.5-pro",
           extractionPrompt: "custom prompt",
           themeMode: "dark",
         },
@@ -44,8 +50,11 @@ describe("local-data/storage", () => {
     expect(loadPersistedState()).toEqual({
       settings: {
         ...defaultSettings,
+        llmProvider: "gemini",
         openAiApiKey: "sk-test",
+        geminiApiKey: "AIzaabcdefghijklmnopqrstuvwxyz123456789",
         preferredOpenAiModel: "gpt-5.4-mini",
+        preferredGeminiModel: "gemini-2.5-pro",
         extractionPrompt: "custom prompt",
         themeMode: "dark",
       },

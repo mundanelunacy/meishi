@@ -67,6 +67,10 @@ describe("LandingQuickSetupSection", () => {
       "href",
       "https://console.anthropic.com/settings/keys",
     );
+    expect(screen.getByRole("link", { name: "Google Gemini" })).toHaveAttribute(
+      "href",
+      "https://aistudio.google.com/app/apikey",
+    );
     expect(
       screen.getByRole("link", { name: "How do I obtain an API key?" }),
     ).toHaveAttribute("href", "/docs#api-keys");
@@ -178,5 +182,29 @@ describe("LandingQuickSetupSection", () => {
     expect(
       screen.getByText(/incorrect api key provided/i),
     ).toBeInTheDocument();
+  });
+
+  it("validates Gemini provider settings from quick setup", async () => {
+    renderSection();
+    fetchMock.mockResolvedValue({ ok: true });
+
+    fireEvent.change(screen.getByLabelText(/llm provider/i), {
+      target: { value: "gemini" },
+    });
+
+    expect(screen.getByLabelText(/gemini api key/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/gemini model/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/gemini api key/i), {
+      target: { value: "AIzaabcdefghijklmnopqrstuvwxyz123456789" },
+    });
+
+    await flushDebounce(700);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const request = fetchMock.mock.calls[0];
+    expect(request[0]).toBe(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+    );
   });
 });

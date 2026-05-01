@@ -175,6 +175,19 @@ describe("OnboardingPanel", () => {
     ).toBeInTheDocument();
   });
 
+  it("switches provider-specific fields when Gemini is selected", async () => {
+    renderPanel();
+
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByLabelText(/llm provider/i), "gemini");
+
+    expect(screen.getByLabelText(/gemini api key/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/gemini model/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /^gemini 2\.5 flash$/i }),
+    ).toBeInTheDocument();
+  });
+
   it("explains the Google consent scope more precisely", () => {
     renderPanel();
 

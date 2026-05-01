@@ -14,9 +14,9 @@ const messages = defineMessages({
     id: "onboarding.provider.anthropic",
     defaultMessage: "Anthropic",
   },
-  providerGeminiPlanned: {
-    id: "onboarding.provider.geminiPlanned",
-    defaultMessage: "Gemini (planned)",
+  providerGemini: {
+    id: "onboarding.provider.gemini",
+    defaultMessage: "Google Gemini",
   },
   openAiApiKey: {
     id: "onboarding.openAiApiKey",
@@ -26,6 +26,10 @@ const messages = defineMessages({
     id: "onboarding.anthropicApiKey",
     defaultMessage: "Anthropic API key",
   },
+  geminiApiKey: {
+    id: "onboarding.geminiApiKey",
+    defaultMessage: "Gemini API key",
+  },
   openAiModel: {
     id: "onboarding.openAiModel",
     defaultMessage: "OpenAI model",
@@ -33,6 +37,10 @@ const messages = defineMessages({
   anthropicModel: {
     id: "onboarding.anthropicModel",
     defaultMessage: "Anthropic model",
+  },
+  geminiModel: {
+    id: "onboarding.geminiModel",
+    defaultMessage: "Gemini model",
   },
   securityNoteTitle: {
     id: "onboarding.securityNote.title",
@@ -85,6 +93,10 @@ const messages = defineMessages({
     id: "landing.setup.validation.invalidAnthropicFormat",
     defaultMessage: "Anthropic keys should start with `sk-ant-`.",
   },
+  quickSetupValidationInvalidGeminiFormat: {
+    id: "landing.setup.validation.invalidGeminiFormat",
+    defaultMessage: "Gemini keys should start with `AIza`.",
+  },
   quickSetupValidationMissingModel: {
     id: "landing.setup.validation.missingModel",
     defaultMessage: "Choose a model before validation can run.",
@@ -130,7 +142,7 @@ const messages = defineMessages({
   landingFeature1Description: {
     id: "landing.feature1.description",
     defaultMessage:
-      "Bring your own API key and use the latest models from OpenAI or Anthropic. No vendor lock-in; switch providers any time.",
+      "Bring your own API key and use the latest models from OpenAI, Anthropic, or Google Gemini. No vendor lock-in; switch providers any time.",
   },
   landingFeature2Title: {
     id: "landing.feature2.title",
@@ -635,7 +647,7 @@ const messages = defineMessages({
   settingsPromptHelp: {
     id: "settings.advanced.promptHelp",
     defaultMessage:
-      "This guidance is shared by OpenAI and Anthropic and is appended to the fixed structured-output and fidelity rules. Prompt edits cannot disable schema enforcement.",
+      "This guidance is shared by OpenAI, Anthropic, and Gemini and is appended to the fixed structured-output and fidelity rules. Prompt edits cannot disable schema enforcement.",
   },
   settingsClearButton: {
     id: "settings.advanced.clearButton",
@@ -663,7 +675,7 @@ const messages = defineMessages({
   landingSchemaFeature2: {
     id: "landing.schema.feature2",
     defaultMessage:
-      "Extract structured contact details with OpenAI or Anthropic.",
+      "Extract structured contact details with OpenAI, Anthropic, or Gemini.",
   },
   landingSchemaFeature3: {
     id: "landing.schema.feature3",
@@ -713,6 +725,10 @@ const messages = defineMessages({
     id: "landing.schema.keyword6",
     defaultMessage: "Anthropic business card scanner",
   },
+  landingSchemaKeyword7: {
+    id: "landing.schema.keyword7",
+    defaultMessage: "Gemini business card scanner",
+  },
 });
 
 export type LandingSchemaContent = {
@@ -729,24 +745,33 @@ export function getProviderOptionLabels(intl: IntlShape) {
   return {
     openai: intl.formatMessage(messages.providerOpenAi),
     anthropic: intl.formatMessage(messages.providerAnthropic),
-    gemini: intl.formatMessage(messages.providerGeminiPlanned),
+    gemini: intl.formatMessage(messages.providerGemini),
   };
 }
 
 export function getProviderFieldLabels(
   intl: IntlShape,
-  provider: "openai" | "anthropic",
+  provider: "openai" | "anthropic" | "gemini",
 ) {
+  const labels = {
+    anthropic: {
+      apiKey: intl.formatMessage(messages.anthropicApiKey),
+      model: intl.formatMessage(messages.anthropicModel),
+    },
+    gemini: {
+      apiKey: intl.formatMessage(messages.geminiApiKey),
+      model: intl.formatMessage(messages.geminiModel),
+    },
+    openai: {
+      apiKey: intl.formatMessage(messages.openAiApiKey),
+      model: intl.formatMessage(messages.openAiModel),
+    },
+  };
+
   return {
     provider: intl.formatMessage(messages.providerLabel),
-    apiKey:
-      provider === "anthropic"
-        ? intl.formatMessage(messages.anthropicApiKey)
-        : intl.formatMessage(messages.openAiApiKey),
-    model:
-      provider === "anthropic"
-        ? intl.formatMessage(messages.anthropicModel)
-        : intl.formatMessage(messages.openAiModel),
+    apiKey: labels[provider].apiKey,
+    model: labels[provider].model,
   };
 }
 
@@ -773,6 +798,9 @@ export function getQuickSetupValidationContent(intl: IntlShape) {
     ),
     invalidAnthropicFormat: intl.formatMessage(
       messages.quickSetupValidationInvalidAnthropicFormat,
+    ),
+    invalidGeminiFormat: intl.formatMessage(
+      messages.quickSetupValidationInvalidGeminiFormat,
     ),
     missingModel: intl.formatMessage(messages.quickSetupValidationMissingModel),
   };
@@ -1064,6 +1092,7 @@ export function getLandingSchemaContent(
       intl.formatMessage(messages.landingSchemaKeyword4),
       intl.formatMessage(messages.landingSchemaKeyword5),
       intl.formatMessage(messages.landingSchemaKeyword6),
+      intl.formatMessage(messages.landingSchemaKeyword7),
     ],
   };
 }

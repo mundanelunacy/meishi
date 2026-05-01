@@ -4,10 +4,12 @@ import {
   onboardingReducer,
   selectAppReadiness,
   setAnthropicApiKey,
+  setGeminiApiKey,
   setGoogleAuthState,
   setLlmProvider,
   setOpenAiApiKey,
   setPreferredAnthropicModel,
+  setPreferredGeminiModel,
   setPreferredOpenAiModel,
   setThemeMode,
 } from "./onboardingSlice";
@@ -19,9 +21,16 @@ describe("onboardingSlice", () => {
       withOpenAi,
       setAnthropicApiKey("sk-ant-test"),
     );
+    const withGemini = onboardingReducer(
+      withAnthropic,
+      setGeminiApiKey("AIzaabcdefghijklmnopqrstuvwxyz123456789"),
+    );
 
-    expect(withAnthropic.settings.openAiApiKey).toBe("sk-test");
-    expect(withAnthropic.settings.anthropicApiKey).toBe("sk-ant-test");
+    expect(withGemini.settings.openAiApiKey).toBe("sk-test");
+    expect(withGemini.settings.anthropicApiKey).toBe("sk-ant-test");
+    expect(withGemini.settings.geminiApiKey).toBe(
+      "AIzaabcdefghijklmnopqrstuvwxyz123456789",
+    );
   });
 
   it("updates the provider-specific models", () => {
@@ -33,12 +42,19 @@ describe("onboardingSlice", () => {
       withOpenAiModel,
       setPreferredAnthropicModel("claude-sonnet-4-20250514"),
     );
+    const withGeminiModel = onboardingReducer(
+      withAnthropicModel,
+      setPreferredGeminiModel("gemini-2.5-pro"),
+    );
 
-    expect(withAnthropicModel.settings.preferredOpenAiModel).toBe(
+    expect(withGeminiModel.settings.preferredOpenAiModel).toBe(
       "gpt-5.4-mini",
     );
-    expect(withAnthropicModel.settings.preferredAnthropicModel).toBe(
+    expect(withGeminiModel.settings.preferredAnthropicModel).toBe(
       "claude-sonnet-4-20250514",
+    );
+    expect(withGeminiModel.settings.preferredGeminiModel).toBe(
+      "gemini-2.5-pro",
     );
   });
 

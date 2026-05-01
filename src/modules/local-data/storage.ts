@@ -26,8 +26,10 @@ const defaultSettings: AppSettings = {
   llmProvider: "openai",
   openAiApiKey: "",
   anthropicApiKey: "",
+  geminiApiKey: "",
   preferredOpenAiModel: "gpt-5.4-mini",
   preferredAnthropicModel: "claude-haiku-4-5-20251001",
+  preferredGeminiModel: "gemini-2.5-flash-lite",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
   themeMode: "system",
   locale: "en-US",
@@ -69,6 +71,10 @@ function sanitizeSettings(settings: unknown): AppSettings {
       typeof candidate.anthropicApiKey === "string"
         ? candidate.anthropicApiKey
         : defaultSettings.anthropicApiKey,
+    geminiApiKey:
+      typeof candidate.geminiApiKey === "string"
+        ? candidate.geminiApiKey
+        : defaultSettings.geminiApiKey,
     preferredOpenAiModel:
       typeof candidate.preferredOpenAiModel === "string"
         ? candidate.preferredOpenAiModel
@@ -77,6 +83,10 @@ function sanitizeSettings(settings: unknown): AppSettings {
       typeof candidate.preferredAnthropicModel === "string"
         ? candidate.preferredAnthropicModel
         : defaultSettings.preferredAnthropicModel,
+    preferredGeminiModel:
+      typeof candidate.preferredGeminiModel === "string"
+        ? candidate.preferredGeminiModel
+        : defaultSettings.preferredGeminiModel,
     extractionPrompt:
       typeof candidate.extractionPrompt === "string" &&
       candidate.extractionPrompt.trim().length > 0

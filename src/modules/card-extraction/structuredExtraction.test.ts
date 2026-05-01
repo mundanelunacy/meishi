@@ -17,9 +17,13 @@ const baseSettings: AppSettings = {
   llmProvider: "openai",
   openAiApiKey: "sk-test",
   anthropicApiKey: "sk-ant-test",
+  geminiApiKey: "AIzaabcdefghijklmnopqrstuvwxyz123456789",
   preferredOpenAiModel: "gpt-5.4-mini",
   preferredAnthropicModel: "claude-sonnet-4-20250514",
+  preferredGeminiModel: "gemini-2.5-flash-lite",
   extractionPrompt: DEFAULT_EXTRACTION_PROMPT,
+  themeMode: "system",
+  locale: "en-US",
 };
 
 describe("structuredExtraction", () => {
@@ -157,6 +161,95 @@ describe("structuredExtraction", () => {
     expect(fetchImpl).toHaveBeenCalledOnce();
   });
 
+  it("parses Gemini structured JSON responses and sends inline images", async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      fullName: "Katherine Johnson",
+                      namePrefix: "",
+                      firstName: "Katherine",
+                      phoneticFirstName: "",
+                      phoneticMiddleName: "",
+                      phoneticLastName: "",
+                      lastName: "Johnson",
+                      nickname: "",
+                      fileAs: "Johnson, Katherine",
+                      organization: "NASA",
+                      department: "Flight Research",
+                      title: "Mathematician",
+                      email: "katherine@example.com",
+                      emails: [
+                        {
+                          value: "katherine@example.com",
+                          type: "WORK",
+                          label: "",
+                        },
+                      ],
+                      phone: "",
+                      phones: [],
+                      website: "",
+                      urls: [],
+                      notes: "",
+                      address: "",
+                      addresses: [],
+                      relations: [],
+                      events: [],
+                      xFields: [],
+                      ambiguousText: [],
+                      confidenceNotes: [],
+                    }),
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      ),
+    );
+
+    const result = await extractBusinessCardWithProvider({
+      request: { images: [sampleImage] },
+      settings: {
+        ...baseSettings,
+        llmProvider: "gemini",
+      },
+      fetchImpl,
+    });
+
+    expect(result.organization).toBe("NASA");
+    expect(result.fileAs).toBe("Johnson, Katherine");
+    expect(fetchImpl).toHaveBeenCalledOnce();
+
+    const request = fetchImpl.mock.calls[0];
+    expect(request[0]).toBe(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+    );
+    expect(request[1]?.headers).toMatchObject({
+      "x-goog-api-key": baseSettings.geminiApiKey,
+    });
+
+    const body = JSON.parse(request[1]?.body as string) as {
+      contents: Array<{ parts: Array<{ inlineData?: { data: string } }> }>;
+      generationConfig: {
+        maxOutputTokens: number;
+        responseMimeType: string;
+        responseJsonSchema: unknown;
+        thinkingConfig: { thinkingBudget: number };
+      };
+    };
+    expect(body.generationConfig.maxOutputTokens).toBe(8192);
+    expect(body.generationConfig.responseMimeType).toBe("application/json");
+    expect(body.generationConfig.responseJsonSchema).toBeDefined();
+    expect(body.generationConfig.thinkingConfig.thinkingBudget).toBe(0);
+    expect(body.contents[0]?.parts[1]?.inlineData?.data).toBe("ZmFrZQ==");
+  });
+
   it("rejects invalid provider output after schema validation", async () => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(
@@ -201,7 +294,31 @@ describe("structuredExtraction", () => {
     );
   });
 
-  it("returns an explicit unsupported-provider error for gemini", async () => {
+  it("fails when the selected Gemini key is missing", async () => {
+    await expect(
+      extractBusinessCardWithProvider({
+        request: { images: [sampleImage] },
+        settings: {
+          ...baseSettings,
+          llmProvider: "gemini",
+          geminiApiKey: "",
+        },
+      }),
+    ).rejects.toThrow("Add a Gemini API key in settings before extraction.");
+  });
+
+  it("surfaces Gemini provider errors", async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: {
+            message: "API key not valid.",
+          },
+        }),
+        { status: 400 },
+      ),
+    );
+
     await expect(
       extractBusinessCardWithProvider({
         request: { images: [sampleImage] },
@@ -209,7 +326,8 @@ describe("structuredExtraction", () => {
           ...baseSettings,
           llmProvider: "gemini",
         },
+        fetchImpl,
       }),
-    ).rejects.toThrow("Gemini extraction is not implemented yet.");
+    ).rejects.toThrow("API key not valid.");
   });
 });
